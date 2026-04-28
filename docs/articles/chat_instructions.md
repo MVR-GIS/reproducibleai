@@ -94,11 +94,11 @@ paths <- use_instructions(
 )
 
 paths
-#> [1] "C:\\Users\\B5PMMMPD\\AppData\\Local\\Temp\\1\\RtmpEjdDRY/dev/instructions/chat-manual.md"      
-#> [2] "C:\\Users\\B5PMMMPD\\AppData\\Local\\Temp\\1\\RtmpEjdDRY/dev/instructions/goals.md"            
-#> [3] "C:\\Users\\B5PMMMPD\\AppData\\Local\\Temp\\1\\RtmpEjdDRY/dev/instructions/quarto-book.md"      
-#> [4] "C:\\Users\\B5PMMMPD\\AppData\\Local\\Temp\\1\\RtmpEjdDRY/dev/instructions/user-manual.md"      
-#> [5] "C:\\Users\\B5PMMMPD\\AppData\\Local\\Temp\\1\\RtmpEjdDRY/dev/instructions/CHAT_INSTRUCTIONS.md"
+#> [1] "C:\\Users\\B5PMMMPD\\AppData\\Local\\Temp\\1\\Rtmpyu8eoB/dev/instructions/chat-manual.md"      
+#> [2] "C:\\Users\\B5PMMMPD\\AppData\\Local\\Temp\\1\\Rtmpyu8eoB/dev/instructions/goals.md"            
+#> [3] "C:\\Users\\B5PMMMPD\\AppData\\Local\\Temp\\1\\Rtmpyu8eoB/dev/instructions/quarto-book.md"      
+#> [4] "C:\\Users\\B5PMMMPD\\AppData\\Local\\Temp\\1\\Rtmpyu8eoB/dev/instructions/user-manual.md"      
+#> [5] "C:\\Users\\B5PMMMPD\\AppData\\Local\\Temp\\1\\Rtmpyu8eoB/dev/instructions/CHAT_INSTRUCTIONS.md"
 list.files(dest)
 #> [1] "chat-manual.md"       "CHAT_INSTRUCTIONS.md" "goals.md"            
 #> [4] "quarto-book.md"       "user-manual.md"

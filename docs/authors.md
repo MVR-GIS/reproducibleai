@@ -8,11 +8,11 @@
 ## Citation
 
 Dougherty M (2026). *reproducibleai: Reproducible AI*. R package version
-2026.04.17.
+2026.04.28.
 
     @Manual{,
       title = {reproducibleai: Reproducible AI},
       author = {Michael Dougherty},
       year = {2026},
-      note = {R package version 2026.04.17},
+      note = {R package version 2026.04.28},
     }

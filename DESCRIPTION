@@ -1,6 +1,6 @@
 Package: reproducibleai
 Title: Reproducible AI
-Version: 2026.04.17
+Version: 2026.04.28
 Authors@R: c(
     person("Michael", "Dougherty", , 
            "Michael.P.Dougherty@usace.army.mil", role = c("aut", "cre"),

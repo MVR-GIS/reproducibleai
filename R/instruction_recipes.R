@@ -32,7 +32,10 @@ instructions_recipes <- function(validate = TRUE) {
     quarto_book = c("chat-manual", "goals", "quarto-book"),
 
     # Quarto books that are also technical manuals
-    quarto_user_manual = c("chat-manual", "goals", "quarto-book", "user-manual")
+    quarto_user_manual = c("chat-manual", "goals", "quarto-book", "user-manual"),
+
+    # Python packages
+    python_package = c("chat-manual", "goals", "python-package")
   )
 
   if (validate) {

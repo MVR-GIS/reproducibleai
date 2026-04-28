@@ -62,7 +62,7 @@ You can install the development version from GitHub with:
 
     library(reproducibleai)
     instructions_available()
-    #> [1] "chat-manual" "goals"       "quarto-book" "r-package"   "shiny-golem" "user-manual"
+    #> [1] "chat-manual"    "goals"          "python-package" "quarto-book"    "r-package"      "shiny-golem"    "user-manual"
 
 1.  Use a recommended recipe
 
