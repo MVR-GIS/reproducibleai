@@ -1,5 +1,5 @@
 test_that("instructions_recipes() returns named list of character vectors", {
-  rec <- instructions_recipes(validate = FALSE)
+  rec <- instructions_recipes()
 
   expect_type(rec, "list")
   expect_true(length(rec) > 0)
@@ -14,15 +14,15 @@ test_that("instructions_recipes() returns named list of character vectors", {
   }
 })
 
-test_that("instructions_recipes(validate=TRUE) references only available modules", {
-  rec <- instructions_recipes(validate = TRUE)
+test_that("instructions_recipes() references only available modules", {
+  rec <- instructions_recipes()
   avail <- instructions_available()
 
   used <- unique(unlist(rec, use.names = FALSE))
   expect_true(all(used %in% avail))
 })
 
-test_that("instructions_recipes(validate=TRUE) errors if a recipe references a missing module", {
+test_that("instructions_recipes() errors if a recipe references a missing module", {
   # We can't directly inject a bad recipe into instructions_recipes(), so instead
   # we temporarily mask instructions_available() to simulate a missing module.
   local_mocked_bindings(
@@ -33,8 +33,7 @@ test_that("instructions_recipes(validate=TRUE) errors if a recipe references a m
   )
 
   expect_error(
-    instructions_recipes(validate = TRUE),
-    "missing instruction modules",
-    fixed = FALSE
+    instructions_recipes(),
+    "missing instruction modules"
   )
 })

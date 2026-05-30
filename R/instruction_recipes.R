@@ -28,9 +28,25 @@
 instructions_recipes <- function() {
   list(
     r_package = c("chat-manual", "goals", "r-package"),
-    python_package = c("chat-manual", "goals", "python-package"),
+    r_package_governed = c(
+      "chat-manual",
+      "goals",
+      "r-package",
+      "development-governance"
+    ),
+    python_package_governed = c(
+      "chat-manual",
+      "goals",
+      "python-package",
+      "development-governance"
+    ),
     quarto_book = c("chat-manual", "goals", "quarto-book"),
-    quarto_book_user_manual = c("chat-manual", "goals", "quarto-book", "user-manual"),
+    quarto_book_user_manual = c(
+      "chat-manual",
+      "goals",
+      "quarto-book",
+      "user-manual"
+    ),
     shiny_golem = c("chat-manual", "goals", "r-package", "shiny-golem"),
     shiny_golem_help_governed = c(
       "chat-manual",
