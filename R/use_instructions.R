@@ -1,17 +1,20 @@
 #' Write selected instruction modules into a working directory
 #'
-#' Copies instruction modules shipped with the package (from `inst/instructions/`)
-#' into a local folder (default: `dev/instructions`) for reference in
-#' reproducible chat sessions. Also writes an entrypoint file
-#' (`CHAT_INSTRUCTIONS.md`) describing the selected recipe and read order.
+#' Installs instruction modules shipped with the package into a local repository
+#' `dev/instructions` folder for reference in reproducible chat sessions.
+#' Also writes an entrypoint file (`CHAT_INSTRUCTIONS.md`) describing the
+#' selected recipe and read order.
+#'
+#' Internally, module installation is delegated to module handler functions.
 #'
 #' @param spec Character vector of module tokens, e.g.
 #'   `c("chat-manual", "goals", "r-package")`.
 #' @param dest_dir Character. Destination directory (default: "dev/instructions").
-#' @param overwrite Logical. Overwrite existing module files? (default: TRUE).
+#'   This must correspond to `<repo>/dev/instructions`.
+#' @param overwrite Logical. Overwrite existing module files? (default: `TRUE`).
 #'   Note: the entrypoint file `CHAT_INSTRUCTIONS.md` is always overwritten.
-#' @param write_entrypoint Logical. Write `CHAT_INSTRUCTIONS.md`? (default: TRUE).
-#' @param quiet Logical. Suppress informational messages? (default: FALSE).
+#' @param write_entrypoint Logical. Write `CHAT_INSTRUCTIONS.md`? (default: `TRUE`).
+#' @param quiet Logical. Suppress informational messages? (default: `FALSE`).
 #'
 #' @return Character vector of written file paths (invisibly), including the
 #'   entrypoint file when `write_entrypoint = TRUE`.
@@ -35,79 +38,85 @@ use_instructions <- function(spec,
   if (!is.character(dest_dir) || length(dest_dir) != 1 || !nzchar(dest_dir)) {
     stop("`dest_dir` must be a non-empty character scalar.", call. = FALSE)
   }
-  if (!is.logical(overwrite) || length(overwrite) != 1) {
+  if (!is.logical(overwrite) || length(overwrite) != 1 || is.na(overwrite)) {
     stop("`overwrite` must be TRUE/FALSE.", call. = FALSE)
   }
-  if (!is.logical(write_entrypoint) || length(write_entrypoint) != 1) {
+  if (!is.logical(write_entrypoint) || length(write_entrypoint) != 1 || is.na(write_entrypoint)) {
     stop("`write_entrypoint` must be TRUE/FALSE.", call. = FALSE)
   }
-  if (!is.logical(quiet) || length(quiet) != 1) {
+  if (!is.logical(quiet) || length(quiet) != 1 || is.na(quiet)) {
     stop("`quiet` must be TRUE/FALSE.", call. = FALSE)
   }
 
-  # Normalize and de-duplicate while preserving order ----
-  spec <- trimws(spec)
-  spec <- spec[!duplicated(spec)]
+  # Normalize and validate requested modules ----
+  spec <- normalize_module_names(spec)
+  validate_modules_available(spec)
 
-  # Discover available modules + paths ----
-  available_df <- instructions_available(include_path = TRUE)
+  # Align legacy dest_dir interface with handler-based architecture ----
+  dest_dir <- trimws(dest_dir)
+  normalized_dest <- gsub("\\\\", "/", dest_dir)
+  expected_suffix <- "dev/instructions"
 
-  missing_mods <- setdiff(spec, available_df$module)
-  if (length(missing_mods) > 0) {
+  if (!identical(normalized_dest, expected_suffix) &&
+      !endsWith(normalized_dest, paste0("/", expected_suffix))) {
     stop(
-      "Unknown instruction module(s): ", paste(missing_mods, collapse = ", "),
-      "\nAvailable modules: ", paste(available_df$module, collapse = ", "),
+      "`dest_dir` must be `dev/instructions` or end with `/dev/instructions` ",
+      "so it aligns with handler-based installation.",
       call. = FALSE
     )
   }
 
-  # Ensure destination directory exists ----
-  if (!dir.exists(dest_dir)) {
-    dir.create(dest_dir, recursive = TRUE, showWarnings = FALSE)
-    if (!dir.exists(dest_dir)) {
-      stop("Failed to create destination directory: ", dest_dir, call. = FALSE)
+  repo_path <- sub(
+    paste0("(/)?", expected_suffix, "$"),
+    "",
+    normalized_dest
+  )
+
+  if (!nzchar(repo_path)) {
+    repo_path <- "."
+  }
+
+  if (!dir.exists(repo_path)) {
+    ok <- dir.create(repo_path, recursive = TRUE, showWarnings = FALSE)
+    if (!ok || !dir.exists(repo_path)) {
+      stop("Failed to create repository root directory: ", repo_path, call. = FALSE)
     }
-    if (!quiet) message("Created directory: ", dest_dir)
   }
 
   out_paths <- character(0)
 
-  # Copy module files ----
+  # Install modules through handlers ----
   for (mod in spec) {
-    src <- available_df$path[match(mod, available_df$module)]
-    if (!file.exists(src)) {
-      stop("Source file missing for module '", mod, "': ", src, call. = FALSE)
+    handler <- get_module_handler(mod)
+    result <- handler(path = repo_path, overwrite = overwrite)
+
+    if (length(result$files_written) > 0) {
+      out_paths <- c(out_paths, result$files_written)
+      if (!quiet) {
+        for (path_written in result$files_written) {
+          message("Wrote: ", path_written)
+        }
+      }
     }
 
-    dest <- file.path(dest_dir, paste0(mod, ".md"))
-    ok <- file.copy(src, dest, overwrite = overwrite)
-
-    if (!ok) {
-      stop(
-        "Failed to write instruction file: ", dest,
-        if (!overwrite && file.exists(dest)) " (already exists; overwrite=FALSE)" else "",
-        call. = FALSE
-      )
+    if (length(result$files_skipped) > 0 && !quiet) {
+      for (path_skipped in result$files_skipped) {
+        message("Skipped existing file: ", path_skipped)
+      }
     }
-
-    out_paths <- c(out_paths, dest)
-    if (!quiet) message("Wrote: ", dest)
   }
 
   # Write entrypoint file (ALWAYS overwrite) ----
   if (write_entrypoint) {
-    entry_path <- file.path(dest_dir, "CHAT_INSTRUCTIONS.md")
+    entry_path <- file.path(repo_path, "dev", "instructions", "CHAT_INSTRUCTIONS.md")
 
-    # Build filled template pieces
+    dir_info <- ensure_dir(dirname(entry_path))
+    if (isTRUE(dir_info$created) && !quiet) {
+      message("Created directory: ", dir_info$path)
+    }
+
     spec_r <- paste(sprintf("%s", shQuote(spec)), collapse = ", ")
     spec_bullets <- paste0("- ", spec, collapse = "\n")
-    file_list <- paste0(
-      seq_along(spec), ". `", file.path(dest_dir, paste0(spec, ".md")), "`",
-      collapse = "\n"
-    )
-
-    # Use dest_dir-relative paths in the entrypoint for portability
-    # (Most prompts will reference dev/instructions/... from repo root.)
     file_list <- paste0(
       seq_along(spec), ". `", file.path("dev", "instructions", paste0(spec, ".md")), "`",
       collapse = "\n"

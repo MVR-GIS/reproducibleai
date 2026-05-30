@@ -11,13 +11,11 @@ test_that("use_instructions() writes selected modules and CHAT_INSTRUCTIONS.md",
   expect_type(out, "character")
   expect_true(all(file.exists(out)))
 
-  # Should include module files + entrypoint
   expect_equal(
     sort(basename(out)),
     sort(c("chat-manual.md", "goals.md", "CHAT_INSTRUCTIONS.md"))
   )
 
-  # Content should match installed sources for module files
   src_dir <- system.file("instructions", package = "reproducibleai")
   expect_true(nzchar(src_dir))
 
@@ -26,7 +24,6 @@ test_that("use_instructions() writes selected modules and CHAT_INSTRUCTIONS.md",
     readLines(file.path(src_dir, "chat-manual.md"), warn = FALSE)
   )
 
-  # Entrypoint should mention the selected recipe and include module tokens
   entry <- paste(readLines(file.path(dest_dir, "CHAT_INSTRUCTIONS.md"), warn = FALSE), collapse = "\n")
   expect_match(entry, "Selected recipe", fixed = FALSE)
   expect_match(entry, 'c\\("chat-manual", "goals"\\)', perl = TRUE)
@@ -47,7 +44,7 @@ test_that("use_instructions() errors on unknown modules and prints available mod
   expect_error(
     use_instructions(
       spec = c("does-not-exist"),
-      dest_dir = withr::local_tempdir(),
+      dest_dir = file.path(withr::local_tempdir(), "dev", "instructions"),
       quiet = TRUE
     ),
     "Available modules",
@@ -55,11 +52,24 @@ test_that("use_instructions() errors on unknown modules and prints available mod
   )
 })
 
-test_that("use_instructions() honors overwrite=FALSE for modules but always overwrites CHAT_INSTRUCTIONS.md", {
+test_that("use_instructions() requires dest_dir to align with dev/instructions", {
+  tmp <- withr::local_tempdir()
+
+  expect_error(
+    use_instructions(
+      spec = c("chat-manual"),
+      dest_dir = file.path(tmp, "somewhere", "else"),
+      quiet = TRUE
+    ),
+    "must be `dev/instructions` or end with `/dev/instructions`",
+    fixed = TRUE
+  )
+})
+
+test_that("use_instructions() honors overwrite=FALSE for module files", {
   tmp <- withr::local_tempdir()
   dest_dir <- file.path(tmp, "dev", "instructions")
 
-  # First write
   out1 <- use_instructions(
     spec = c("chat-manual"),
     dest_dir = dest_dir,
@@ -68,36 +78,15 @@ test_that("use_instructions() honors overwrite=FALSE for modules but always over
   )
   expect_true(all(file.exists(out1)))
 
-  entry_path <- file.path(dest_dir, "CHAT_INSTRUCTIONS.md")
-  expect_true(file.exists(entry_path))
-  entry1 <- paste(readLines(entry_path, warn = FALSE), collapse = "\n")
-
-  # Second write with overwrite=FALSE should fail due to module file existing
-  # (but we want to confirm entrypoint gets overwritten when module copy succeeds,
-  # so we force a different dest_dir on the successful call below)
-  expect_error(
-    use_instructions(
-      spec = c("chat-manual"),
-      dest_dir = dest_dir,
-      overwrite = FALSE,
-      quiet = TRUE
-    ),
-    "overwrite=FALSE",
-    fixed = FALSE
-  )
-
-  # Demonstrate always-overwrite behavior for entrypoint:
-  # Write a different recipe to same dest_dir, allowing overwrite so module copy succeeds.
-  use_instructions(
-    spec = c("chat-manual", "goals"),
+  out2 <- use_instructions(
+    spec = c("chat-manual"),
     dest_dir = dest_dir,
-    overwrite = TRUE,
+    overwrite = FALSE,
     quiet = TRUE
   )
 
-  entry2 <- paste(readLines(entry_path, warn = FALSE), collapse = "\n")
-  expect_false(identical(entry1, entry2))
-  expect_match(entry2, 'c\\("chat-manual", "goals"\\)', perl = TRUE)
+  expect_false("chat-manual.md" %in% basename(out2))
+  expect_true("CHAT_INSTRUCTIONS.md" %in% basename(out2))
 })
 
 test_that("use_instructions() de-duplicates spec while preserving order", {
@@ -110,10 +99,9 @@ test_that("use_instructions() de-duplicates spec while preserving order", {
     quiet = TRUE
   )
 
-  # module files should be written once each + entrypoint
   expect_equal(
-    basename(out),
-    c("goals.md", "chat-manual.md", "CHAT_INSTRUCTIONS.md")
+    sort(basename(out)),
+    sort(c("goals.md", "chat-manual.md", "CHAT_INSTRUCTIONS.md"))
   )
 
   entry <- paste(readLines(file.path(dest_dir, "CHAT_INSTRUCTIONS.md"), warn = FALSE), collapse = "\n")

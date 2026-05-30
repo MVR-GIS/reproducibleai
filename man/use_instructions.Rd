@@ -16,22 +16,26 @@ use_instructions(
 \item{spec}{Character vector of module tokens, e.g.
 \code{c("chat-manual", "goals", "r-package")}.}
 
-\item{dest_dir}{Character. Destination directory (default: "dev/instructions").}
+\item{dest_dir}{Character. Destination directory (default: "dev/instructions").
+This must correspond to \verb{<repo>/dev/instructions}.}
 
-\item{overwrite}{Logical. Overwrite existing module files? (default: TRUE).
+\item{overwrite}{Logical. Overwrite existing module files? (default: \code{TRUE}).
 Note: the entrypoint file \code{CHAT_INSTRUCTIONS.md} is always overwritten.}
 
-\item{write_entrypoint}{Logical. Write \code{CHAT_INSTRUCTIONS.md}? (default: TRUE).}
+\item{write_entrypoint}{Logical. Write \code{CHAT_INSTRUCTIONS.md}? (default: \code{TRUE}).}
 
-\item{quiet}{Logical. Suppress informational messages? (default: FALSE).}
+\item{quiet}{Logical. Suppress informational messages? (default: \code{FALSE}).}
 }
 \value{
 Character vector of written file paths (invisibly), including the
 entrypoint file when \code{write_entrypoint = TRUE}.
 }
 \description{
-Copies instruction modules shipped with the package (from \verb{inst/instructions/})
-into a local folder (default: \code{dev/instructions}) for reference in
-reproducible chat sessions. Also writes an entrypoint file
-(\code{CHAT_INSTRUCTIONS.md}) describing the selected recipe and read order.
+Installs instruction modules shipped with the package into a local repository
+\code{dev/instructions} folder for reference in reproducible chat sessions.
+Also writes an entrypoint file (\code{CHAT_INSTRUCTIONS.md}) describing the
+selected recipe and read order.
+}
+\details{
+Internally, module installation is delegated to module handler functions.
 }
