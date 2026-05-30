@@ -17,7 +17,9 @@ use_instructions(
 \code{c("chat-manual", "goals", "r-package")}.}
 
 \item{dest_dir}{Character. Destination directory (default: "dev/instructions").
-This must correspond to \verb{<repo>/dev/instructions}.}
+This must correspond to \verb{<repo>/dev/instructions}, because instruction
+modules are installed through handlers that target the repository's
+standard \verb{dev/instructions/} location.}
 
 \item{overwrite}{Logical. Overwrite existing module files? (default: \code{TRUE}).
 Note: the entrypoint file \code{CHAT_INSTRUCTIONS.md} is always overwritten.}

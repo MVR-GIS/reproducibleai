@@ -10,7 +10,9 @@
 #' @param spec Character vector of module tokens, e.g.
 #'   `c("chat-manual", "goals", "r-package")`.
 #' @param dest_dir Character. Destination directory (default: "dev/instructions").
-#'   This must correspond to `<repo>/dev/instructions`.
+#'   This must correspond to `<repo>/dev/instructions`, because instruction
+#'   modules are installed through handlers that target the repository's
+#'   standard `dev/instructions/` location.
 #' @param overwrite Logical. Overwrite existing module files? (default: `TRUE`).
 #'   Note: the entrypoint file `CHAT_INSTRUCTIONS.md` is always overwritten.
 #' @param write_entrypoint Logical. Write `CHAT_INSTRUCTIONS.md`? (default: `TRUE`).
