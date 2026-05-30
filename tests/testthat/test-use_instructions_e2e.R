@@ -171,3 +171,97 @@ test_that("end-to-end: parameterized-help scaffolds help framework through use_i
   expect_true(file.exists(file.path(tmp, "inst", "app", "www", "help.css")))
   expect_true(file.exists(file.path(tmp, "dev", "instructions", "CHAT_INSTRUCTIONS.md")))
 })
+
+test_that("end-to-end: shiny_golem_help_governed recipe installs combined scaffolds", {
+  tmp <- withr::local_tempdir()
+  dest_dir <- file.path(tmp, "dev", "instructions")
+
+  recipes <- instructions_recipes()
+
+  out <- use_instructions(
+    spec = recipes$shiny_golem_help_governed,
+    dest_dir = dest_dir,
+    overwrite = FALSE,
+    write_entrypoint = TRUE,
+    quiet = TRUE
+  )
+
+  expect_type(out, "character")
+  expect_true(all(file.exists(out)))
+
+  # Installed instruction modules
+  expect_true(file.exists(file.path(tmp, "dev", "instructions", "chat-manual.md")))
+  expect_true(file.exists(file.path(tmp, "dev", "instructions", "goals.md")))
+  expect_true(file.exists(file.path(tmp, "dev", "instructions", "r-package.md")))
+  expect_true(file.exists(file.path(tmp, "dev", "instructions", "shiny-golem.md")))
+  expect_true(file.exists(file.path(tmp, "dev", "instructions", "parameterized-help.md")))
+  expect_true(file.exists(file.path(tmp, "dev", "instructions", "development-governance.md")))
+  expect_true(file.exists(file.path(tmp, "dev", "instructions", "CHAT_INSTRUCTIONS.md")))
+
+  # Governance scaffold
+  expect_true(file.exists(file.path(tmp, "dev", "05_plan.md")))
+  expect_true(file.exists(file.path(tmp, "dev", "10_design.md")))
+  expect_true(file.exists(file.path(tmp, "dev", "40_schemas.md")))
+  expect_true(file.exists(file.path(tmp, "dev", "decisions", "README.md")))
+  expect_true(dir.exists(file.path(tmp, "dev", "sessions")))
+
+  # Parameterized-help scaffold
+  expect_true(file.exists(file.path(tmp, "data-raw", "create_help_data.R")))
+  expect_true(file.exists(file.path(tmp, "R", "help_data.R")))
+  expect_true(file.exists(file.path(tmp, "inst", "app", "www", "help.css")))
+
+  # Entrypoint preserves recipe order
+  entry <- paste(
+    readLines(file.path(tmp, "dev", "instructions", "CHAT_INSTRUCTIONS.md"), warn = FALSE),
+    collapse = "\n"
+  )
+
+  expect_match(
+    entry,
+    'c\\("chat-manual", "goals", "r-package", "shiny-golem", "parameterized-help", "development-governance"\\)',
+    perl = TRUE
+  )
+
+  expect_match(entry, "- chat-manual", fixed = TRUE)
+  expect_match(entry, "- goals", fixed = TRUE)
+  expect_match(entry, "- r-package", fixed = TRUE)
+  expect_match(entry, "- shiny-golem", fixed = TRUE)
+  expect_match(entry, "- parameterized-help", fixed = TRUE)
+  expect_match(entry, "- development-governance", fixed = TRUE)
+})
+
+test_that("end-to-end: shiny_golem_help_governed preserves edited scaffold files when overwrite = FALSE", {
+  tmp <- withr::local_tempdir()
+  dest_dir <- file.path(tmp, "dev", "instructions")
+
+  recipes <- instructions_recipes()
+
+  use_instructions(
+    spec = recipes$shiny_golem_help_governed,
+    dest_dir = dest_dir,
+    overwrite = FALSE,
+    write_entrypoint = TRUE,
+    quiet = TRUE
+  )
+
+  plan_path <- file.path(tmp, "dev", "05_plan.md")
+  help_script_path <- file.path(tmp, "data-raw", "create_help_data.R")
+
+  writeLines("custom plan content", plan_path)
+  writeLines("custom help script", help_script_path)
+
+  out <- use_instructions(
+    spec = recipes$shiny_golem_help_governed,
+    dest_dir = dest_dir,
+    overwrite = FALSE,
+    write_entrypoint = TRUE,
+    quiet = TRUE
+  )
+
+  expect_identical(readLines(plan_path, warn = FALSE), "custom plan content")
+  expect_identical(readLines(help_script_path, warn = FALSE), "custom help script")
+
+  expect_true("CHAT_INSTRUCTIONS.md" %in% basename(out))
+  expect_false("05_plan.md" %in% basename(out))
+  expect_false("create_help_data.R" %in% basename(out))
+})
