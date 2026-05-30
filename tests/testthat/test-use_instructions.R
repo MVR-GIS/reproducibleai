@@ -122,3 +122,52 @@ test_that("use_instructions(write_entrypoint=FALSE) writes only module files", {
   expect_equal(sort(basename(out)), sort(c("chat-manual.md", "goals.md")))
   expect_false(file.exists(file.path(dest_dir, "CHAT_INSTRUCTIONS.md")))
 })
+
+test_that("instructions_recipes() returns a named list of character vectors", {
+  recipes <- instructions_recipes()
+
+  expect_type(recipes, "list")
+  expect_true(length(recipes) > 0)
+  expect_true(!is.null(names(recipes)))
+  expect_true(all(nzchar(names(recipes))))
+  expect_true(all(vapply(recipes, is.character, logical(1))))
+})
+
+test_that("instructions_recipes() includes expected core recipes", {
+  recipes <- instructions_recipes()
+
+  expect_true("r_package" %in% names(recipes))
+  expect_true("shiny_golem" %in% names(recipes))
+  expect_true("quarto_book" %in% names(recipes))
+  expect_true("python_package" %in% names(recipes))
+})
+
+test_that("instructions_recipes() includes help/governance recipes for golem workflows", {
+  recipes <- instructions_recipes()
+
+  expect_true("shiny_golem_help_governed" %in% names(recipes))
+
+  expect_true("parameterized-help" %in% recipes$shiny_golem_help_governed)
+  expect_true("development-governance" %in% recipes$shiny_golem_help_governed)
+
+  expect_identical(
+    recipes$shiny_golem_help_governed,
+    c(
+      "chat-manual",
+      "goals",
+      "r-package",
+      "shiny-golem",
+      "parameterized-help",
+      "development-governance"
+    )
+  )
+})
+
+test_that("all recipe modules are available instruction modules", {
+  recipes <- instructions_recipes()
+  available <- instructions_available()
+
+  all_modules <- unique(unlist(recipes, use.names = FALSE))
+
+  expect_true(all(all_modules %in% available))
+})
