@@ -117,12 +117,11 @@ test_that("module_name_to_handler() maps kebab-case names correctly", {
   )
 })
 
-test_that("get_module_handler() errors clearly when handler is missing", {
-  expect_error(
-    get_module_handler("chat-manual"),
-    "Expected function `module_chat_manual()`",
-    fixed = TRUE
-  )
+test_that("get_module_handler() resolves an existing handler", {
+  handler <- get_module_handler("chat-manual")
+
+  expect_true(is.function(handler))
+  expect_identical(module_name_to_handler("chat-manual"), "module_chat_manual")
 })
 
 test_that("new_module_result() returns standard result shape", {
