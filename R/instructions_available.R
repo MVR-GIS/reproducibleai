@@ -1,13 +1,28 @@
 #' List available instruction modules shipped with the package
 #'
 #' Discovers instruction modules from `inst/instructions/*.md` at runtime.
+#' These module names are the public identifiers used in recipes and
+#' `use_instructions()`.
 #'
-#' @param include_path Logical; if `TRUE`, return a data.frame with module names
+#' Canonical instruction content remains static markdown stored in
+#' `inst/instructions/`. Installation into a target repository is handled by
+#' internal module handlers, but the discovered module names remain the public
+#' user-facing interface.
+#'
+#' @param include_path Logical; if `TRUE`, return a data frame with module names
 #'   and file paths. If `FALSE` (default), return a character vector of module
 #'   names.
 #'
-#' @return If `include_path = FALSE`, a character vector of module names.
-#'   If `include_path = TRUE`, a data.frame with columns `module` and `path`.
+#' @return If `include_path = FALSE`, a character vector of public module names.
+#'   If `include_path = TRUE`, a data frame with columns:
+#' \describe{
+#'   \item{module}{Public module name in kebab-case.}
+#'   \item{path}{Installed package path to the canonical markdown file.}
+#' }
+#'
+#' @examples
+#' instructions_available()
+#' instructions_available(include_path = TRUE)
 #'
 #' @export
 instructions_available <- function(include_path = FALSE) {
@@ -15,8 +30,6 @@ instructions_available <- function(include_path = FALSE) {
 
   dir <- system.file("instructions", package = "reproducibleai")
   if (!nzchar(dir) || !dir.exists(dir)) {
-    # This should not happen if inst/instructions is shipped correctly,
-    # but the error message should be explicit.
     stop(
       "No instructions directory found in installed package. ",
       "Expected 'inst/instructions' to be installed and discoverable via system.file().",
@@ -25,11 +38,10 @@ instructions_available <- function(include_path = FALSE) {
   }
 
   paths <- list.files(dir, pattern = "\\.md$", full.names = TRUE)
-  paths <- paths[!grepl("/_", paths)]  # ignore any optional underscore files (_manifest.md, etc.)
+  paths <- paths[!grepl("/_", paths)]  # ignore underscore files (_manifest.md, etc.)
 
   modules <- sub("\\.md$", "", basename(paths))
 
-  # stable ordering
   ord <- order(modules)
   modules <- modules[ord]
   paths <- paths[ord]

@@ -1,55 +1,35 @@
-#' Recommended instruction compositions ("recipes")
+#' List recommended instruction-module recipes
 #'
-#' Returns a set of recommended instruction module compositions for common
-#' workflows. Recipes are expressed as character vectors suitable for passing to
-#' `use_instructions(spec = ...)`.
+#' Returns named recipe vectors that compose public instruction modules into
+#' recommended starting points for common repository types or workflows.
 #'
-#' Design intent:
-#' - Always include base modules: `chat-manual` + `goals`.
-#' - Add overlays as needed (e.g., `r-package`, `shiny-golem`, `quarto-book`,
-#'   `user-manual`).
+#' Recipes are intentionally lightweight: they are simple ordered character
+#' vectors of public module names. They do not bypass `use_instructions()` and
+#' they do not replace direct module selection when custom composition is
+#' preferred.
 #'
-#' @param validate Logical; if `TRUE`, validate that referenced modules exist in
-#'   `instructions_available()`. Defaults to `TRUE`.
+#' @return A named list of character vectors. Each element is a recipe composed
+#'   of public module names suitable for passing directly to `use_instructions()`.
 #'
-#' @return A named list. Each element is a character vector of module tokens.
+#' @details
+#' Recipes are part of the package's instruction-first interface:
+#' \itemize{
+#'   \item canonical instruction content remains static markdown in `inst/instructions/`
+#'   \item recipes provide recommended compositions of those modules
+#'   \item `use_instructions()` installs the selected modules into a target repository
+#' }
+#'
+#' @examples
+#' recipes <- instructions_recipes()
+#' names(recipes)
+#' recipes$r_package
 #'
 #' @export
-instructions_recipes <- function(validate = TRUE) {
-  stopifnot(is.logical(validate), length(validate) == 1)
-
-  recipes <- list(
-    # Base-only
-    base = c("chat-manual", "goals"),
-
-    # R packages
+instructions_recipes <- function() {
+  list(
     r_package = c("chat-manual", "goals", "r-package"),
-
-    # Shiny apps using golem (golem == package)
     shiny_golem = c("chat-manual", "goals", "r-package", "shiny-golem"),
-
-    # Quarto books
     quarto_book = c("chat-manual", "goals", "quarto-book"),
-
-    # Quarto books that are also technical manuals
-    quarto_user_manual = c("chat-manual", "goals", "quarto-book", "user-manual"),
-
-    # Python packages
     python_package = c("chat-manual", "goals", "python-package")
   )
-
-  if (validate) {
-    avail <- instructions_available()
-    missing <- setdiff(unique(unlist(recipes, use.names = FALSE)), avail)
-
-    if (length(missing) > 0) {
-      stop(
-        "Some recipes reference missing instruction modules: ",
-        paste(missing, collapse = ", "),
-        call. = FALSE
-      )
-    }
-  }
-
-  recipes
 }

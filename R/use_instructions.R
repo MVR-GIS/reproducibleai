@@ -18,8 +18,9 @@
 #' @param write_entrypoint Logical. Write `CHAT_INSTRUCTIONS.md`? (default: `TRUE`).
 #' @param quiet Logical. Suppress informational messages? (default: `FALSE`).
 #'
-#' @return Character vector of written file paths (invisibly), including the
-#'   entrypoint file when `write_entrypoint = TRUE`.
+#' @return Character vector of file paths written during the call (invisibly),
+#'   including the entrypoint file when `write_entrypoint = TRUE`. Existing
+#'   module files preserved because `overwrite = FALSE` are not included.
 #'
 #' @export
 use_instructions <- function(spec,

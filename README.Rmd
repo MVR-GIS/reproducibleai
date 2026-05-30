@@ -78,6 +78,7 @@ pak::pak("MVR-GIS/reproducibleai")
 ```{r}
 library(reproducibleai)
 instructions_available()
+# returns the public module names you can compose into recipes
 ```
 
 ### 2) Use a recommended recipe

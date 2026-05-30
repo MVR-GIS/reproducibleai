@@ -2,27 +2,34 @@
 % Please edit documentation in R/instruction_recipes.R
 \name{instructions_recipes}
 \alias{instructions_recipes}
-\title{Recommended instruction compositions ("recipes")}
+\title{List recommended instruction-module recipes}
 \usage{
-instructions_recipes(validate = TRUE)
-}
-\arguments{
-\item{validate}{Logical; if \code{TRUE}, validate that referenced modules exist in
-\code{instructions_available()}. Defaults to \code{TRUE}.}
+instructions_recipes()
 }
 \value{
-A named list. Each element is a character vector of module tokens.
+A named list of character vectors. Each element is a recipe composed
+of public module names suitable for passing directly to \code{use_instructions()}.
 }
 \description{
-Returns a set of recommended instruction module compositions for common
-workflows. Recipes are expressed as character vectors suitable for passing to
-\code{use_instructions(spec = ...)}.
+Returns named recipe vectors that compose public instruction modules into
+recommended starting points for common repository types or workflows.
 }
 \details{
-Design intent:
+Recipes are intentionally lightweight: they are simple ordered character
+vectors of public module names. They do not bypass \code{use_instructions()} and
+they do not replace direct module selection when custom composition is
+preferred.
+
+Recipes are part of the package's instruction-first interface:
 \itemize{
-\item Always include base modules: \code{chat-manual} + \code{goals}.
-\item Add overlays as needed (e.g., \code{r-package}, \code{shiny-golem}, \code{quarto-book},
-\code{user-manual}).
+\item canonical instruction content remains static markdown in \verb{inst/instructions/}
+\item recipes provide recommended compositions of those modules
+\item \code{use_instructions()} installs the selected modules into a target repository
 }
+}
+\examples{
+recipes <- instructions_recipes()
+names(recipes)
+recipes$r_package
+
 }

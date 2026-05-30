@@ -29,8 +29,9 @@ Note: the entrypoint file \code{CHAT_INSTRUCTIONS.md} is always overwritten.}
 \item{quiet}{Logical. Suppress informational messages? (default: \code{FALSE}).}
 }
 \value{
-Character vector of written file paths (invisibly), including the
-entrypoint file when \code{write_entrypoint = TRUE}.
+Character vector of file paths written during the call (invisibly),
+including the entrypoint file when \code{write_entrypoint = TRUE}. Existing
+module files preserved because \code{overwrite = FALSE} are not included.
 }
 \description{
 Installs instruction modules shipped with the package into a local repository

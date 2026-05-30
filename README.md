@@ -85,6 +85,7 @@ You can install the development version from GitHub with:
     #> [1] "chat-manual"            "development-governance" "goals"                  "parameterized-help"    
     #> [5] "python-package"         "quarto-book"            "r-package"              "shiny-golem"           
     #> [9] "user-manual"
+    # returns the public module names you can compose into recipes
 
 ### 2) Use a recommended recipe
 
