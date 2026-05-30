@@ -1,4 +1,4 @@
-# ADR-0002: Adopt handler-based installation for static instruction modules
+# ADR-0003: Adopt handler-based installation for static instruction modules
 
 ## Status
 Accepted
