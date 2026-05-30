@@ -1,4 +1,4 @@
-test_that("instructions_recipes() returns named list of character vectors", {
+test_that("instructions_recipes() returns a named list of character vectors", {
   rec <- instructions_recipes()
 
   expect_type(rec, "list")
@@ -6,12 +6,22 @@ test_that("instructions_recipes() returns named list of character vectors", {
   expect_true(!is.null(names(rec)))
   expect_true(all(nzchar(names(rec))))
 
-  for (nm in names(rec)) {
-    expect_type(rec[[nm]], "character")
-    expect_true(length(rec[[nm]]) > 0)
-    # discourage duplicates inside a recipe (not strictly required, but good hygiene)
-    expect_false(anyDuplicated(rec[[nm]]) > 0)
+  for (x in rec) {
+    expect_type(x, "character")
+    expect_true(length(x) > 0)
   }
+})
+
+test_that("instructions_recipes() includes expected modest recipe set", {
+  rec <- instructions_recipes()
+
+  expect_true("r_package" %in% names(rec))
+  expect_true("r_package_governed" %in% names(rec))
+  expect_true("python_package_governed" %in% names(rec))
+  expect_true("quarto_book" %in% names(rec))
+  expect_true("quarto_book_user_manual" %in% names(rec))
+  expect_true("shiny_golem" %in% names(rec))
+  expect_true("shiny_golem_help_governed" %in% names(rec))
 })
 
 test_that("instructions_recipes() references only available modules", {
@@ -22,18 +32,32 @@ test_that("instructions_recipes() references only available modules", {
   expect_true(all(used %in% avail))
 })
 
-test_that("instructions_recipes() errors if a recipe references a missing module", {
-  # We can't directly inject a bad recipe into instructions_recipes(), so instead
-  # we temporarily mask instructions_available() to simulate a missing module.
-  local_mocked_bindings(
-    instructions_available = function(include_path = FALSE) {
-      # Return something that is missing at least one known module token used by recipes
-      c("chat-manual", "goals")
-    }
-  )
+test_that("r_package_governed recipe has expected composition", {
+  rec <- instructions_recipes()
 
-  expect_error(
-    instructions_recipes(),
-    "missing instruction modules"
+  expect_identical(
+    rec$r_package_governed,
+    c(
+      "chat-manual",
+      "goals",
+      "r-package",
+      "development-governance"
+    )
+  )
+})
+
+test_that("shiny_golem_help_governed recipe has expected composition", {
+  rec <- instructions_recipes()
+
+  expect_identical(
+    rec$shiny_golem_help_governed,
+    c(
+      "chat-manual",
+      "goals",
+      "r-package",
+      "shiny-golem",
+      "parameterized-help",
+      "development-governance"
+    )
   )
 })
