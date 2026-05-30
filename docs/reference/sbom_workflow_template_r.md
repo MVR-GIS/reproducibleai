@@ -1,7 +1,7 @@
 # Workflow template for SBOM generation (R packages)
 
 Returns the GitHub Actions workflow YAML text used by
-[`use_sbom()`](use_sbom.md).
+[`use_sbom()`](https://mvr-gis.github.io/reproducibleai/reference/use_sbom.md).
 
 ## Usage
 
@@ -19,7 +19,7 @@ A single character string containing the YAML workflow.
   SPDX JSON).
 
 - Writes SBOM-adjacent environment metadata via
-  [`reproducibleai::write_sbom_env()`](write_sbom_env.md).
+  [`reproducibleai::write_sbom_env()`](https://mvr-gis.github.io/reproducibleai/reference/write_sbom_env.md).
 
 - Uploads the `artifacts/sbom/` directory as a single artifact bundle
   with 120-day retention (subject to org/repo policy).

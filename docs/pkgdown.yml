@@ -4,5 +4,9 @@ pkgdown_sha: ~
 articles:
   chat-session-history: chat-session-history.html
   chat_instructions: chat_instructions.html
+  governed-r-package-workflow: governed-r-package-workflow.html
   sbom: sbom.html
-last_built: 2026-04-28T22:44Z
+last_built: 2026-05-30T22:10Z
+urls:
+  reference: https://mvr-gis.github.io/reproducibleai/reference
+  article: https://mvr-gis.github.io/reproducibleai/articles

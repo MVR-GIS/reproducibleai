@@ -11,9 +11,9 @@ integration (CI) using:
 - Anchore SBOM Action (Syft-based) to generate an SBOM file (SPDX JSON
   by default)
 - `reproducibleai` to standardize configuration
-  ([`use_sbom()`](../reference/use_sbom.md)) and to write additional
-  environment metadata
-  ([`write_sbom_env()`](../reference/write_sbom_env.md))
+  ([`use_sbom()`](https://mvr-gis.github.io/reproducibleai/reference/use_sbom.md))
+  and to write additional environment metadata
+  ([`write_sbom_env()`](https://mvr-gis.github.io/reproducibleai/reference/write_sbom_env.md))
 
 This workflow is designed to be:
 
@@ -111,7 +111,8 @@ Merge these commits or open a pull request and confirm:
 If your package depends on `sf`, `terra`, `units`, `xml2`, etc., CI may
 fail due to missing system libraries/headers on Ubuntu runners.
 
-The default workflow written by [`use_sbom()`](../reference/use_sbom.md)
+The default workflow written by
+[`use_sbom()`](https://mvr-gis.github.io/reproducibleai/reference/use_sbom.md)
 installs a baseline set of Ubuntu packages (GDAL/PROJ/GEOS/udunits,
 etc.), but you may need to extend it depending on your dependency graph.
 

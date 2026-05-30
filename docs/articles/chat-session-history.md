@@ -6,10 +6,10 @@ transparent audit trail of AI usage.
 
 Functions covered:
 
-- [`extract_copilot_chat()`](../reference/extract_copilot_chat.md) —
-  extract the main chat markdown from a Copilot export `.zip` into a
+- [`extract_copilot_chat()`](https://mvr-gis.github.io/reproducibleai/reference/extract_copilot_chat.md)
+  — extract the main chat markdown from a Copilot export `.zip` into a
   dated session file
-- [`cleanup_session_backups()`](../reference/cleanup_session_backups.md)
+- [`cleanup_session_backups()`](https://mvr-gis.github.io/reproducibleai/reference/cleanup_session_backups.md)
   — remove older backups to prevent `dev/sessions/.backups/` bloat
 
 ## Overview of the workflow
@@ -17,13 +17,14 @@ Functions covered:
 A typical workflow looks like:
 
 1.  Export your Copilot Chat session as a `.zip` file.
-2.  Run [`extract_copilot_chat()`](../reference/extract_copilot_chat.md)
+2.  Run
+    [`extract_copilot_chat()`](https://mvr-gis.github.io/reproducibleai/reference/extract_copilot_chat.md)
     to write (or update) a `dev/sessions/YYYY-MM-DD[_topic].md` file.
 3.  Re-run the export +
-    [`extract_copilot_chat()`](../reference/extract_copilot_chat.md)
+    [`extract_copilot_chat()`](https://mvr-gis.github.io/reproducibleai/reference/extract_copilot_chat.md)
     throughout the day; the function will create timestamped backups.
 4.  Periodically run
-    [`cleanup_session_backups()`](../reference/cleanup_session_backups.md)
+    [`cleanup_session_backups()`](https://mvr-gis.github.io/reproducibleai/reference/cleanup_session_backups.md)
     to delete old backups.
 
 ## Setup
@@ -38,8 +39,8 @@ To make this vignette runnable without requiring an actual Copilot
 export, we generate a tiny zip that mimics the expected structure:
 
 - a markdown file in the **root** of the zip archive (this is what
-  [`extract_copilot_chat()`](../reference/extract_copilot_chat.md) looks
-  for)
+  [`extract_copilot_chat()`](https://mvr-gis.github.io/reproducibleai/reference/extract_copilot_chat.md)
+  looks for)
 
 ``` r
 tmp <- tempdir()
@@ -89,7 +90,7 @@ session_path <- extract_copilot_chat(
 )
 
 session_path
-#> [1] "C:\\Users\\B5PMMMPD\\AppData\\Local\\Temp\\1\\RtmpasObLh/dev/sessions/2026-04-14_documentation.md"
+#> [1] "C:\\Users\\B5PMMMPD\\AppData\\Local\\Temp\\1\\RtmpuYtdLN/dev/sessions/2026-04-14_documentation.md"
 readLines(session_path, warn = FALSE)[1:6]
 #> [1] "# Example Copilot Chat Export"                         
 #> [2] ""                                                      
@@ -102,9 +103,9 @@ readLines(session_path, warn = FALSE)[1:6]
 ## Updating the same session (and creating backups)
 
 If you export again later and re-run
-[`extract_copilot_chat()`](../reference/extract_copilot_chat.md) for the
-same `session_date` + `topic`, the existing file will be overwritten and
-a backup will be created in `dev/sessions/.backups/`.
+[`extract_copilot_chat()`](https://mvr-gis.github.io/reproducibleai/reference/extract_copilot_chat.md)
+for the same `session_date` + `topic`, the existing file will be
+overwritten and a backup will be created in `dev/sessions/.backups/`.
 
 To demonstrate that, we update the synthetic markdown inside the zip and
 extract again.
@@ -146,13 +147,13 @@ list.files(sessions_dir, full.names = FALSE)
 
 backup_dir <- file.path(sessions_dir, ".backups")
 list.files(backup_dir, full.names = FALSE)
-#> [1] "2026-04-14_documentation_backup_20260428_174445.md"
+#> [1] "2026-04-14_documentation_backup_20260530_171043.md"
 ```
 
 ## Cleaning up old backups
 
 Over time, repeated exports can create many backups. Use
-[`cleanup_session_backups()`](../reference/cleanup_session_backups.md)
+[`cleanup_session_backups()`](https://mvr-gis.github.io/reproducibleai/reference/cleanup_session_backups.md)
 to delete backups older than `days_to_keep`.
 
 First, a dry run (no deletion):
@@ -181,13 +182,13 @@ For a consistent audit trail across projects:
 
 - Store session transcripts in `dev/sessions/`
 - Use `YYYY-MM-DD[_topic].md` naming (what
-  [`extract_copilot_chat()`](../reference/extract_copilot_chat.md)
+  [`extract_copilot_chat()`](https://mvr-gis.github.io/reproducibleai/reference/extract_copilot_chat.md)
   produces)
 - Commit `dev/sessions/*.md` to version control when appropriate for
   your org
 - Decide on a backup retention policy (e.g., keep 7 or 30 days)
 - Periodically run
-  [`cleanup_session_backups()`](../reference/cleanup_session_backups.md)
+  [`cleanup_session_backups()`](https://mvr-gis.github.io/reproducibleai/reference/cleanup_session_backups.md)
   (or schedule it)
 
 ## Troubleshooting
@@ -196,7 +197,7 @@ Common issues:
 
 - **“Zip file not found”**: confirm the path is correct and accessible.
 - **“No .md file found in zip archive root”**:
-  [`extract_copilot_chat()`](../reference/extract_copilot_chat.md)
+  [`extract_copilot_chat()`](https://mvr-gis.github.io/reproducibleai/reference/extract_copilot_chat.md)
   expects a markdown file at the root of the zip.
 - **Multiple root `.md` files**: the function will use the first one
   (and warn).

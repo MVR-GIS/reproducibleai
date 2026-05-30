@@ -35,5 +35,6 @@ reproducibleai::extract_copilot_chat(file.path(
 
 
 ## Update docs
+devtools::install()
 pkgdown::build_site()
 
