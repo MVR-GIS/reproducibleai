@@ -49,3 +49,56 @@ It does not govern:
 - scaffolding functions that establish the `dev/` governance structure
 - instruction modules that define chat behavior for maintaining it
 - published package documentation that explains the governance framework to users
+
+
+
+## Parameterized-help capability
+
+### Purpose
+`reproducibleai` standardizes a reusable pattern for contextual help in `golem`-based Shiny apps developed as R packages.
+
+This capability is intended to help teams implement help systems that are:
+- structured as package data
+- composed from stable reusable records
+- rendered through shared helper functions
+- maintainable as app functionality evolves
+
+### Scope
+This capability governs:
+- help-data architecture
+- help-data storage and package-data conventions
+- stable help IDs
+- composition and rendering of contextual help
+- help-specific CSS support
+- integrity and drift review practices
+
+It does not govern:
+- app domain logic
+- general Shiny architecture
+- general package governance outside the help system
+
+### Standard architecture
+The package assumes a help-data workflow with:
+- `data-raw/create_help_data.R` as the authoring script
+- `data/help_data.rda` as the package dataset
+- `R/help_data.R` as dataset documentation
+- stable `id`, `title`, `summary`, and `detail` fields
+- overview and granular help records composed into app surfaces
+
+### Runtime helper model
+The preferred model is for app packages to import reusable help helpers from `reproducibleai` rather than copying them into each app repository.
+
+`reproducibleai` should provide the reusable runtime behavior, while app repositories should own:
+- their help content
+- their help composition choices
+- their app-specific help wording
+
+### Maintenance model
+This capability assumes that help is part of the app’s maintained interface.
+
+When app functionality changes, help should be reviewed for:
+- missing IDs
+- stale names
+- stale formulas
+- stale unit descriptions
+- composition mismatches with current UI surfaces
