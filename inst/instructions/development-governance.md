@@ -21,8 +21,8 @@ This module is not about:
 Use this module when:
 - the repository is developed through iterative AI-assisted chat sessions
 - the repository uses a `dev/` directory to store development-state documentation
-- the team wants durable records of plans, architecture, decisions, and reusable chat instructions
-- the session may produce requirements, architecture, workflow, or schema decisions that should guide future work
+- the team wants durable records of plans, architecture, decisions, schemas, and reusable chat instructions
+- the session may produce requirements, architecture, workflow, schema, or decision changes that should guide future work
 
 This module is especially appropriate for:
 - R packages
@@ -30,14 +30,14 @@ This module is especially appropriate for:
 - other package-style repositories using `reproducibleai` conventions
 
 ## Assumed repository structure
-This module assumes the repository may contain the following internal development-governance artifacts:
+This module assumes the repository contains the following internal development-governance artifacts:
 
 - `dev/05_plan.md`
 - `dev/10_design.md`
+- `dev/40_schemas.md`
 - `dev/decisions/`
 - `dev/instructions/`
 - `dev/sessions/`
-- optionally `dev/40_schemas.md`
 
 It also assumes that user-facing package documentation belongs elsewhere, such as:
 - `README`
@@ -67,6 +67,18 @@ Use for:
 - stable operating assumptions
 - current design truths that future work should inherit
 
+### `dev/40_schemas.md`
+Canonical schema and structural contract document.
+
+Use for:
+- file schemas
+- structured object contracts
+- required fields and types
+- interface/data invariants
+- durable data structure assumptions that other code depends on
+
+Schema documentation is required, not optional. In data-science-oriented and AI-assisted repositories, implicit schemas are a common source of fragile and buggy behavior.
+
 ### `dev/decisions/`
 Decision records.
 
@@ -93,17 +105,6 @@ Use for:
 - auditability
 
 Do not treat session files as the canonical source of final design state.
-
-### Optional `dev/40_schemas.md`
-Exact structural contracts.
-
-Use for:
-- file schemas
-- structured object contracts
-- required fields and types
-- interface/data invariants
-
-Only use this document when the repository has enough structural complexity to justify a centralized schema reference.
 
 ## Document precedence
 When development-governance artifacts disagree, apply this precedence:
@@ -134,16 +135,17 @@ During the session, monitor for changes that should be promoted into durable doc
 - invariants or operating assumptions are established
 - document structure or governance roles are revised
 
+### Update `dev/40_schemas.md` when:
+- exact file, object, table, or data contracts are defined
+- required fields or structures become part of the design
+- outputs, datasets, or scaffolded artifacts require a precise schema reference
+- a module introduces or changes a maintained structured interface
+
 ### Create or update `dev/decisions/` when:
 - a meaningful design choice is made
 - alternatives were considered
 - a convention is intentionally adopted
 - an earlier design decision is superseded, narrowed, or replaced
-
-### Update `dev/40_schemas.md` when:
-- exact file, object, or data contracts are defined
-- required fields or structures become part of the design
-- outputs or scaffolded artifacts require a precise schema reference
 
 ### Update `dev/instructions/` when:
 - reusable chat behavior is defined
@@ -182,21 +184,26 @@ Session files are archival context, not final-state documentation.
 ### 2. Leaving meaningful decisions undocumented
 If a design choice materially affects future work, capture it in the appropriate artifact.
 
-### 3. Mixing artifact roles
+### 3. Leaving schemas implicit
+If other code depends on the structure of an object, file, dataset, or interface, record that structure explicitly in `dev/40_schemas.md`.
+
+### 4. Mixing artifact roles
 Do not use:
 - plan files for stable architecture
+- design docs for transient task tracking
+- schema docs for rationale that belongs in decisions
 - ADRs for task tracking
 - session files as design documents
 - user-facing articles as internal decision logs
 
-### 4. Giving vague documentation advice
+### 5. Giving vague documentation advice
 Do not say only “you should document this.”
 Provide paste-ready additions or replacements.
 
-### 5. Over-documenting trivial changes
+### 6. Over-documenting trivial changes
 Do not create design updates or ADRs for every minor edit. Use judgment and focus on durable project state.
 
-### 6. Duplicating the same material across all artifacts
+### 7. Duplicating the same material across all artifacts
 Each document should have a distinct role. Summarize where appropriate and avoid copy-pasting large repeated sections across plan, design, and decision records.
 
 ## Relationship to user-facing package documentation
@@ -212,14 +219,22 @@ Use `dev/` artifacts for:
 - internal development state
 - architecture
 - design decisions
+- schema contracts
 - AI-assisted workflow continuity
 
 Do not default to putting internal architecture decisions into public-facing docs unless those decisions are also useful to package users.
 
-## Relationship to scaffolding functions
-This module governs behavior during chat sessions. It does not require the chat to create files automatically.
+## Relationship to module handlers
+This module remains a static reviewed instruction artifact.
 
-`reproducibleai` may provide scaffolding functions to create the `dev/` governance structure, but this module is responsible for ensuring that sessions maintain and promote the contents of that structure correctly.
+In `reproducibleai`, instruction modules may have corresponding handler functions that install the canonical instruction text and perform supporting repository configuration.
+
+For `development-governance`, the handler is expected to:
+- install this instruction file into `dev/instructions/`
+- scaffold the required `dev/` governance structure
+- preserve existing repository content by default unless overwrite is explicitly requested
+
+The handler supports this module’s use, but does not replace the chat session’s responsibility to draft substantive project-specific updates.
 
 ## Output expectations
 When proposing governance updates, the chat should:

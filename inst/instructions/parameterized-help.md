@@ -17,6 +17,7 @@ This module is about:
 - help composition and rendering
 - help-surface roles
 - help-specific CSS requirements
+- schema implications of the help-data contract
 - help maintenance and drift control
 
 This module is not about:
@@ -55,6 +56,7 @@ This module governs:
 - the distinction between overview help and granular help
 - help-specific CSS support for complex popovers
 - integrity checking and drift review
+- documentation of the help-data schema as a maintained structural contract
 
 This module does not govern:
 - the app’s domain logic
@@ -92,7 +94,20 @@ Document the dataset in:
 
 - `R/help_data.R`
 
-### 4. Help IDs are the contract
+### 4. Help-data schema must be documented
+Because the help system defines a maintained structured interface, its schema should also be reflected in the repository’s schema documentation.
+
+At minimum, the help-data contract should be represented in:
+
+- `dev/40_schemas.md`
+
+This helps prevent drift between:
+- help data
+- helper functions
+- UI references
+- expected required fields
+
+### 5. Help IDs are the contract
 Each help record must have a stable `id`.
 
 UI and server code must reference help by ID rather than embedding duplicated prose.
@@ -103,7 +118,7 @@ IDs should be:
 - specific enough to support reuse
 - updated deliberately during refactors
 
-### 5. Help must be composable
+### 6. Help must be composable
 The help system must support composing multiple help records into a single help surface.
 
 Use:
@@ -112,7 +127,7 @@ Use:
 
 Do not duplicate the same explanation across multiple surfaces when composition can be used instead.
 
-### 6. Rendering should use reusable helpers
+### 7. Rendering should use reusable helpers
 Use `reproducibleai` runtime helpers for composing and rendering help.
 
 Preferred pattern:
@@ -123,7 +138,7 @@ or imported equivalents in the app package namespace.
 
 Do not copy these helpers into app repositories unless there is a deliberate reason to fork or customize behavior.
 
-### 7. Help surfaces must have distinct roles
+### 8. Help surfaces must have distinct roles
 Different help surfaces should serve different purposes.
 
 Recommended roles:
@@ -135,7 +150,7 @@ Recommended roles:
 
 Do not make every help surface a full technical essay.
 
-### 8. Help popovers must support long-form content
+### 9. Help popovers must support long-form content
 If composed help is displayed in popovers or similar constrained containers, the app must include help-specific CSS that supports:
 - wider popovers
 - scrollable popover bodies
@@ -143,13 +158,13 @@ If composed help is displayed in popovers or similar constrained containers, the
 
 Help content must remain usable when multiple records are composed into one UI surface.
 
-### 9. Formula rendering should be conservative
+### 10. Formula rendering should be conservative
 When mathematical notation is needed:
 - prefer block MathJax
 - avoid fragile inline math where possible
 - keep formulas aligned with implemented code and units
 
-### 10. Help must describe implemented behavior
+### 11. Help must describe implemented behavior
 Help text must describe what the app currently computes and displays.
 
 Do not document:
@@ -196,6 +211,7 @@ When building or extending a help system, the chat must:
 3. create help records as reusable data rather than inline prose
 4. compose help records into surfaces rather than duplicating content
 5. distinguish overview records from granular records
+6. recognize when the help-data structure itself needs a schema update in `dev/40_schemas.md`
 
 ### During review and refinement
 The chat must:
@@ -204,6 +220,7 @@ The chat must:
 3. identify orphaned records that remain useful but unwired
 4. identify overlap or redundancy across help surfaces
 5. recommend concise improvements where help surfaces are doing the wrong job
+6. check whether schema documentation remains aligned with the help-data contract
 
 ### During maintenance
 The chat must:
@@ -211,6 +228,7 @@ The chat must:
 2. flag stale help after renames or refactors
 3. propose paste-ready updates when drift is detected
 4. keep help aligned with what the app currently renders and computes
+5. update schema documentation when required help fields or structural assumptions change
 
 ## Maintenance triggers
 Update help data and/or help composition when:
@@ -222,6 +240,12 @@ Update help data and/or help composition when:
 - a tab’s role changes
 - a refactor introduces missing or stale IDs
 
+Update `dev/40_schemas.md` when:
+- the required help-data fields change
+- additional maintained fields are added
+- helper assumptions about help record structure change
+- the shape of the maintained help dataset changes materially
+
 ## Integrity and drift checks
 A parameterized help system should be maintained with explicit checks such as:
 - referenced IDs exist in `help_data`
@@ -229,6 +253,7 @@ A parameterized help system should be maintained with explicit checks such as:
 - required columns exist
 - help composition reflects currently displayed outputs
 - formulas, units, and descriptions match the implemented code
+- schema documentation reflects the actual maintained help-data structure
 
 The chat should surface these checks during review work and provide paste-ready fixes when mismatches are found.
 
@@ -250,10 +275,13 @@ Each surface should have a distinct role and level of detail.
 ### 5. Letting help drift from implementation
 Do not leave formulas, units, names, or plot descriptions stale after code changes.
 
-### 6. Using long popovers without CSS support
+### 6. Leaving the help-data contract undocumented
+If the application depends on a maintained structured help dataset, record that contract in `dev/40_schemas.md`.
+
+### 7. Using long popovers without CSS support
 If help content is rich or composed, ensure the UI remains readable.
 
-### 7. Copying reusable runtime helpers into each app by default
+### 8. Copying reusable runtime helpers into each app by default
 Prefer importing `reproducibleai` helpers unless there is an intentional reason not to.
 
 ## Completion rule
@@ -268,6 +296,7 @@ without also:
 - updating the relevant help data
 - checking help-ID integrity
 - surfacing paste-ready updates for the user
+- updating `dev/40_schemas.md` if the maintained help-data contract changed
 
 ## Relationship to other modules
 This module is intended to be used alongside:
@@ -276,3 +305,15 @@ This module is intended to be used alongside:
 - development-governance modules
 
 This module governs the contextual-help system only. It should remain separate from broader governance and broader Shiny architecture modules.
+
+## Relationship to module handlers
+This module remains a static reviewed instruction artifact.
+
+In `reproducibleai`, instruction modules may have corresponding handler functions that install canonical instruction text and perform supporting repository configuration.
+
+For `parameterized-help`, the handler may eventually support:
+- scaffolding the help-data framework
+- installing helper-oriented setup artifacts
+- reinforcing consistent package-data conventions
+
+The handler supports this module’s use, but does not replace the chat session’s responsibility to draft substantive app-specific help content and schema updates.
