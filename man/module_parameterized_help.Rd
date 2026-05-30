@@ -9,7 +9,7 @@ module_parameterized_help(path = ".", overwrite = FALSE, ...)
 \arguments{
 \item{path}{Character scalar path to the target repository root.}
 
-\item{overwrite}{Logical scalar; whether an existing installed file may be
+\item{overwrite}{Logical scalar; whether handler-owned files may be
 overwritten.}
 
 \item{...}{Reserved for future extensibility.}
@@ -18,8 +18,7 @@ overwritten.}
 A standard module result object.
 }
 \description{
-Current B1 implementation installs the canonical static instruction text only.
-Additional help-framework scaffolding will be added in a later config-aware
-implementation step.
+Installs the canonical \code{parameterized-help} instruction text and
+scaffolds a starter help-data framework for package-based Shiny apps.
 }
 \keyword{internal}

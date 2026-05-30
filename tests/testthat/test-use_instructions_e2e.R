@@ -150,3 +150,24 @@ test_that("end-to-end: mixed recipe with development-governance preserves module
   expect_match(entry, "- development-governance", fixed = TRUE)
   expect_match(entry, "- chat-manual", fixed = TRUE)
 })
+
+test_that("end-to-end: parameterized-help scaffolds help framework through use_instructions", {
+  tmp <- withr::local_tempdir()
+  dest_dir <- file.path(tmp, "dev", "instructions")
+
+  out <- use_instructions(
+    spec = c("chat-manual", "parameterized-help"),
+    dest_dir = dest_dir,
+    overwrite = FALSE,
+    write_entrypoint = TRUE,
+    quiet = TRUE
+  )
+
+  expect_true(all(file.exists(out)))
+
+  expect_true(file.exists(file.path(tmp, "dev", "instructions", "parameterized-help.md")))
+  expect_true(file.exists(file.path(tmp, "data-raw", "create_help_data.R")))
+  expect_true(file.exists(file.path(tmp, "R", "help_data.R")))
+  expect_true(file.exists(file.path(tmp, "inst", "app", "www", "help.css")))
+  expect_true(file.exists(file.path(tmp, "dev", "instructions", "CHAT_INSTRUCTIONS.md")))
+})

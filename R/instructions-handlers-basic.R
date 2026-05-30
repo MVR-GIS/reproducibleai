@@ -366,30 +366,157 @@ module_development_governance <- function(path = ".", overwrite = FALSE, ...) {
 
 #' Install the parameterized-help instruction module
 #'
-#' Current B1 implementation installs the canonical static instruction text only.
-#' Additional help-framework scaffolding will be added in a later config-aware
-#' implementation step.
+#' Installs the canonical `parameterized-help` instruction text and
+#' scaffolds a starter help-data framework for package-based Shiny apps.
 #'
 #' @param path Character scalar path to the target repository root.
-#' @param overwrite Logical scalar; whether an existing installed file may be
+#' @param overwrite Logical scalar; whether handler-owned files may be
 #'   overwritten.
 #' @param ... Reserved for future extensibility.
 #'
 #' @return A standard module result object.
 #' @keywords internal
 module_parameterized_help <- function(path = ".", overwrite = FALSE, ...) {
+  path <- validate_scalar_character(path, "path")
+
+  if (!dir.exists(path)) {
+    stop("`path` must be an existing directory: ", path, call. = FALSE)
+  }
+
+  if (!is.logical(overwrite) || length(overwrite) != 1 || is.na(overwrite)) {
+    stop("`overwrite` must be TRUE/FALSE.", call. = FALSE)
+  }
+
   install <- install_module_text(
     module_name = "parameterized-help",
     path = path,
     overwrite = overwrite
   )
 
+  dirs_created <- install$dirs_created
+  files_written <- install$files_written
+  files_skipped <- install$files_skipped
+
+  dir_paths <- c(
+    file.path(path, "data-raw"),
+    file.path(path, "inst"),
+    file.path(path, "inst", "app"),
+    file.path(path, "inst", "app", "www"),
+    file.path(path, "R")
+  )
+
+  for (dir_path in dir_paths) {
+    dir_info <- ensure_dir(dir_path)
+    if (isTRUE(dir_info$created)) {
+      dirs_created <- c(dirs_created, dir_info$path)
+    }
+  }
+
+  create_help_data_lines <- c(
+    "# Create and maintain structured contextual help data for the app.",
+    "#",
+    "# This file should construct a data.frame or tibble with at least:",
+    "# - id",
+    "# - title",
+    "# - summary",
+    "# - detail",
+    "#",
+    "# Example skeleton:",
+    "#",
+    "# help_data <- data.frame(",
+    "#   id = c(\"app_overview\"),",
+    "#   title = c(\"Application overview\"),",
+    "#   summary = c(\"Short orientation text.\"),",
+    "#   detail = c(\"Longer explanation of what this app does.\"),",
+    "#   stringsAsFactors = FALSE",
+    "# )",
+    "#",
+    "# usethis::use_data(help_data, overwrite = TRUE)",
+    "",
+    "help_data <- data.frame(",
+    "  id = c(\"app_overview\"),",
+    "  title = c(\"Application overview\"),",
+    "  summary = c(\"Short orientation text.\"),",
+    "  detail = c(\"Longer explanation of what this app does.\"),",
+    "  stringsAsFactors = FALSE",
+    ")",
+    "",
+    "# Save as package data after reviewing/editing:",
+    "# usethis::use_data(help_data, overwrite = TRUE)"
+  )
+
+  help_data_doc_lines <- c(
+    "#' Structured contextual help data",
+    "#'",
+    "#' A package dataset containing structured contextual help records used by",
+    "#' the application help system.",
+    "#'",
+    "#' Required fields include:",
+    "#' \\describe{",
+    "#'   \\item{id}{Stable help identifier.}",
+    "#'   \\item{title}{Display title.}",
+    "#'   \\item{summary}{Concise orientation text.}",
+    "#'   \\item{detail}{Long-form help text.}",
+    "#' }",
+    "#'",
+    "#' @format A data frame with at least four columns:",
+    "#' \\describe{",
+    "#'   \\item{id}{character}",
+    "#'   \\item{title}{character}",
+    "#'   \\item{summary}{character}",
+    "#'   \\item{detail}{character}",
+    "#' }",
+    "\"help_data\""
+  )
+
+  help_css_lines <- c(
+    "/* Help popover styling scaffold */",
+    "",
+    ".popover.help-popover {",
+    "  max-width: 480px;",
+    "}",
+    "",
+    ".popover.help-popover .popover-body {",
+    "  max-height: 320px;",
+    "  overflow-y: auto;",
+    "  white-space: normal;",
+    "}"
+  )
+
+  scaffold_files <- list(
+    "data-raw/create_help_data.R" = create_help_data_lines,
+    "R/help_data.R" = help_data_doc_lines,
+    "inst/app/www/help.css" = help_css_lines
+  )
+
+  for (relative_path in names(scaffold_files)) {
+    write_info <- write_text_file_if_needed(
+      path = file.path(path, relative_path),
+      lines = scaffold_files[[relative_path]],
+      overwrite = overwrite
+    )
+
+    if (isTRUE(write_info$written)) {
+      files_written <- c(files_written, write_info$path)
+    }
+    if (isTRUE(write_info$skipped)) {
+      files_skipped <- c(files_skipped, write_info$path)
+    }
+  }
+
   new_module_result(
     module_name = "parameterized-help",
     instruction_source = install$source,
     instruction_target = install$target,
-    dirs_created = install$dirs_created,
-    files_written = install$files_written,
-    files_skipped = install$files_skipped
+    dirs_created = unique(dirs_created),
+    files_written = unique(files_written),
+    files_skipped = unique(files_skipped),
+    next_steps = c(
+      "Review `data-raw/create_help_data.R`.",
+      "Create and save `help_data` as package data.",
+      "Review `R/help_data.R` dataset documentation.",
+      "Integrate `inst/app/www/help.css` into the app if needed.",
+      "Document the help-data contract in `dev/40_schemas.md`."
+    )
   )
 }
