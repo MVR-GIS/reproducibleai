@@ -9,7 +9,7 @@ module_development_governance(path = ".", overwrite = FALSE, ...)
 \arguments{
 \item{path}{Character scalar path to the target repository root.}
 
-\item{overwrite}{Logical scalar; whether an existing installed file may be
+\item{overwrite}{Logical scalar; whether handler-owned files may be
 overwritten.}
 
 \item{...}{Reserved for future extensibility.}
@@ -18,8 +18,7 @@ overwritten.}
 A standard module result object.
 }
 \description{
-Current B1 implementation installs the canonical static instruction text only.
-Additional governance scaffolding will be added in a later config-aware
-implementation step.
+Installs the canonical \code{development-governance} instruction text and
+scaffolds the standard \verb{dev/} governance framework in the target repository.
 }
 \keyword{internal}

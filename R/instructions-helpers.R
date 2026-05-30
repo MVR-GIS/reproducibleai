@@ -325,3 +325,49 @@ validate_modules_available <- function(modules,
 
   invisible(TRUE)
 }
+
+#' Write a text file if needed
+#'
+#' Writes a text file when missing, or overwrites it if explicitly requested.
+#'
+#' @param path Character scalar file path.
+#' @param lines Character vector of lines to write.
+#' @param overwrite Logical scalar; whether an existing file may be overwritten.
+#'
+#' @return A named list with elements:
+#' \describe{
+#'   \item{path}{Character scalar file path.}
+#'   \item{written}{Logical scalar; `TRUE` if the file was written.}
+#'   \item{skipped}{Logical scalar; `TRUE` if the file was left unchanged.}
+#' }
+#' @keywords internal
+write_text_file_if_needed <- function(path, lines, overwrite = FALSE) {
+  path <- validate_scalar_character(path, "path")
+
+  if (!is.character(lines)) {
+    stop("`lines` must be a character vector.", call. = FALSE)
+  }
+
+  if (!is.logical(overwrite) || length(overwrite) != 1 || is.na(overwrite)) {
+    stop("`overwrite` must be TRUE/FALSE.", call. = FALSE)
+  }
+
+  parent <- dirname(path)
+  ensure_dir(parent)
+
+  if (file.exists(path) && !overwrite) {
+    return(list(
+      path = path,
+      written = FALSE,
+      skipped = TRUE
+    ))
+  }
+
+  writeLines(lines, con = path, useBytes = TRUE)
+
+  list(
+    path = path,
+    written = TRUE,
+    skipped = FALSE
+  )
+}

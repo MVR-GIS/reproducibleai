@@ -214,3 +214,53 @@ test_that("validate_modules_available() accepts known modules and errors on unkn
     fixed = TRUE
   )
 })
+
+test_that("write_text_file_if_needed() writes a missing file", {
+  tmp <- withr::local_tempdir()
+  path <- file.path(tmp, "subdir", "file.txt")
+
+  out <- write_text_file_if_needed(
+    path = path,
+    lines = c("a", "b"),
+    overwrite = FALSE
+  )
+
+  expect_true(file.exists(path))
+  expect_true(isTRUE(out$written))
+  expect_false(isTRUE(out$skipped))
+  expect_identical(readLines(path, warn = FALSE), c("a", "b"))
+})
+
+test_that("write_text_file_if_needed() skips an existing file when overwrite = FALSE", {
+  tmp <- withr::local_tempdir()
+  path <- file.path(tmp, "file.txt")
+
+  writeLines("original", path)
+
+  out <- write_text_file_if_needed(
+    path = path,
+    lines = "new",
+    overwrite = FALSE
+  )
+
+  expect_false(isTRUE(out$written))
+  expect_true(isTRUE(out$skipped))
+  expect_identical(readLines(path, warn = FALSE), "original")
+})
+
+test_that("write_text_file_if_needed() overwrites an existing file when overwrite = TRUE", {
+  tmp <- withr::local_tempdir()
+  path <- file.path(tmp, "file.txt")
+
+  writeLines("original", path)
+
+  out <- write_text_file_if_needed(
+    path = path,
+    lines = c("new1", "new2"),
+    overwrite = TRUE
+  )
+
+  expect_true(isTRUE(out$written))
+  expect_false(isTRUE(out$skipped))
+  expect_identical(readLines(path, warn = FALSE), c("new1", "new2"))
+})
