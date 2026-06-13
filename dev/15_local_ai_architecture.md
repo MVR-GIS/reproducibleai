@@ -513,12 +513,12 @@ These sources should remain:
 - versioned with the package
 - the semantic source of truth for derived workflow artifacts
 
-### 2. Runtime rule and prompt artifacts
+### 2. Runtime rule artifacts
 These are client-facing artifacts intended for direct AI runtime use.
 
 Examples may include:
-- Continue workspace rule or prompt files
-- future client-specific runtime rule or prompt bundles
+- Continue workspace rule files
+- future client-specific runtime rule bundles
 
 These artifacts should:
 - be optimized for runtime behavior rather than long-form readability
@@ -531,7 +531,199 @@ These are repository artifacts that should be treated as governed context inputs
 Candidate examples include:
 - `dev/05_plan.md`
 - `dev/10_design.md`
-- `dev`
+- `dev/40_schemas.md`
+- `dev/decisions/`
+- `dev/instructions/`
+- package metadata
+- package API summaries derived from repository contents
+
+These resources should be classified explicitly rather than discovered only through ad hoc prompt behavior.
+
+### 4. Governed tools
+These are bounded, inspectable actions aligned with package methodology.
+
+Candidate examples include:
+- list governed repository artifacts
+- summarize current design state
+- resolve instruction recipes
+- compare canonical instructions with deployed runtime rules
+- generate or validate client-facing rule artifacts
+- derive package or cross-repo API summaries
+
+These are methodology-aware capabilities rather than generic AI actions.
+
+### 5. Workflow prompts and templates
+These are reusable workflow entrypoints aligned with package methodology.
+
+Candidate examples include:
+- analyze repository design
+- draft governed design updates
+- prepare local runtime rules from canonical instructions
+- evaluate hosted vs local task fit
+- review repository context before proposing changes
+
+These prompts and templates should be treated as reusable workflow assets rather than one-off chat phrasing.
+
+## Mapping to MCP roles
+
+These package concepts align naturally with MCP.
+
+### MCP resources
+The following package concepts are natural candidates for MCP resources:
+- governed repository resources
+- package-generated summaries of architecture, schema, or API state
+- selected canonical instruction sources when they are useful as structured context
+
+### MCP tools
+The following package concepts are natural candidates for MCP tools:
+- governed tools
+- validation helpers
+- derivation helpers
+- repository analysis helpers
+- cross-repo API inspection helpers
+
+### MCP prompts
+The following package concepts are natural candidates for MCP prompts:
+- workflow prompts and templates
+- standardized task entrypoints for governed repository work
+- hybrid workflow routing prompts
+
+This mapping suggests that MCP is not an incidental add-on. It is a strong fit for how `reproducibleai` should expose governed capabilities to compatible clients.
+
+## Recommended package abstractions
+
+The package likely needs a small abstraction layer beyond the current instruction-handler model.
+
+Candidate abstraction families include:
+
+### 1. Source abstractions
+Purpose:
+- represent canonical instruction modules and recipes as governed source assets
+
+Possible responsibilities:
+- source discovery
+- provenance tracking
+- recipe membership
+- source-to-derived-artifact traceability
+
+### 2. Runtime artifact abstractions
+Purpose:
+- represent client-facing runtime artifacts as derived deployment targets
+
+Possible responsibilities:
+- target client type
+- derivation metadata
+- deployment location
+- overwrite/preservation behavior
+- source linkage
+
+### 3. Governed resource abstractions
+Purpose:
+- classify repository artifacts that should be treated as governed AI context
+
+Possible responsibilities:
+- artifact type classification
+- inclusion rules
+- context packaging rules
+- future MCP resource exposure
+
+### 4. Capability abstractions
+Purpose:
+- represent reusable methodology-aware actions and prompts
+
+Possible responsibilities:
+- capability type
+- required repo inputs
+- allowed outputs
+- deployment target
+- evaluation hooks
+
+### 5. Integration adapter abstractions
+Purpose:
+- isolate client- and protocol-specific deployment behavior from core package logic
+
+Candidate early adapters:
+- Continue runtime rule adapter
+- MCP-aware integration adapter
+
+This abstraction should help prevent Continue-specific or MCP-specific details from leaking across the whole package design.
+
+## Recommended first implementation slice
+
+The package should begin with a narrow, high-value implementation slice rather than trying to implement the full architecture at once.
+
+Recommended first slice:
+
+### 1. Governed resource classification
+Define the first explicit package convention for which repository artifacts count as governed AI context.
+
+This should likely start with:
+- `dev/05_plan.md`
+- `dev/10_design.md`
+- `dev/40_schemas.md`
+- `dev/decisions/`
+- `dev/instructions/`
+
+### 2. Continue runtime rule deployment
+Define the first formal package support for deploying workspace-local Continue runtime rules derived from canonical instruction sources.
+
+### 3. MCP-oriented capability design
+Define the first conceptual set of:
+- MCP resources
+- MCP tools
+- MCP prompts
+
+even if the first iteration is only documented or scaffolded rather than fully deployed by the package.
+
+### 4. Competency-question evaluation
+Define at least one evaluation path that tests whether:
+- governed resources are usable as intended
+- runtime rules reflect the intended instruction source
+- the workflow improves local context awareness in a measurable way
+
+This first slice should prioritize architecture clarity and methodological value over breadth.
+
+## Recommended near-term deployment stance
+
+In the near term, `reproducibleai` should assume:
+
+- local and hybrid AI workflows are real package targets
+- Continue is the first supported runtime-rule client target
+- MCP is the preferred protocol-level integration direction
+- local deployment patterns are feasible and worth supporting
+- the package should scaffold and document integration patterns before attempting to generalize them too aggressively
+
+## Design risks to manage
+
+The package should explicitly manage the following risks:
+
+### 1. Overbuilding abstractions too early
+The package should not create a heavy internal framework before the first deployment patterns are validated.
+
+### 2. Duplicating mature external tooling
+The package should prefer integration with existing clients, runtimes, and protocols over reimplementation.
+
+### 3. Losing traceability between reviewed source instructions and deployed runtime artifacts
+This would undermine governance and reviewer confidence.
+
+### 4. Treating MCP as equivalent to runtime rules
+MCP and runtime rules solve different problems and should remain conceptually distinct.
+
+### 5. Letting client-specific details dominate the package core
+Continue and MCP are important, but the package should retain a methodology-centered core rather than becoming client-bound.
+
+## Architecture implication
+
+This sketch implies that `reproducibleai` may need to evolve from an instruction-handler package into a broader governed AI workflow package with support for:
+
+- canonical instruction sources
+- derived runtime rule artifacts
+- governed repository resource definitions
+- reusable methodology-aware capabilities
+- integration adapters
+- competency-question evaluation structures
+
+This is a meaningful expansion of scope, but it remains coherent with the package’s existing governance-first and instruction-first design principles.
 
 
 ## Remaining implementation questions
