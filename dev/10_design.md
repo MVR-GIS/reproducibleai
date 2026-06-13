@@ -258,3 +258,24 @@ The following are current architectural invariants:
 - Finalize helper implementations and tests for the handler-based refactor.
 - Decide whether `use_instructions()` should return its combined result visibly or invisibly.
 - Decide how `instructions_available()` should validate consistency between canonical source files and implemented handlers.
+
+***
+
+## Active architecture extension
+
+The current stable package architecture remains instruction-first and handler-based as described above.
+
+In parallel, the package is actively developing a broader architecture direction for local and hybrid AI workflows. That work extends the current package model toward:
+- hybrid frontier-model and local-model methodology
+- client-facing runtime rule artifacts derived from canonical instruction sources
+- competency-question-based evaluation of AI workflows
+- MCP-aware integration for exposing governed resources, tools, and prompts to compatible clients
+
+This work is not yet considered part of the stable implemented architecture recorded in this document.
+
+The active design proposal and follow-up plan for that extension currently live in:
+- `dev/15_local_ai_architecture.md`
+- `dev/decisions/adr-0004-hybrid-ai-methodology-and-mcp-aware-integration.md`
+- `dev/05_plan.md` under Milestone G
+
+Stable outcomes from that work may later require updates to this design document.
