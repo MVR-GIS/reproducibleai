@@ -5,11 +5,6 @@ This file is the entrypoint for **instruction modules** that govern a reproducib
 ## How to start a new chat session
 In your first message, specify the target GitHub repository and direct the assistant to follow these instructions.
 
-Suggested prompt template:
-
-> Target repo: OWNER/REPO  
-> Read `dev/instructions/CHAT_INSTRUCTIONS.md` and follow the instruction modules listed under **Selected instruction modules (read in order)**.
-
 ## Instruction model used here (base + overlays)
 We use a composable instruction system:
 
@@ -22,7 +17,7 @@ Overlays are intended to be **thin** and should not duplicate the base modules.
 Selected recipe (R syntax):
 
 ```r
-c("chat-manual", "goals", "r-package", "user-manual")
+c("chat-manual", "goals", "r-package", "development-governance")
 ```
 
 Selected modules (tokens, in order):
@@ -30,6 +25,7 @@ Selected modules (tokens, in order):
 - chat-manual
 - goals
 - r-package
+- development-governance
 - user-manual
 
 ## Selected instruction modules (read in order)
@@ -38,7 +34,8 @@ Read these files in order:
 1. `dev/instructions/chat-manual.md`
 2. `dev/instructions/goals.md`
 3. `dev/instructions/r-package.md`
-4. `dev/instructions/user-manual.md`
+4. `dev/instructions/development-governance.md`
+5. `dev/instructions/user-manual.md`
 
 ## If the assistant cannot read repository files
 If the chat platform cannot access repository files, paste the contents of:
