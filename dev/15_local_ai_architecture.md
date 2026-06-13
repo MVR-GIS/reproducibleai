@@ -3,134 +3,86 @@
 Last updated: 2026-06-13
 
 ## Purpose
-This document defines the proposed architecture direction for how `reproducibleai` should support AI-assisted development workflows across both frontier-model and local-model environments.
+This document records the working architecture proposal for how `reproducibleai` should support governed AI-assisted development workflows across frontier-model and local-model environments.
 
-`reproducibleai` is an opinionated package intended to help standardize emerging best practice for a USACE data science team. It should therefore do more than install instruction files. It should help teams adopt governed, reviewable, reproducible AI workflows that are realistic about the strengths and limits of different AI platforms.
+It is the primary design-stage architecture document for Milestone G work on local and hybrid AI methodology.
 
-This document establishes the current architecture proposal for that work.
+This document is not the stable statement of current implemented package architecture. That role remains with `dev/10_design.md`.
 
-It is stronger than exploratory notes, but not yet the final canonical statement of stable package architecture. Stable conclusions from this document may later be promoted into:
+Instead, this document captures the proposed direction, rationale, architecture layers, MCP-aware integration concepts, and implementation questions that may later be promoted into:
 - `dev/10_design.md`
-- `dev/05_plan.md`
 - `dev/decisions/`
 - `dev/instructions/`
+- package helpers and handlers in `R/`
 
-## Relationship to existing governance artifacts
+## Relationship to governance artifacts
 
 ### `dev/10_design.md`
-Use `dev/10_design.md` for stable current-state package architecture and accepted operating assumptions.
+Use `dev/10_design.md` for the stable current-state architecture of the implemented package.
 
-This document is the design-stage architecture proposal that will feed future updates to `dev/10_design.md` once the proposed local and hybrid workflow model has been validated.
+Use this document for the active architecture extension that is still being refined and validated.
 
 ### `dev/05_plan.md`
-Use `dev/05_plan.md` for concrete implementation work created by this architecture proposal.
+Use `dev/05_plan.md` for concrete follow-up work created by this architecture proposal, especially Milestone G.
 
 ### `dev/decisions/`
-Use `dev/decisions/` when a durable architecture or methodology choice from this document has been accepted and should be preserved with explicit rationale and alternatives.
+Use `dev/decisions/` for durable accepted choices about package scope, boundaries, and architecture direction.
+
+ADR-0004 records the current proposed decision direction for this work:
+- `dev/decisions/adr-0004-hybrid-ai-methodology-and-mcp-aware-integration.md`
 
 ### `dev/instructions/`
-Use `dev/instructions/` for reusable chat and developer instruction modules after this architecture has clarified how frontier-oriented instructions, local-adapted runtime rules, and client-specific rule artifacts should relate to one another.
+Use `dev/instructions/` for reusable instruction modules after this architecture has clarified how canonical source instructions, local runtime rules, and MCP-aware capabilities should relate to one another.
 
 ## Problem statement
-`reproducibleai` was initially developed around modular instruction workflows that performed well with hosted frontier-model platforms such as GitHub Copilot.
+`reproducibleai` was initially developed around governed, instruction-first workflows that performed well with hosted frontier-model platforms such as GitHub Copilot.
 
-Subsequent experimentation with a local stack using:
-- Podman
-- Ollama
-- Continue
-- local rules
-- local repository context
+Subsequent experimentation with local tooling showed that the design problem is not merely how to run a local model.
 
-demonstrated that a local system should not be treated as a drop-in one-model replacement for a hosted frontier platform.
-
-The design problem is not merely how to run a local model.
-
-The real design problem is how to help teams build a governed AI workbench that:
+The real design problem is how to help teams build a governed hybrid AI workbench that:
 - supports both frontier and local workflows
-- preserves the strengths of modular instruction systems
-- improves local context awareness and repository grounding
-- supports IT-managed and no-cloud environments where needed
+- preserves repository-specific instructions and governed development artifacts
+- improves local context awareness in a multi-repository R package ecosystem
+- supports reusable workflow patterns across different clients and runtimes
 - remains reviewable, reproducible, and governable
-- guides users toward the right tool or workflow mode for the task
 
-## Package position
+## Architecture position
+
+### Hybrid methodology
 `reproducibleai` should explicitly support both frontier-model and local-model workflows as first-class methodology targets.
 
 The package should not define success as replacing hosted assistants with one local model.
 
-Instead, it should define success as helping teams build a governed hybrid AI workflow in which:
+Instead, it should define success as helping teams build governed hybrid workflows in which:
 - frontier systems are used where they are the best fit
 - local systems are used where they are the best fit
 - repository-specific instructions and governed artifacts remain central
 - evaluation is explicit rather than anecdotal
-- architecture and workflow choices are reviewable and reproducible
+- workflow choices are reviewable and reproducible
 
-This package should therefore standardize methodology, structure, and evaluation more than it standardizes allegiance to any one runtime.
+### Local workflows as governed workbenches
+The package should treat local workflows as governed workbenches rather than as one-model replacements for hosted assistants.
 
-## Why this document is needed
-The package already provides strong support for:
-- modular instructions
-- recipe-based composition
-- reviewed static instruction text
-- governed repository scaffolding
-
-However, those strengths were established primarily in a frontier-model context.
-
-The package does not yet fully define how the same instruction-first and governance-first philosophy should operate when:
-- local models have different reasoning and context limits
-- client-specific runtime rule systems are introduced
-- users need to switch intentionally between hosted and local modes
-- evaluation must distinguish between raw model quality and system-design quality
-
-This document exists to close that gap by making the local and hybrid architecture explicit.
-
-## Architecture position
-The package should be designed around the assumption that hosted frontier platforms behave like integrated AI systems rather than like single interchangeable models.
-
-Their apparent performance is shaped not only by model quality, but also by:
-- retrieval and ranking
-- tool orchestration
-- context management
-- editor integration
-- workflow tuning
-- hidden platform behavior
-
-A local system should therefore not be modeled as:
-- one model
-- one editor integration
-- one instruction set
-- one universal workflow
-
-A local system should instead be modeled as a governed workbench with explicit architecture for:
+This means the architecture should explicitly account for:
 - model roles
 - context selection
-- rule activation
+- runtime rule design
 - workflow modes
 - evaluation
-- governance
+- integration
 
-## Industry gut-check
+Hosted frontier platforms should be understood as integrated systems whose quality depends not only on model quality, but also on:
+- retrieval and ranking
+- tool access
+- context management
+- workflow shaping
+- editor integration
+- hidden platform behavior
 
-The current architecture direction is aligned with emerging industry practice in several important ways.
+For that reason, one-model parity is the wrong design target for local workflow architecture.
 
-First, modern AI development workflows increasingly behave as multi-layer systems rather than as single-model experiences. In practice, workflow quality depends not only on model quality, but also on retrieval, tool access, context selection, workflow shaping, evaluation, and client integration.
-
-Second, workspace-local runtime rules are now a standard pattern in at least some major AI coding clients. This supports the package direction of separating canonical human-readable instruction sources from client-facing runtime rule artifacts.
-
-Third, explicit integration standards such as MCP increasingly provide a better solution to structured context and tool access than trying to encode all project knowledge directly into prompt text.
-
-Fourth, evaluation is becoming a first-class concern. Teams increasingly need repeatable workflow checks rather than relying only on anecdotal impressions of whether one AI setup “feels better” than another.
-
-These signals support the current direction of `reproducibleai` as a methodology, governance, derivation, deployment, and evaluation layer rather than as a new AI runtime.
-
-This also clarifies an important boundary:
-
-`reproducibleai` should adopt and integrate best-of-breed external tooling where appropriate instead of attempting to replace mature clients, tool protocols, or context delivery mechanisms.
-
-## Non-goals
-
-To keep the package architecture focused, `reproducibleai` should not attempt to become:
-
+### Non-goals
+`reproducibleai` should not attempt to become:
 - a general-purpose AI runtime
 - a code editor or IDE client
 - a generic model serving framework
@@ -138,8 +90,7 @@ To keep the package architecture focused, `reproducibleai` should not attempt to
 - a generic agent runtime
 - a generic MCP platform
 
-Instead, the package should focus on:
-
+Instead, it should focus on:
 - governed instruction architecture
 - hybrid workflow methodology
 - client-facing runtime rule derivation and deployment
@@ -147,72 +98,22 @@ Instead, the package should focus on:
 - evaluation and competency-question design
 - integration patterns for external tools and protocols
 
-## MCP in the proposed architecture
+## Why this direction
 
-MCP should be treated as a preferred integration standard in the package architecture.
+### Industry alignment
+The current architecture direction is aligned with emerging industry practice in several important ways.
 
-This is important because the design problem faced by `reproducibleai` is not limited to prompt wording or model selection. The package also needs a way to expose governed repository artifacts, reusable workflows, and structured actions to compatible AI clients in a standard, inspectable form.
+Modern AI development workflows increasingly behave as multi-layer systems rather than as single-model experiences. Workflow quality depends not only on model quality, but also on retrieval, tool access, context selection, workflow shaping, evaluation, and client integration.
 
-In this architecture, MCP is not the model, and it is not the client.
+Workspace-local runtime rules are now a standard pattern in at least some major AI coding clients. This supports separating canonical human-readable instruction sources from client-facing runtime rule artifacts.
 
-It is the integration boundary through which AI clients can access governed capabilities.
+Explicit integration standards such as MCP provide a better solution to structured context and tool access than trying to encode all project knowledge directly into prompt text alone.
 
-For `reproducibleai`, the most relevant MCP roles are:
+Evaluation is also becoming a first-class concern. Teams increasingly need repeatable workflow checks rather than relying only on anecdotal impressions of whether one AI setup “feels better” than another.
 
-- **resources**
-  - governed repository artifacts and structured context sources
-- **tools**
-  - callable actions related to repository inspection, instruction handling, validation, or derivation workflows
-- **prompts**
-  - reusable workflow entrypoints and task templates aligned with package methodology
+These signals support the current direction of `reproducibleai` as a methodology, governance, derivation, deployment, and evaluation layer rather than as a new AI runtime.
 
-This makes MCP a strong fit for:
-
-- multi-repository R package ecosystems
-- governed design and schema artifacts
-- cross-repo API understanding
-- reusable workflow patterns
-- structured local context delivery
-
-The package should therefore be designed so that its methodology, artifact structure, and future deployment helpers can support MCP-compatible exposure of governed capabilities.
-
-This does not mean that `reproducibleai` should become a generic MCP platform.
-
-It means the package should explicitly design for MCP-aware integration and should avoid architecture choices that would make MCP support difficult later.
-
-## External tools to leverage rather than replace
-
-The package should explicitly leverage existing best-of-breed tools where they fit the architecture.
-
-Initial examples include:
-
-- **Continue**
-  - as a client integration target for workspace-local rules, local and hybrid model use, and MCP-aware workflows
-- **MCP**
-  - as an integration standard for exposing governed resources, tools, and prompts
-- **existing package tests and linters**
-  - for machine-checkable concerns that should not be enforced only through prompt instructions
-- **existing local model runtimes**
-  - such as Ollama, rather than custom model-serving logic inside the package
-
-This architecture should prefer integration and specialization over reinvention.
-
-## Observed design shift
-The earlier working assumption was that a local stack could reproduce the apparent behavior of a hosted assistant by combining:
-- one model
-- one editor integration
-- one rule system
-
-That assumption is now rejected as the core design target.
-
-The design target for `reproducibleai` should be a hybrid AI methodology that helps teams:
-- choose the right workflow mode for the task
-- deploy repository-governed instructions across different AI clients
-- adapt frontier-oriented instruction systems into local-runtime rule systems
-- evaluate AI workflow quality using explicit competency questions
-- preserve durable development governance regardless of runtime choice
-
-## Shortcomings matrix
+### Shortcomings matrix
 
 | Frontier workflow strength or shortcoming | Why it matters | Can a local or hybrid system address it? | Required response from `reproducibleai` |
 |---|---|---|---|
@@ -227,64 +128,14 @@ The design target for `reproducibleai` should be a hybrid AI methodology that he
 | Broad workspace context can reduce answer quality when irrelevant files dominate the prompt | Context awareness is useful only when relevant context is selected well | Yes | Standardize task-specific context strategies and competency-based evaluation |
 | Explanation, editing, planning, and refactoring are not the same task | One interface should not imply one optimal model, rule set, or workflow mode | Yes | Define workflow modes and best-bet task routing rather than pretending one workflow fits all cases |
 
-## Architecture conclusions
-The shortcomings matrix supports the following architecture conclusions.
+### Key architecture conclusions
+The current design work supports the following conclusions:
 
-### 1. `reproducibleai` should standardize a hybrid AI methodology
-The package should support both:
-- frontier-model workflows
-- local-model workflows
-
-It should also support intentional switching between them.
-
-The package should not assume:
-- hosted-only methodology
-- local-only methodology
-- one-model parity as the primary goal
-
-Instead, it should standardize a hybrid methodology that helps teams choose the best-bet workflow for the task while preserving governance and reproducibility.
-
-### 2. `reproducibleai` should treat local systems as governed workbenches
-Local workflows should not be framed as one-model replacements for hosted assistants.
-
-They should be framed as governed workbenches with explicit design for:
-- model roles
-- context strategy
-- rule tiers
-- workflow modes
-- evaluation
-
-### 3. `reproducibleai` should treat local context awareness as a major design opportunity
-Local workflows are unlikely to consistently outperform frontier systems at general reasoning quality.
-
-They may, however, outperform frontier systems in:
-- governed repository grounding
-- explicit use of local design artifacts
-- repeatable workflow compliance
-- transparent configuration
-- private and infrastructure-constrained environments
-
-For this package, local context awareness should therefore be treated as a primary optimization target rather than a secondary convenience.
-
-### 4. `reproducibleai` should distinguish raw model capability from workflow architecture quality
-When a local workflow performs poorly, the cause may be:
-- model limitations
-- rule overload
-- weak context selection
-- poor task framing
-- wrong tool choice
-
-The package should help users evaluate and improve system design rather than treating all failures as prompt problems.
-
-### 5. `reproducibleai` should optimize for selective superiority rather than universal parity
-The package should not promise that local workflows will match frontier platforms in every dimension.
-
-Instead, it should help teams build workflows that are selectively better in areas such as:
-- governance
-- privacy
-- reviewability
-- explicit repository grounding
-- controlled and reproducible workflow behavior
+1. `reproducibleai` should standardize a hybrid AI methodology rather than assume hosted-only, local-only, or one-model-parity workflows.
+2. Local workflows should be treated as governed workbenches with explicit design for model roles, context strategy, rule tiers, workflow modes, evaluation, and integration.
+3. Local context awareness is a major package opportunity and should be treated as a primary optimization target.
+4. The package should distinguish raw model capability from workflow architecture quality.
+5. The package should optimize for selective superiority in governance, privacy, reviewability, and repository grounding rather than universal parity with hosted frontier systems.
 
 ## Proposed architecture layers
 
@@ -376,283 +227,122 @@ This layer should include:
 
 The integration layer is where `reproducibleai` should connect its governed internal artifacts to external AI tooling without becoming a generic AI platform itself.
 
-## Implications for instruction architecture
+## MCP-aware package architecture
 
-### Current package strength
-`reproducibleai` already provides a strong foundation through:
-- modular instruction text
-- reviewed static canonical modules
-- recipe composition
-- governed installation into target repositories
+### Role of MCP
+MCP should be treated as a preferred integration standard in the package architecture.
 
-### Required extension
-To support local and hybrid workflows well, the package should extend that foundation to include:
-- rule-tier classification
-- local-runtime rule variants derived from canonical instruction sources
-- client-specific workspace rule deployment
-- workflow-mode guidance
-- competency-question-based evaluation support
+In this architecture, MCP is not the model, and it is not the client.
 
-### Canonical source principle
-The package should preserve one canonical human-readable instruction source wherever possible.
+It is the integration boundary through which AI clients can access governed capabilities.
 
-Frontier-ready instructions should remain the reviewed source of truth for developers and reviewers.
+For `reproducibleai`, the most relevant MCP roles are:
+- **resources**
+  - governed repository artifacts and structured context sources
+- **tools**
+  - callable actions related to repository inspection, instruction handling, validation, derivation, and package-ecosystem workflows
+- **prompts**
+  - reusable workflow entrypoints and task templates aligned with package methodology
 
-Local-runtime rule variants should be derived from those canonical sources rather than maintained as unrelated parallel documents.
+MCP is a strong fit for:
+- multi-repository R package ecosystems
+- governed design and schema artifacts
+- cross-repo API understanding
+- reusable workflow patterns
+- structured local context delivery
 
-This is necessary to preserve:
-- governance
-- readability
-- reviewability
-- semantic alignment across workflow modes
+### External tools to leverage
+`reproducibleai` should explicitly leverage existing best-of-breed tools where they fit the architecture.
 
-### Local-adapted derivation principle
-The package should treat local-rule adaptation as a governed transformation problem.
+Initial examples include:
+- **Continue**
+  - as a client integration target for workspace-local rules, local and hybrid model use, and MCP-aware workflows
+- **MCP**
+  - as an integration standard for exposing governed resources, tools, and prompts
+- **existing package tests and linters**
+  - for machine-checkable concerns that should not be enforced only through prompt instructions
+- **existing local model runtimes**
+  - such as Ollama, rather than custom model-serving logic inside the package
 
-The core design question is not whether local-adapted rules should exist. They should.
+The package should prefer integration and specialization over reinvention.
 
-The remaining design question is how to derive them while preserving quality and reviewer confidence.
+### Core package concepts
+The package architecture should distinguish at least five MCP-aware concepts:
 
-The package should therefore assume:
-- derivation from canonical human-readable instructions is the desired model
-- fully automatic derivation may not be sufficient in all cases
-- human review and iterative refinement are likely to remain necessary
-- any future automation should preserve transparent traceability to the canonical instruction source
+1. **Canonical instruction sources**
+   - reviewed human-readable source materials that define team workflow expectations
+   - currently centered on `inst/instructions/*.md`
 
-## Implications for repository deployment
+2. **Runtime rule artifacts**
+   - client-facing artifacts intended for direct AI runtime use
+   - for example Continue workspace rule files or future client-specific runtime rule bundles
 
-The package should standardize a three-part deployment distinction.
+3. **Governed repository resources**
+   - repository artifacts treated as governed context inputs for AI workflows
+   - including plan, design, schema, decisions, instructions, package metadata, and package/API summaries
 
-### 1. User-level AI client configuration
-This layer should hold:
-- endpoint definitions
-- model declarations
-- client-wide defaults
-- behavior intended to apply across repositories
+4. **Governed tools**
+   - bounded, inspectable actions aligned with package methodology
+   - for example listing governed artifacts, resolving instruction recipes, validating runtime artifacts, or summarizing API relationships
 
-This layer should remain minimal and should not carry the full burden of repository-specific workflow governance.
+5. **Workflow prompts and templates**
+   - reusable workflow entrypoints aligned with package methodology
+   - for example design analysis, governed update drafting, rule preparation, and task-fit evaluation
 
-### 2. Repository-level runtime rules
-This layer should hold:
-- workspace-specific runtime rules
-- version-controlled local client artifacts
-- repository-governed behavior tied to the local project
-
-The first supported target for this layer should be Continue.
-
-The architecture should remain extensible to additional clients later.
-
-### 3. Repository-level human instruction sources
-This layer should hold:
-- richer reviewed source instructions
-- architecture and workflow rationale
-- governance-aligned human-readable materials that should not always be injected directly into runtime prompt context
-
-This layer should be treated as the durable source material from which runtime rule artifacts may be derived or maintained.
-
-## Proposed package direction
-
-Based on the current analysis, `reproducibleai` should move toward the following package direction:
-
-- support both frontier and local workflows as first-class methodology targets
-- document hybrid best-bet task routing rather than requiring one universal runtime
-- preserve canonical human-readable instruction sources
-- support derived local-runtime rule variants
-- scaffold workspace-local runtime rules beginning with Continue
-- formalize rule tiers as part of package methodology
-- formalize workflow modes as part of package methodology
-- formalize competency-question-based evaluation as part of package methodology
-- support MCP-aware integration as part of package methodology
-- expose governed capabilities through external-tool-friendly architecture rather than prompt text alone
-
-## First MCP-aware package architecture sketch
-
-This section sketches the first concrete package architecture direction for incorporating MCP-aware integration into `reproducibleai`.
-
-The goal is not to turn the package into a generic MCP platform.
-
-The goal is to define the package concepts, boundaries, and first implementation slice needed to support governed AI workflows in a multi-repository R package ecosystem.
-
-## Package responsibility boundary
-
-`reproducibleai` should define and scaffold governed capabilities for AI-assisted development workflows.
-
-It should not attempt to own all surrounding infrastructure.
-
-In particular, the package should aim to:
-
-- define canonical human-readable instruction sources
-- derive or support derivation of client-facing runtime rule artifacts
-- define governed repository context conventions
-- define reusable workflow prompts and methodology patterns
-- define evaluation structures for competency-question-based workflow testing
-- support client- and protocol-aware deployment patterns where needed
-
-It should not attempt to become:
-
-- a generic MCP runtime host
-- a general-purpose MCP server framework
-- a code editor client
-- a model-serving framework
-- a generic retrieval engine
-- a general agent orchestration platform
-
-## Core MCP-aware package concepts
-
-The package architecture should distinguish at least five core concepts.
-
-### 1. Canonical instruction sources
-These are the reviewed human-readable source materials that define team workflow expectations.
-
-Current examples include:
-- `inst/instructions/*.md`
-
-These sources should remain:
-- readable by humans
-- reviewable in Git
-- versioned with the package
-- the semantic source of truth for derived workflow artifacts
-
-### 2. Runtime rule artifacts
-These are client-facing artifacts intended for direct AI runtime use.
-
-Examples may include:
-- Continue workspace rule files
-- future client-specific runtime rule bundles
-
-These artifacts should:
-- be optimized for runtime behavior rather than long-form readability
-- preserve traceability to canonical instruction sources
-- support client-specific deployment without fragmenting the human-reviewed source of truth
-
-### 3. Governed repository resources
-These are repository artifacts that should be treated as governed context inputs for AI workflows.
-
-Candidate examples include:
-- `dev/05_plan.md`
-- `dev/10_design.md`
-- `dev/40_schemas.md`
-- `dev/decisions/`
-- `dev/instructions/`
-- package metadata
-- package API summaries derived from repository contents
-
-These resources should be classified explicitly rather than discovered only through ad hoc prompt behavior.
-
-### 4. Governed tools
-These are bounded, inspectable actions aligned with package methodology.
-
-Candidate examples include:
-- list governed repository artifacts
-- summarize current design state
-- resolve instruction recipes
-- compare canonical instructions with deployed runtime rules
-- generate or validate client-facing rule artifacts
-- derive package or cross-repo API summaries
-
-These are methodology-aware capabilities rather than generic AI actions.
-
-### 5. Workflow prompts and templates
-These are reusable workflow entrypoints aligned with package methodology.
-
-Candidate examples include:
-- analyze repository design
-- draft governed design updates
-- prepare local runtime rules from canonical instructions
-- evaluate hosted vs local task fit
-- review repository context before proposing changes
-
-These prompts and templates should be treated as reusable workflow assets rather than one-off chat phrasing.
-
-## Mapping to MCP roles
-
+### Mapping to MCP roles
 These package concepts align naturally with MCP.
 
-### MCP resources
-The following package concepts are natural candidates for MCP resources:
+#### MCP resources
+Natural candidates include:
 - governed repository resources
 - package-generated summaries of architecture, schema, or API state
 - selected canonical instruction sources when they are useful as structured context
 
-### MCP tools
-The following package concepts are natural candidates for MCP tools:
+#### MCP tools
+Natural candidates include:
 - governed tools
 - validation helpers
 - derivation helpers
 - repository analysis helpers
 - cross-repo API inspection helpers
 
-### MCP prompts
-The following package concepts are natural candidates for MCP prompts:
+#### MCP prompts
+Natural candidates include:
 - workflow prompts and templates
 - standardized task entrypoints for governed repository work
 - hybrid workflow routing prompts
 
-This mapping suggests that MCP is not an incidental add-on. It is a strong fit for how `reproducibleai` should expose governed capabilities to compatible clients.
+This mapping suggests that MCP is a strong fit for how `reproducibleai` should expose governed capabilities to compatible clients.
 
-## Recommended package abstractions
-
+### Recommended package abstractions
 The package likely needs a small abstraction layer beyond the current instruction-handler model.
 
 Candidate abstraction families include:
 
-### 1. Source abstractions
-Purpose:
-- represent canonical instruction modules and recipes as governed source assets
+1. **Source abstractions**
+   - represent canonical instruction modules and recipes as governed source assets
+   - responsibilities may include source discovery, provenance tracking, recipe membership, and source-to-derived-artifact traceability
 
-Possible responsibilities:
-- source discovery
-- provenance tracking
-- recipe membership
-- source-to-derived-artifact traceability
+2. **Runtime artifact abstractions**
+   - represent client-facing runtime artifacts as derived deployment targets
+   - responsibilities may include target client type, derivation metadata, deployment location, overwrite behavior, and source linkage
 
-### 2. Runtime artifact abstractions
-Purpose:
-- represent client-facing runtime artifacts as derived deployment targets
+3. **Governed resource abstractions**
+   - classify repository artifacts that should be treated as governed AI context
+   - responsibilities may include artifact type classification, inclusion rules, context packaging rules, and future MCP resource exposure
 
-Possible responsibilities:
-- target client type
-- derivation metadata
-- deployment location
-- overwrite/preservation behavior
-- source linkage
+4. **Capability abstractions**
+   - represent reusable methodology-aware actions and prompts
+   - responsibilities may include capability type, required inputs, allowed outputs, deployment target, and evaluation hooks
 
-### 3. Governed resource abstractions
-Purpose:
-- classify repository artifacts that should be treated as governed AI context
+5. **Integration adapter abstractions**
+   - isolate client- and protocol-specific deployment behavior from core package logic
+   - early candidates include a Continue runtime rule adapter and an MCP-aware integration adapter
 
-Possible responsibilities:
-- artifact type classification
-- inclusion rules
-- context packaging rules
-- future MCP resource exposure
+These abstractions should prevent Continue-specific or MCP-specific details from leaking across the whole package design.
 
-### 4. Capability abstractions
-Purpose:
-- represent reusable methodology-aware actions and prompts
-
-Possible responsibilities:
-- capability type
-- required repo inputs
-- allowed outputs
-- deployment target
-- evaluation hooks
-
-### 5. Integration adapter abstractions
-Purpose:
-- isolate client- and protocol-specific deployment behavior from core package logic
-
-Candidate early adapters:
-- Continue runtime rule adapter
-- MCP-aware integration adapter
-
-This abstraction should help prevent Continue-specific or MCP-specific details from leaking across the whole package design.
-
-## Recommended first implementation slice
-
+## First implementation slice
 The package should begin with a narrow, high-value implementation slice rather than trying to implement the full architecture at once.
-
-Recommended first slice:
 
 ### 1. Governed resource classification
 Define the first explicit package convention for which repository artifacts count as governed AI context.
@@ -673,7 +363,7 @@ Define the first conceptual set of:
 - MCP tools
 - MCP prompts
 
-even if the first iteration is only documented or scaffolded rather than fully deployed by the package.
+The first iteration may be documented or scaffolded before it is fully package-deployed.
 
 ### 4. Competency-question evaluation
 Define at least one evaluation path that tests whether:
@@ -681,56 +371,9 @@ Define at least one evaluation path that tests whether:
 - runtime rules reflect the intended instruction source
 - the workflow improves local context awareness in a measurable way
 
-This first slice should prioritize architecture clarity and methodological value over breadth.
-
-## Recommended near-term deployment stance
-
-In the near term, `reproducibleai` should assume:
-
-- local and hybrid AI workflows are real package targets
-- Continue is the first supported runtime-rule client target
-- MCP is the preferred protocol-level integration direction
-- local deployment patterns are feasible and worth supporting
-- the package should scaffold and document integration patterns before attempting to generalize them too aggressively
-
-## Design risks to manage
-
-The package should explicitly manage the following risks:
-
-### 1. Overbuilding abstractions too early
-The package should not create a heavy internal framework before the first deployment patterns are validated.
-
-### 2. Duplicating mature external tooling
-The package should prefer integration with existing clients, runtimes, and protocols over reimplementation.
-
-### 3. Losing traceability between reviewed source instructions and deployed runtime artifacts
-This would undermine governance and reviewer confidence.
-
-### 4. Treating MCP as equivalent to runtime rules
-MCP and runtime rules solve different problems and should remain conceptually distinct.
-
-### 5. Letting client-specific details dominate the package core
-Continue and MCP are important, but the package should retain a methodology-centered core rather than becoming client-bound.
-
-## Architecture implication
-
-This sketch implies that `reproducibleai` may need to evolve from an instruction-handler package into a broader governed AI workflow package with support for:
-
-- canonical instruction sources
-- derived runtime rule artifacts
-- governed repository resource definitions
-- reusable methodology-aware capabilities
-- integration adapters
-- competency-question evaluation structures
-
-This is a meaningful expansion of scope, but it remains coherent with the package’s existing governance-first and instruction-first design principles.
-
+This first implementation slice should prioritize architecture clarity and methodological value over breadth.
 
 ## Remaining implementation questions
-
-The major architecture direction is now clear enough to state strongly.
-
-The remaining open questions are primarily implementation and packaging questions rather than core direction questions.
 
 ### 1. Rule derivation mechanics
 Open implementation questions:
@@ -764,31 +407,52 @@ Open implementation questions:
 - how much deployment logic belongs in handlers versus supporting helpers
 - whether MCP-aware capabilities should be treated as a separate config-aware package capability
 
+## Risks and constraints
+The package should explicitly manage the following risks:
 
-## Promotion targets
+1. **Overbuilding abstractions too early**
+   - The package should not create a heavy internal framework before the first deployment patterns are validated.
 
-If subsequent experimentation supports this architecture direction, the following promotions should occur:
+2. **Duplicating mature external tooling**
+   - The package should prefer integration with existing clients, runtimes, and protocols over reimplementation.
 
-- update `dev/10_design.md` to include stable local and hybrid AI capability boundaries
-- update `dev/05_plan.md` with a formal local-AI methodology milestone
-- create a new ADR recording the decision to support hybrid frontier/local methodology with governed local runtime rule deployment
-- update `dev/instructions/` and `inst/instructions/` to reflect rule-tier and derivation-aware architecture
+3. **Losing traceability between reviewed source instructions and deployed runtime artifacts**
+   - This would undermine governance and reviewer confidence.
 
-## Immediate follow-up work
+4. **Treating MCP as equivalent to runtime rules**
+   - MCP and runtime rules solve different problems and should remain conceptually distinct.
 
-The next design and implementation work should likely include:
+5. **Letting client-specific details dominate the package core**
+   - Continue and MCP are important, but the package should retain a methodology-centered core rather than becoming client-bound.
 
-- refining the shortcomings matrix into a more explicit task-routing framework
-- defining the first formal rule-tier taxonomy
-- defining the first Continue-specific workspace rule deployment pattern
-- designing the first competency-question evaluation structure
-- identifying which existing instruction modules need local-adapted variants first
+## Current status and promotion path
+The current working direction is that `reproducibleai` should evolve toward:
+- support for both frontier and local workflows as first-class methodology targets
+- hybrid best-bet task routing rather than one universal runtime
+- canonical human-readable instruction sources as the semantic source of truth
+- derived local-runtime rule artifacts
+- workspace-local runtime rule deployment beginning with Continue
+- formal rule tiers
+- formal workflow modes
+- competency-question-based evaluation
+- MCP-aware integration for governed resources, tools, and prompts
 
-## Current proposal status
+This direction is now reflected in:
+- `dev/15_local_ai_architecture.md` as the working architecture proposal
+- `dev/05_plan.md` Milestone G as the active work plan
+- `dev/decisions/adr-0004-hybrid-ai-methodology-and-mcp-aware-integration.md` as the proposed architectural decision
 
-This document now serves as the package’s working architecture proposal for local and hybrid AI methodology.
+The following items are still considered implementation-stage questions rather than settled architecture:
+- rule derivation mechanics
+- client adapter structure
+- MCP deployment mechanics
+- competency-question harness structure
+- recipe and deployment structure
 
-It should be treated as the governing design draft for this topic until its stable conclusions are promoted into:
+Stable outcomes from the Milestone G work may later require promotion into:
 - `dev/10_design.md`
-- `dev/05_plan.md`
-- `dev/decisions/`
+- accepted ADR updates in `dev/decisions/`
+- updated instruction modules in `inst/instructions/` and `dev/instructions/`
+- package helpers and handlers in `R/`
+
+Until that promotion occurs, this document should be treated as the main context document for continuing local and hybrid AI architecture implementation work.
