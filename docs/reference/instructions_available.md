@@ -56,14 +56,14 @@ instructions_available(include_path = TRUE)
 #> 7              r-package
 #> 8            shiny-golem
 #> 9            user-manual
-#>                                                                                                                                                                    path
-#> 1            C:/Users/B5PMMMPD/AppData/Local/R/cache/R/renv/library/reproducibleai-f2dbcda7/windows/R-4.5/x86_64-w64-mingw32/reproducibleai/instructions/chat-manual.md
-#> 2 C:/Users/B5PMMMPD/AppData/Local/R/cache/R/renv/library/reproducibleai-f2dbcda7/windows/R-4.5/x86_64-w64-mingw32/reproducibleai/instructions/development-governance.md
-#> 3                  C:/Users/B5PMMMPD/AppData/Local/R/cache/R/renv/library/reproducibleai-f2dbcda7/windows/R-4.5/x86_64-w64-mingw32/reproducibleai/instructions/goals.md
-#> 4     C:/Users/B5PMMMPD/AppData/Local/R/cache/R/renv/library/reproducibleai-f2dbcda7/windows/R-4.5/x86_64-w64-mingw32/reproducibleai/instructions/parameterized-help.md
-#> 5         C:/Users/B5PMMMPD/AppData/Local/R/cache/R/renv/library/reproducibleai-f2dbcda7/windows/R-4.5/x86_64-w64-mingw32/reproducibleai/instructions/python-package.md
-#> 6            C:/Users/B5PMMMPD/AppData/Local/R/cache/R/renv/library/reproducibleai-f2dbcda7/windows/R-4.5/x86_64-w64-mingw32/reproducibleai/instructions/quarto-book.md
-#> 7              C:/Users/B5PMMMPD/AppData/Local/R/cache/R/renv/library/reproducibleai-f2dbcda7/windows/R-4.5/x86_64-w64-mingw32/reproducibleai/instructions/r-package.md
-#> 8            C:/Users/B5PMMMPD/AppData/Local/R/cache/R/renv/library/reproducibleai-f2dbcda7/windows/R-4.5/x86_64-w64-mingw32/reproducibleai/instructions/shiny-golem.md
-#> 9            C:/Users/B5PMMMPD/AppData/Local/R/cache/R/renv/library/reproducibleai-f2dbcda7/windows/R-4.5/x86_64-w64-mingw32/reproducibleai/instructions/user-manual.md
+#>                                                                                                                               path
+#> 1            C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpIPuZ1s/temp_libpath2a586b73538d/reproducibleai/instructions/chat-manual.md
+#> 2 C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpIPuZ1s/temp_libpath2a586b73538d/reproducibleai/instructions/development-governance.md
+#> 3                  C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpIPuZ1s/temp_libpath2a586b73538d/reproducibleai/instructions/goals.md
+#> 4     C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpIPuZ1s/temp_libpath2a586b73538d/reproducibleai/instructions/parameterized-help.md
+#> 5         C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpIPuZ1s/temp_libpath2a586b73538d/reproducibleai/instructions/python-package.md
+#> 6            C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpIPuZ1s/temp_libpath2a586b73538d/reproducibleai/instructions/quarto-book.md
+#> 7              C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpIPuZ1s/temp_libpath2a586b73538d/reproducibleai/instructions/r-package.md
+#> 8            C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpIPuZ1s/temp_libpath2a586b73538d/reproducibleai/instructions/shiny-golem.md
+#> 9            C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpIPuZ1s/temp_libpath2a586b73538d/reproducibleai/instructions/user-manual.md
 ```

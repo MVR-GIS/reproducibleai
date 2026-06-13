@@ -28,6 +28,7 @@ Use
 to see what modules are installed with the package:
 
 ``` r
+
 library(reproducibleai)
 
 instructions_available()
@@ -39,6 +40,7 @@ instructions_available()
 If you want the resolved file paths:
 
 ``` r
+
 instructions_available(include_path = TRUE)
 #>                   module
 #> 1            chat-manual
@@ -50,16 +52,16 @@ instructions_available(include_path = TRUE)
 #> 7              r-package
 #> 8            shiny-golem
 #> 9            user-manual
-#>                                                                                                                                                                    path
-#> 1            C:/Users/B5PMMMPD/AppData/Local/R/cache/R/renv/library/reproducibleai-f2dbcda7/windows/R-4.5/x86_64-w64-mingw32/reproducibleai/instructions/chat-manual.md
-#> 2 C:/Users/B5PMMMPD/AppData/Local/R/cache/R/renv/library/reproducibleai-f2dbcda7/windows/R-4.5/x86_64-w64-mingw32/reproducibleai/instructions/development-governance.md
-#> 3                  C:/Users/B5PMMMPD/AppData/Local/R/cache/R/renv/library/reproducibleai-f2dbcda7/windows/R-4.5/x86_64-w64-mingw32/reproducibleai/instructions/goals.md
-#> 4     C:/Users/B5PMMMPD/AppData/Local/R/cache/R/renv/library/reproducibleai-f2dbcda7/windows/R-4.5/x86_64-w64-mingw32/reproducibleai/instructions/parameterized-help.md
-#> 5         C:/Users/B5PMMMPD/AppData/Local/R/cache/R/renv/library/reproducibleai-f2dbcda7/windows/R-4.5/x86_64-w64-mingw32/reproducibleai/instructions/python-package.md
-#> 6            C:/Users/B5PMMMPD/AppData/Local/R/cache/R/renv/library/reproducibleai-f2dbcda7/windows/R-4.5/x86_64-w64-mingw32/reproducibleai/instructions/quarto-book.md
-#> 7              C:/Users/B5PMMMPD/AppData/Local/R/cache/R/renv/library/reproducibleai-f2dbcda7/windows/R-4.5/x86_64-w64-mingw32/reproducibleai/instructions/r-package.md
-#> 8            C:/Users/B5PMMMPD/AppData/Local/R/cache/R/renv/library/reproducibleai-f2dbcda7/windows/R-4.5/x86_64-w64-mingw32/reproducibleai/instructions/shiny-golem.md
-#> 9            C:/Users/B5PMMMPD/AppData/Local/R/cache/R/renv/library/reproducibleai-f2dbcda7/windows/R-4.5/x86_64-w64-mingw32/reproducibleai/instructions/user-manual.md
+#>                                                                                                                               path
+#> 1            C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpIPuZ1s/temp_libpath2a586b73538d/reproducibleai/instructions/chat-manual.md
+#> 2 C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpIPuZ1s/temp_libpath2a586b73538d/reproducibleai/instructions/development-governance.md
+#> 3                  C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpIPuZ1s/temp_libpath2a586b73538d/reproducibleai/instructions/goals.md
+#> 4     C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpIPuZ1s/temp_libpath2a586b73538d/reproducibleai/instructions/parameterized-help.md
+#> 5         C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpIPuZ1s/temp_libpath2a586b73538d/reproducibleai/instructions/python-package.md
+#> 6            C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpIPuZ1s/temp_libpath2a586b73538d/reproducibleai/instructions/quarto-book.md
+#> 7              C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpIPuZ1s/temp_libpath2a586b73538d/reproducibleai/instructions/r-package.md
+#> 8            C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpIPuZ1s/temp_libpath2a586b73538d/reproducibleai/instructions/shiny-golem.md
+#> 9            C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpIPuZ1s/temp_libpath2a586b73538d/reproducibleai/instructions/user-manual.md
 ```
 
 ## Use recommended compositions (recipes)
@@ -68,6 +70,7 @@ instructions_available(include_path = TRUE)
 provides opinionated, maintained “known good” compositions.
 
 ``` r
+
 recipes <- instructions_recipes()
 names(recipes)
 #> [1] "r_package"                 "r_package_governed"       
@@ -88,6 +91,7 @@ recipes$quarto_user_manual
 In a real project, you’ll usually write to `dev/instructions/`:
 
 ``` r
+
 use_instructions(c("chat-manual", "goals", "r-package"))
 ```
 
@@ -95,6 +99,7 @@ For this vignette, we write into a temporary directory so nothing in
 your working directory is modified:
 
 ``` r
+
 tmp <- tempdir()
 dest <- file.path(tmp, "dev", "instructions")
 
@@ -105,11 +110,11 @@ paths <- use_instructions(
 )
 
 paths
-#> [1] "C:/Users/B5PMMMPD/AppData/Local/Temp/1/Rtmp2NV23O/dev/instructions/chat-manual.md"      
-#> [2] "C:/Users/B5PMMMPD/AppData/Local/Temp/1/Rtmp2NV23O/dev/instructions/goals.md"            
-#> [3] "C:/Users/B5PMMMPD/AppData/Local/Temp/1/Rtmp2NV23O/dev/instructions/quarto-book.md"      
-#> [4] "C:/Users/B5PMMMPD/AppData/Local/Temp/1/Rtmp2NV23O/dev/instructions/user-manual.md"      
-#> [5] "C:/Users/B5PMMMPD/AppData/Local/Temp/1/Rtmp2NV23O/dev/instructions/CHAT_INSTRUCTIONS.md"
+#> [1] "C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpETRvuN/dev/instructions/chat-manual.md"      
+#> [2] "C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpETRvuN/dev/instructions/goals.md"            
+#> [3] "C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpETRvuN/dev/instructions/quarto-book.md"      
+#> [4] "C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpETRvuN/dev/instructions/user-manual.md"      
+#> [5] "C:/Users/B5PMMMPD/AppData/Local/Temp/1/RtmpETRvuN/dev/instructions/CHAT_INSTRUCTIONS.md"
 list.files(dest)
 #> [1] "chat-manual.md"       "CHAT_INSTRUCTIONS.md" "goals.md"            
 #> [4] "quarto-book.md"       "user-manual.md"
@@ -118,6 +123,7 @@ list.files(dest)
 You can inspect the written files to confirm what guidance was used:
 
 ``` r
+
 cat(readLines(file.path(dest, "chat-manual.md"), warn = FALSE)[1:10], sep = "\n")
 #> # chat-manual — Chat Interaction Protocol (Manual / Review-First)
 #> 

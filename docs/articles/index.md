@@ -2,6 +2,8 @@
 
 ### All vignettes
 
+- [Starting a new AI chat session with a governed bootstrap
+  prompt](https://mvr-gis.github.io/reproducibleai/articles/chat-boostrap-governance.md):
 - [Saving Copilot chat session history (audit
   trail)](https://mvr-gis.github.io/reproducibleai/articles/chat-session-history.md):
 - [Reproducible chat

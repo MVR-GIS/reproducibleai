@@ -30,6 +30,7 @@ A typical workflow looks like:
 ## Setup
 
 ``` r
+
 library(reproducibleai)
 ```
 
@@ -43,6 +44,7 @@ export, we generate a tiny zip that mimics the expected structure:
   looks for)
 
 ``` r
+
 tmp <- tempdir()
 
 # Create a minimal Copilot-like export zip in a temp folder
@@ -78,6 +80,7 @@ In a real project, you’ll typically use `sessions_dir = "dev/sessions"`
 don’t modify your project.
 
 ``` r
+
 sessions_dir <- file.path(tmp, "dev", "sessions")
 
 session_path <- extract_copilot_chat(
@@ -90,7 +93,7 @@ session_path <- extract_copilot_chat(
 )
 
 session_path
-#> [1] "C:\\Users\\B5PMMMPD\\AppData\\Local\\Temp\\1\\RtmpuYtdLN/dev/sessions/2026-04-14_documentation.md"
+#> [1] "C:\\Users\\B5PMMMPD\\AppData\\Local\\Temp\\1\\RtmpUDqF6w/dev/sessions/2026-04-14_documentation.md"
 readLines(session_path, warn = FALSE)[1:6]
 #> [1] "# Example Copilot Chat Export"                         
 #> [2] ""                                                      
@@ -111,6 +114,7 @@ To demonstrate that, we update the synthetic markdown inside the zip and
 extract again.
 
 ``` r
+
 # Update the synthetic markdown and re-zip
 writeLines(c(
   "# Example Copilot Chat Export (updated)",
@@ -142,12 +146,13 @@ identical(session_path, session_path2)
 List session files and backups:
 
 ``` r
+
 list.files(sessions_dir, full.names = FALSE)
 #> [1] "2026-04-14_documentation.md"
 
 backup_dir <- file.path(sessions_dir, ".backups")
 list.files(backup_dir, full.names = FALSE)
-#> [1] "2026-04-14_documentation_backup_20260530_171043.md"
+#> [1] "2026-04-14_documentation_backup_20260613_181820.md"
 ```
 
 ## Cleaning up old backups
@@ -159,6 +164,7 @@ to delete backups older than `days_to_keep`.
 First, a dry run (no deletion):
 
 ``` r
+
 cleanup_session_backups(
   sessions_dir = sessions_dir,
   days_to_keep = 7,
@@ -169,6 +175,7 @@ cleanup_session_backups(
 To actually delete eligible backups in a real project:
 
 ``` r
+
 cleanup_session_backups(
   sessions_dir = "dev/sessions",
   days_to_keep = 7,

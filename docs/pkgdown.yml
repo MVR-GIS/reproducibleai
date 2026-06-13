@@ -1,12 +1,13 @@
-pandoc: 3.6.3
+pandoc: 3.8.3
 pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
+  chat-boostrap-governance: chat-boostrap-governance.html
   chat-session-history: chat-session-history.html
   chat_instructions: chat_instructions.html
   governed-r-package-workflow: governed-r-package-workflow.html
   sbom: sbom.html
-last_built: 2026-05-30T22:10Z
+last_built: 2026-06-13T23:16Z
 urls:
   reference: https://mvr-gis.github.io/reproducibleai/reference
   article: https://mvr-gis.github.io/reproducibleai/articles

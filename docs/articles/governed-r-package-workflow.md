@@ -27,6 +27,7 @@ The `r_package_governed` recipe composes:
 You can inspect the recipe directly:
 
 ``` r
+
 library(reproducibleai)
 
 recipes <- instructions_recipes()
@@ -40,6 +41,7 @@ recipes$r_package_governed
 To install the recipe into an R package repository:
 
 ``` r
+
 use_instructions(recipes$r_package_governed)
 ```
 
@@ -147,6 +149,7 @@ Once the files are installed, a new session can begin by directing the
 assistant to the entrypoint:
 
 ``` r
+
 # Example prompt content
 # Target repo: OWNER/REPO
 # Read dev/instructions/CHAT_INSTRUCTIONS.md and follow the listed modules.
