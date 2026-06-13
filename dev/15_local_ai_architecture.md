@@ -3,17 +3,13 @@
 Last updated: 2026-06-13
 
 ## Purpose
-This document is a working design-analysis artifact for the local AI system architecture used in repositories supported by `reproducibleai`.
+This document defines the proposed architecture direction for how `reproducibleai` should support AI-assisted development workflows across both frontier-model and local-model environments.
 
-Its purpose is to capture:
-- shortcomings observed in frontier-model development workflows
-- the opportunities and limits of local AI systems
-- architectural implications for `reproducibleai`
-- candidate design directions that require iteration before promotion into stable design documents or decision records
+`reproducibleai` is an opinionated package intended to help standardize emerging best practice for a USACE data science team. It should therefore do more than install instruction files. It should help teams adopt governed, reviewable, reproducible AI workflows that are realistic about the strengths and limits of different AI platforms.
 
-This document is intentionally exploratory.
+This document establishes the current architecture proposal for that work.
 
-It is not yet the canonical statement of stable package architecture. Stable conclusions from this document may later be promoted into:
+It is stronger than exploratory notes, but not yet the final canonical statement of stable package architecture. Stable conclusions from this document may later be promoted into:
 - `dev/10_design.md`
 - `dev/05_plan.md`
 - `dev/decisions/`
@@ -24,404 +20,403 @@ It is not yet the canonical statement of stable package architecture. Stable con
 ### `dev/10_design.md`
 Use `dev/10_design.md` for stable current-state package architecture and accepted operating assumptions.
 
-This file should hold exploratory analysis and evolving architecture concepts until they are stable enough to promote.
+This document is the design-stage architecture proposal that will feed future updates to `dev/10_design.md` once the proposed local and hybrid workflow model has been validated.
 
 ### `dev/05_plan.md`
-Use `dev/05_plan.md` for concrete follow-up work created by this design analysis.
+Use `dev/05_plan.md` for concrete implementation work created by this architecture proposal.
 
 ### `dev/decisions/`
-Use `dev/decisions/` when a durable design choice has been made and the rationale, alternatives, and supersession history should be preserved.
+Use `dev/decisions/` when a durable architecture or methodology choice from this document has been accepted and should be preserved with explicit rationale and alternatives.
 
 ### `dev/instructions/`
-Use `dev/instructions/` for reusable chat/developer instruction modules after the architecture for local and frontier workflows is clearer.
+Use `dev/instructions/` for reusable chat and developer instruction modules after this architecture has clarified how frontier-oriented instructions, local-adapted runtime rules, and client-specific rule artifacts should relate to one another.
 
 ## Problem statement
-`reproducibleai` was initially developed around modular instruction workflows that worked well with hosted frontier-model platforms such as GitHub Copilot.
+`reproducibleai` was initially developed around modular instruction workflows that performed well with hosted frontier-model platforms such as GitHub Copilot.
 
-Early experimentation with a local stack using:
+Subsequent experimentation with a local stack using:
 - Podman
 - Ollama
 - Continue
 - local rules
 - local repository context
 
-showed that a local system cannot be treated as a drop-in one-model replacement for a frontier-model platform.
+demonstrated that a local system should not be treated as a drop-in one-model replacement for a hosted frontier platform.
 
-The key design problem is not merely how to run a local model.
+The design problem is not merely how to run a local model.
 
-The deeper design problem is how to help teams build a reproducible, private, repo-aware AI development system that:
-- preserves the strengths of modular instruction workflows
-- improves local context awareness and repo grounding
-- supports IT-managed and no-cloud environments
-- remains reviewable and governable
-- sets correct expectations about where local systems outperform or underperform hosted frontier-model systems
+The real design problem is how to help teams build a governed AI workbench that:
+- supports both frontier and local workflows
+- preserves the strengths of modular instruction systems
+- improves local context awareness and repository grounding
+- supports IT-managed and no-cloud environments where needed
+- remains reviewable, reproducible, and governable
+- guides users toward the right tool or workflow mode for the task
 
-## Current design hypothesis
-The correct target is not:
+## Package position
+`reproducibleai` should explicitly support both frontier-model and local-model workflows as first-class methodology targets.
 
-- one local model that “does it all” like a hosted assistant appears to do
+The package should not define success as replacing hosted assistants with one local model.
 
-The correct target is:
+Instead, it should define success as helping teams build a governed hybrid AI workflow in which:
+- frontier systems are used where they are the best fit
+- local systems are used where they are the best fit
+- repository-specific instructions and governed artifacts remain central
+- evaluation is explicit rather than anecdotal
+- architecture and workflow choices are reviewable and reproducible
 
-- a modular local AI system with explicit architecture for:
-  - model roles
-  - context selection
-  - rule activation
-  - workflow modes
-  - evaluation
-  - governance
+This package should therefore standardize methodology, structure, and evaluation more than it standardizes allegiance to any one runtime.
 
 ## Why this document is needed
-The package currently provides strong support for:
+The package already provides strong support for:
 - modular instructions
 - recipe-based composition
-- reviewable static instruction text
+- reviewed static instruction text
 - governed repository scaffolding
 
-However, it does not yet provide a complete architecture for helping teams adapt frontier-model workflows into local-model workflows.
+However, those strengths were established primarily in a frontier-model context.
 
-This gap matters because:
-- local AI use is a realistic operational need in some environments
-- hosted-model workflows and local-model workflows have materially different capability profiles
-- instructions written for frontier systems may not transfer directly to smaller or local models
-- teams need guidance on where local systems should be optimized, constrained, or combined with other tools
+The package does not yet fully define how the same instruction-first and governance-first philosophy should operate when:
+- local models have different reasoning and context limits
+- client-specific runtime rule systems are introduced
+- users need to switch intentionally between hosted and local modes
+- evaluation must distinguish between raw model quality and system-design quality
+
+This document exists to close that gap by making the local and hybrid architecture explicit.
+
+## Architecture position
+The package should be designed around the assumption that hosted frontier platforms behave like integrated AI systems rather than like single interchangeable models.
+
+Their apparent performance is shaped not only by model quality, but also by:
+- retrieval and ranking
+- tool orchestration
+- context management
+- editor integration
+- workflow tuning
+- hidden platform behavior
+
+A local system should therefore not be modeled as:
+- one model
+- one editor integration
+- one instruction set
+- one universal workflow
+
+A local system should instead be modeled as a governed workbench with explicit architecture for:
+- model roles
+- context selection
+- rule activation
+- workflow modes
+- evaluation
+- governance
 
 ## Observed design shift
-The initial working assumption was that a local stack could reproduce the apparent behavior of a hosted assistant by combining:
+The earlier working assumption was that a local stack could reproduce the apparent behavior of a hosted assistant by combining:
 - one model
 - one editor integration
 - one rule system
 
-This assumption is now considered too simplistic.
+That assumption is now rejected as the core design target.
 
-The emerging design view is that hosted systems behave like integrated platforms rather than single models. Their performance likely depends on:
-- multiple model classes
-- optimized retrieval and ranking
-- product-layer orchestration
-- context management
-- strong editor/tool integration
-- platform-specific tuning
-
-A local system should therefore be designed as a workbench rather than a single assistant.
+The design target for `reproducibleai` should be a hybrid AI methodology that helps teams:
+- choose the right workflow mode for the task
+- deploy repository-governed instructions across different AI clients
+- adapt frontier-oriented instruction systems into local-runtime rule systems
+- evaluate AI workflow quality using explicit competency questions
+- preserve durable development governance regardless of runtime choice
 
 ## Shortcomings matrix
 
-| Frontier workflow strength or shortcoming | Why it matters | Can a local system address it? | Likely local response | Primary `reproducibleai` implication |
-|---|---|---|---|---|
-| Frontier systems often feel like one assistant that can handle many tasks | This creates unrealistic expectations that one local model should perform equally well across planning, explanation, editing, and repo analysis | Partially | Reset expectations and design for multiple roles rather than one universal model | Add methodology guidance that local systems are modular, role-based systems |
-| Frontier systems often provide stronger default reasoning and better ambiguity handling | Teams may perceive local systems as weak or unreliable when comparing raw chat quality directly | Only partially | Do not optimize local systems around “general brilliance”; optimize around governed, repeatable, repo-aware workflows | Explicitly define local success criteria and capability boundaries |
-| Hosted tools can be weak at durable repo-specific workflow compliance | Important instructions may be inconsistently followed across sessions or repos | Yes | Use reviewed static instruction modules and repo-local rules | Extend instruction architecture for local-rule deployment and activation |
-| Hosted tools may be less transparent about why behavior changed | This weakens auditability and reproducibility | Yes | Favor explicit rules, explicit context, and explicit architecture layers | Strengthen package guidance on traceable configuration and evaluated workflows |
-| Cloud dependence can conflict with data governance or no-cloud requirements | Some teams need local/private workflows even if they are less polished | Yes | Treat local workflows as first-class supported patterns, with realistic boundaries | Add local-first methodology and setup guidance |
-| Frontier workflows may not fully exploit local repo conventions and governed artifacts | Teams want AI behavior grounded in local files, repo rules, and design docs | Yes, if designed carefully | Emphasize workspace-local rules, file-aware workflows, and explicit context selection | Add patterns for mapping governed repo artifacts into AI-usable context |
-| Long modular instructions developed for frontier systems may overload smaller local models | Local quality may degrade if prompt/rule mass is too large | Yes | Create compressed local-model-adapted rule variants and rule tiers | Add rule taxonomy and adaptation strategy |
-| One global always-on instruction set can reduce local-model performance | Too much active instruction competes with task context | Yes | Use small core always-on rules plus conditional task-specific overlays | Add architecture for rule tiers and activation strategy |
-| Broad workspace context can reduce answer quality if irrelevant files dominate the prompt | Repo awareness is useful only when the right context is selected | Yes | Prefer narrow, curated context windows and explicit task-mode prompts | Add context-strategy guidance and evaluation criteria |
-| Repo-scale edits, targeted refactors, and explanation tasks may need different tools or model modes | One chat interface is not the same as one optimal workflow | Yes | Design workflows that separate chat, editing, refactoring, and evaluation tasks | Position `reproducibleai` as a methodology layer over multiple AI workflow modes |
+| Frontier workflow strength or shortcoming | Why it matters | Can a local or hybrid system address it? | Required response from `reproducibleai` |
+|---|---|---|---|
+| Frontier systems often feel like one assistant that can handle many tasks | This creates the false expectation that one local model should perform equally well across planning, explanation, editing, and repository analysis | Only partially | Explicitly teach that AI workflows are multi-layer systems, not single-model substitutes |
+| Frontier systems often provide stronger default reasoning and better ambiguity handling | Teams may misdiagnose local-system weaknesses as “bad prompting” when the issue is actually capability mismatch or poor system design | Only partially | Define realistic success criteria for local workflows and separate architecture quality from raw model quality |
+| Hosted tools can be weak at durable repository-specific workflow compliance | Important team instructions and governed repo artifacts may not be followed consistently | Yes | Standardize repository-governed instruction systems and workspace runtime rules |
+| Hosted tools may be less transparent about why behavior changed | This weakens reproducibility, auditability, and reviewer confidence | Yes | Favor explicit architecture layers, explicit rules, and explicit evaluation |
+| Cloud dependence can conflict with governance, security, or infrastructure constraints | Teams may need local/private workflows even when hosted tools are stronger in general reasoning | Yes | Support local and hybrid workflows as first-class package targets |
+| Hosted workflows may not exploit local repository design artifacts as effectively as a tuned local system could | Teams want better use of local files, rules, schemas, plans, and design docs | Yes | Treat local context awareness as a core design target and evaluation objective |
+| Long modular instructions written for frontier systems may overload smaller local models | Local performance can degrade when instruction mass competes with task context | Yes | Introduce rule-tier architecture and local-adapted runtime rule variants |
+| Large always-on instruction sets can reduce local-model usefulness | Local systems often need smaller active prompts and more deliberate task scoping | Yes | Standardize a small core rule layer plus conditional overlays |
+| Broad workspace context can reduce answer quality when irrelevant files dominate the prompt | Context awareness is useful only when relevant context is selected well | Yes | Standardize task-specific context strategies and competency-based evaluation |
+| Explanation, editing, planning, and refactoring are not the same task | One interface should not imply one optimal model, rule set, or workflow mode | Yes | Define workflow modes and best-bet task routing rather than pretending one workflow fits all cases |
 
-## Preliminary conclusions from the matrix
+## Architecture conclusions
+The shortcomings matrix supports the following architecture conclusions.
 
-### 1. A local system should not be evaluated as a direct one-model substitute for hosted assistants
-The comparison target should be:
-- governed, reproducible, repo-aware productivity
-not:
-- general chat parity with frontier systems
+### 1. `reproducibleai` should standardize a hybrid AI methodology
+The package should support both:
+- frontier-model workflows
+- local-model workflows
 
-### 2. `reproducibleai` should support local AI as a methodology problem
-The package should likely help teams design:
-- rule structure
+It should also support intentional switching between them.
+
+The package should not assume:
+- hosted-only methodology
+- local-only methodology
+- one-model parity as the primary goal
+
+Instead, it should standardize a hybrid methodology that helps teams choose the best-bet workflow for the task while preserving governance and reproducibility.
+
+### 2. `reproducibleai` should treat local systems as governed workbenches
+Local workflows should not be framed as one-model replacements for hosted assistants.
+
+They should be framed as governed workbenches with explicit design for:
+- model roles
 - context strategy
+- rule tiers
 - workflow modes
-- evaluation methods
-- governance artifacts
+- evaluation
 
-rather than merely installing instruction files.
+### 3. `reproducibleai` should treat local context awareness as a major design opportunity
+Local workflows are unlikely to consistently outperform frontier systems at general reasoning quality.
 
-### 3. Instruction portability is not automatic
-Frontier-oriented instruction modules may need:
-- compression
-- decomposition
-- reclassification
-- local-model-specific adaptations
+They may, however, outperform frontier systems in:
+- governed repository grounding
+- explicit use of local design artifacts
+- repeatable workflow compliance
+- transparent configuration
+- private and infrastructure-constrained environments
 
-before they work well in local systems.
+For this package, local context awareness should therefore be treated as a primary optimization target rather than a secondary convenience.
 
-### 4. Rule architecture may matter more than model substitution
-Early evidence suggests that local-model quality may be more sensitive to:
+### 4. `reproducibleai` should distinguish raw model capability from workflow architecture quality
+When a local workflow performs poorly, the cause may be:
+- model limitations
 - rule overload
-- irrelevant context
-- weak task framing
+- weak context selection
+- poor task framing
+- wrong tool choice
 
-than to model identity alone.
+The package should help users evaluate and improve system design rather than treating all failures as prompt problems.
 
-### 5. The design goal should be selective superiority, not universal parity
-Local systems may be able to outperform hosted tools in:
+### 5. `reproducibleai` should optimize for selective superiority rather than universal parity
+The package should not promise that local workflows will match frontier platforms in every dimension.
+
+Instead, it should help teams build workflows that are selectively better in areas such as:
+- governance
 - privacy
-- repo-specific governance
-- repeatability
-- explicit workflow control
-- durable local context
+- reviewability
+- explicit repository grounding
+- controlled and reproducible workflow behavior
 
-while still underperforming in:
-- general reasoning quality
-- ambiguity handling
-- polished “one assistant” behavior
+## Proposed architecture layers
 
-## Candidate architecture layers
+`reproducibleai` should standardize local and hybrid AI methodology across five architecture layers.
 
 ### 1. Model layer
-Questions:
-- Which model is used for which task?
-- Should chat, edit, autocomplete, and summarization be treated as separate roles?
-- Which tasks are acceptable for smaller local models and which are not?
+The architecture should distinguish between different model roles rather than assuming one model should do everything.
 
-Candidate direction:
-- do not assume one model should handle all tasks equally well
-- design for model-role separation where supported by the client platform
+The package methodology should assume that tasks such as:
+- explanation
+- planning
+- editing
+- autocomplete
+- summarization
+- repository analysis
+
+may be better served by different model roles, runtime settings, or clients.
+
+The package does not need to hard-code one universal model strategy, but it should explicitly teach model-role separation as a best practice.
 
 ### 2. Context layer
-Questions:
-- What file, selection, or repo context should be active for each task type?
-- How much context is too much for local models?
+The architecture should standardize deliberate context selection.
 
-Candidate direction:
-- favor narrow, highly relevant context
-- standardize context patterns such as:
-  - current file only
-  - selected text plus current file
-  - current file plus one or two related files
-  - governed repo artifact plus working file
+The package should teach that better context is often more important than more context, especially for local models.
+
+Recommended context patterns should include:
+- current file only
+- selected text plus current file
+- current file plus one or two directly related files
+- working file plus governed repository artifact such as:
+  - `dev/10_design.md`
+  - `dev/05_plan.md`
+  - `dev/40_schemas.md`
+  - relevant instruction or rule files
+
+The package should discourage indiscriminate broad workspace injection as a default workflow.
 
 ### 3. Rule layer
-Questions:
-- Which instructions should always apply?
-- Which should be conditional?
-- Which should remain human-oriented source material rather than active model prompt content?
+The architecture should standardize rule tiers.
 
-Candidate direction:
-- define a small always-on core
-- define conditional task overlays
-- distinguish human source instructions from local-model runtime rules
+The package should distinguish between:
+- **core rules**
+  - short, always-on, cross-cutting constraints
+- **task overlays**
+  - domain- or workflow-specific runtime rules used only when relevant
+- **source instructions**
+  - canonical human-readable reviewed instructions that serve as the source of truth
+- **local-adapted runtime rules**
+  - compressed or operationalized variants derived from canonical source instructions for use in local client rule systems
+
+This distinction should become a formal part of package methodology rather than an ad hoc practice.
 
 ### 4. Workflow layer
-Questions:
-- Which workflows should be treated as distinct operating modes?
-- What prompt conventions produce reliable results?
+The architecture should standardize workflow modes instead of assuming one generic chat protocol is sufficient.
 
-Candidate direction:
-- define standard workflow modes such as:
-  - explain
-  - compare options
-  - review before edit
-  - draft replacement text
-  - repo design analysis
-  - governed documentation update
+Candidate workflow modes should include:
+- explain current file
+- compare options before editing
+- review before drafting
+- draft replacement text
+- analyze repository design
+- prepare governed documentation updates
+- evaluate task fit for hosted vs local execution
+
+The package should help teams define and reuse these modes consistently.
 
 ### 5. Evaluation layer
-Questions:
-- How will teams know whether local workflow quality is improving?
-- What tasks should be used for repeated comparison?
+The architecture should make evaluation a first-class concern.
 
-Candidate direction:
-- define a repeatable task suite
-- compare configurations against the same representative tasks
-- score:
-  - instruction compliance
-  - repo grounding
-  - usefulness
-  - hallucination rate
-  - formatting compliance
-  - reviewability
+AI workflow quality should be evaluated with repeatable competency questions rather than anecdotal impressions alone.
+
+Evaluation should focus on questions such as:
+- does the workflow use the intended repository context correctly?
+- does it follow the applicable rules reliably?
+- does it produce useful and reviewable outputs?
+- does it choose an appropriate workflow mode for the task?
+- where does local outperform hosted, and where does it not?
+
+This evaluation model should become part of the package’s methodology and testing approach.
 
 ## Implications for instruction architecture
 
-### Current strength
-`reproducibleai` already supports:
+### Current package strength
+`reproducibleai` already provides a strong foundation through:
 - modular instruction text
 - reviewed static canonical modules
 - recipe composition
-- governed installation
+- governed installation into target repositories
 
-### Likely gap
-The package may need a second layer of support for:
-- local-model-adapted rule variants
-- rule compression
-- rule tier classification
-- workspace rule deployment conventions such as `.continue/rules`
-- evaluation-oriented workflow recipes
+### Required extension
+To support local and hybrid workflows well, the package should extend that foundation to include:
+- rule-tier classification
+- local-runtime rule variants derived from canonical instruction sources
+- client-specific workspace rule deployment
+- workflow-mode guidance
+- competency-question-based evaluation support
 
-### Working taxonomy proposal
-Candidate categories:
+### Canonical source principle
+The package should preserve one canonical human-readable instruction source wherever possible.
 
-- **Core rules**
-  - short, always-on, cross-cutting constraints
-- **Task overlays**
-  - domain- or workflow-specific rules applied only when relevant
-- **Source instructions**
-  - richer human-readable documents that should not necessarily be injected directly into model context
-- **Local-adapted variants**
-  - compressed or operationalized versions of frontier-oriented instruction modules for smaller local models
+Frontier-ready instructions should remain the reviewed source of truth for developers and reviewers.
+
+Local-runtime rule variants should be derived from those canonical sources rather than maintained as unrelated parallel documents.
+
+This is necessary to preserve:
+- governance
+- readability
+- reviewability
+- semantic alignment across workflow modes
+
+### Local-adapted derivation principle
+The package should treat local-rule adaptation as a governed transformation problem.
+
+The core design question is not whether local-adapted rules should exist. They should.
+
+The remaining design question is how to derive them while preserving quality and reviewer confidence.
+
+The package should therefore assume:
+- derivation from canonical human-readable instructions is the desired model
+- fully automatic derivation may not be sufficient in all cases
+- human review and iterative refinement are likely to remain necessary
+- any future automation should preserve transparent traceability to the canonical instruction source
 
 ## Implications for repository deployment
 
-Candidate deployment distinction:
+The package should standardize a three-part deployment distinction.
 
-- user-level AI client configuration
-  - shared across workspaces
-  - endpoint definitions
-  - model declarations
-  - minimal base behavior
+### 1. User-level AI client configuration
+This layer should hold:
+- endpoint definitions
+- model declarations
+- client-wide defaults
+- behavior intended to apply across repositories
 
-- repo-level runtime rules
-  - workspace-specific
-  - version controlled
-  - aligned to governed repository state
+This layer should remain minimal and should not carry the full burden of repository-specific workflow governance.
 
-- repo-level human instruction sources
-  - richer design and workflow documentation
-  - used as canonical reviewed source material for generating or maintaining runtime rules
+### 2. Repository-level runtime rules
+This layer should hold:
+- workspace-specific runtime rules
+- version-controlled local client artifacts
+- repository-governed behavior tied to the local project
 
-## Open questions
+The first supported target for this layer should be Continue.
 
-### Capability and scope
-- Should `reproducibleai` explicitly support both frontier and local workflows as first-class methodology targets?
-- Should it define separate recipe families for frontier-optimized and local-optimized instruction systems?
+The architecture should remain extensible to additional clients later.
 
-### Rule adaptation
-- Should local-model-adapted rules be maintained manually or generated from canonical source instructions?
-- If generated, what transformations are acceptable without violating the static canonical instruction principle?
+### 3. Repository-level human instruction sources
+This layer should hold:
+- richer reviewed source instructions
+- architecture and workflow rationale
+- governance-aligned human-readable materials that should not always be injected directly into runtime prompt context
 
-### Deployment
-- Should the package scaffold workspace-local rules for Continue or other clients?
-- If so, should that be modeled as a new config-aware capability?
+This layer should be treated as the durable source material from which runtime rule artifacts may be derived or maintained.
 
-### Evaluation
-- What minimum benchmark task suite should be used to evaluate local workflow quality?
-- How should evaluation artifacts be stored and compared across repos?
+## Proposed package direction
 
-### Tool boundaries
-- Which tasks should remain in hosted platforms even in a local-first methodology?
-- How should the package document hybrid workflows without weakening local-first governance goals?
+Based on the current analysis, `reproducibleai` should move toward the following package direction:
 
+- support both frontier and local workflows as first-class methodology targets
+- document hybrid best-bet task routing rather than requiring one universal runtime
+- preserve canonical human-readable instruction sources
+- support derived local-runtime rule variants
+- scaffold workspace-local runtime rules beginning with Continue
+- formalize rule tiers as part of package methodology
+- formalize workflow modes as part of package methodology
+- formalize competency-question-based evaluation as part of package methodology
 
-## Provisional design directions
+## Remaining implementation questions
 
-This section records the current working direction from active design analysis.
+The major architecture direction is now clear enough to state strongly.
 
-These are not yet final package decisions, but they are stronger than open questions and should guide subsequent experimentation and design refinement.
+The remaining open questions are mostly implementation questions rather than core direction questions.
 
-### 1. Capability and scope
-The package should support both frontier-model and local-model workflows.
+### 1. Rule derivation mechanics
+Open implementation questions:
+- which parts of local-rule derivation can be automated safely
+- which parts require mandatory human editing or approval
+- how derivation lineage should be recorded
 
-The working goal is not to replace frontier platforms outright, nor to assume that local-first is a universal requirement.
+### 2. Client support sequence
+Open implementation questions:
+- what the first Continue-specific scaffolding should include
+- how client-specific artifacts should be abstracted so later clients can be supported without redesign
 
-Instead, `reproducibleai` should support a hybrid methodology in which:
-- frontier and local systems are both recognized as useful
-- each is used for the tasks it performs best
-- users can switch between them intentionally
-- workflows remain governed, reviewable, and reproducible across both modes
+### 3. Evaluation harness design
+Open implementation questions:
+- how competency questions should be represented in package tests
+- what fixtures and scoring conventions should be used
+- how local-context-aware behavior should be tested consistently
 
-The architecture should therefore avoid assuming a single universal AI runtime.
+### 4. Recipe and deployment structure
+Open implementation questions:
+- whether frontier-oriented and local-oriented workflows should be represented as separate recipe families
+- how hybrid workflow guidance should be exposed to users
+- how much deployment logic belongs in handlers versus supporting helpers
 
-Instead, it should help users configure and operate multiple AI workflow modes with explicit guidance on when each mode is the better fit.
+## Promotion targets
 
-### 2. Rule adaptation
-The preferred design is to maintain a single human-readable canonical instruction source that is suitable for review by developers and non-programmers.
+If subsequent experimentation supports this architecture direction, the following promotions should occur:
 
-Local-model-adapted rule variants should be derived from these more verbose frontier-ready instructions rather than authored independently from scratch.
+- update `dev/10_design.md` to include stable local and hybrid AI capability boundaries
+- update `dev/05_plan.md` with a formal local-AI methodology milestone
+- create a new ADR recording the decision to support hybrid frontier/local methodology with governed local runtime rule deployment
+- update `dev/instructions/` and `inst/instructions/` to reflect rule-tier and derivation-aware architecture
 
-This preserves:
-- one reviewed starting point
-- clearer governance
-- easier diff review
-- lower risk of semantic drift between frontier and local workflows
+## Immediate follow-up work
 
-The main unresolved design question is not whether derivation should occur, but how it should occur.
+The next design and implementation work should likely include:
 
-Current candidate approaches include:
-- deterministic manual compression maintained by package authors
-- LLM-assisted derivation followed by human review and editing
-- partially automated derivation with structured post-processing and manual approval
+- refining the shortcomings matrix into a more explicit task-routing framework
+- defining the first formal rule-tier taxonomy
+- defining the first Continue-specific workspace rule deployment pattern
+- designing the first competency-question evaluation structure
+- identifying which existing instruction modules need local-adapted variants first
 
-The architecture should assume that fully automatic derivation may not be sufficient for high-quality local-model rules, especially when local models have materially different context and reasoning limits.
+## Current proposal status
 
-### 3. Deployment
-The package should scaffold workspace-local runtime rules.
+This document now serves as the package’s working architecture proposal for local and hybrid AI methodology.
 
-The first supported client target should be Continue.
-
-The design should remain extensible so that additional local or hybrid AI clients can be supported later without redesigning the core instruction architecture.
-
-This implies that `reproducibleai` may need to distinguish between:
-- canonical reviewed instruction sources
-- client-specific runtime rule artifacts
-- client-specific configuration scaffolding
-
-### 4. Evaluation
-Evaluation should be a first-class part of the package design.
-
-Evaluation artifacts and tests should be maintained inside `reproducibleai` using standard R package testing infrastructure where practical.
-
-The preferred evaluation pattern is to organize tests as competency questions.
-
-These competency questions should assess whether a configured workflow can perform targeted behaviors reliably and reviewably.
-
-High-value evaluation targets should emphasize local-system strengths, especially:
-- local context awareness
-- governed use of repository artifacts
-- instruction compliance
-- stable task framing
-- useful distinctions between hosted and local task fit
-
-This reflects the working view that local context awareness is a major opportunity area where local workflows may outperform hosted frontier systems if designed well.
-
-### 5. Tool boundaries
-The package should not assume a strict local-first ideology.
-
-In this team context, local workflows were introduced to address shortcomings of hosted frontier systems rather than to prohibit hosted usage.
-
-The preferred methodology is therefore hybrid.
-
-`reproducibleai` should help teams categorize tasks into best-bet recommendations such as:
-- tasks better suited to hosted frontier systems
-- tasks better suited to local systems
-- tasks where either is acceptable
-- tasks where a staged or hybrid workflow is recommended
-
-This implies that part of the package methodology may need to include explicit task-routing guidance rather than only instruction installation.
-
-## Implications of the provisional directions
-
-The current design work now suggests the following likely package responsibilities:
-
-- support both frontier and local methodology patterns
-- preserve one canonical human-readable instruction source where possible
-- support derivation or maintenance of local-runtime rule variants
-- scaffold client-specific workspace rule deployments beginning with Continue
-- add competency-question-based evaluation support
-- document hybrid best-bet task routing rather than assuming one universal AI workflow
-
-These implications are still subject to refinement through experimentation and implementation review.
-
-
-## Promotion candidates
-
-The following topics may later be promoted into stable design or decisions if validated:
-
-- local systems should be treated as modular workbenches rather than one-model assistants
-- instruction modules may require local-model-adapted variants
-- rule tiering should be a formal part of the package methodology
-- evaluation should be an explicit package-supported workflow
-- workspace-local runtime rules may deserve first-class package support
-
-## Immediate follow-up candidates
-This document suggests likely next work in:
-
-- `dev/05_plan.md`
-  - add a local-AI methodology milestone
+It should be treated as the governing design draft for this topic until its stable conclusions are promoted into:
 - `dev/10_design.md`
-  - later add a stable section on local-vs-frontier capability boundaries
+- `dev/05_plan.md`
 - `dev/decisions/`
-  - later record a decision if local-AI architecture becomes a formal supported package direction
-- `dev/instructions/`
-  - later develop rule-tier and local-adaptation guidance once the architecture is tested
