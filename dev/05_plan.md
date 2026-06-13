@@ -143,3 +143,71 @@ This file is the canonical ordered task list for active development work.
     - The test verifies both installed module files and governance scaffold artifacts.
   - Expected artifacts:
     - test added in `tests/testthat/test-use_instructions_e2e.R`
+
+
+## Milestone G — define local and hybrid AI methodology
+
+- [ ] G1: Define governed AI context resource classification
+  - Definition of done:
+    - A stable first-pass classification exists for repository artifacts that should be treated as governed AI context.
+    - The classification identifies at least the initial roles of:
+      - `dev/05_plan.md`
+      - `dev/10_design.md`
+      - `dev/40_schemas.md`
+      - `dev/decisions/`
+      - `dev/instructions/`
+    - The classification is documented in the local AI architecture design work and is specific enough to guide future deployment helpers and evaluation.
+  - Expected artifacts:
+    - updates to `dev/15_local_ai_architecture.md`
+    - possible later promotion into `dev/10_design.md`
+
+- [ ] G2: Define first formal rule-tier and runtime-artifact architecture
+  - Definition of done:
+    - A first formal package taxonomy exists for:
+      - canonical instruction sources
+      - core runtime rules
+      - task overlays
+      - local-adapted runtime artifacts
+    - The taxonomy explains how human-readable sources relate to client-facing runtime artifacts.
+    - Traceability expectations between source instructions and derived runtime artifacts are documented.
+  - Expected artifacts:
+    - updates to `dev/15_local_ai_architecture.md`
+    - possible later updates to `inst/instructions/` or `dev/instructions/`
+
+- [ ] G3: Define first Continue deployment pattern
+  - Definition of done:
+    - A first supported deployment pattern is defined for Continue workspace-local runtime artifacts.
+    - The design clarifies which artifacts belong in user-level client configuration versus workspace-level repository artifacts.
+    - The pattern is specific enough to guide future handler or helper implementation.
+  - Expected artifacts:
+    - updates to `dev/15_local_ai_architecture.md`
+    - possible later handler/helper design in `R/`
+
+- [ ] G4: Define first MCP-aware integration slice
+  - Definition of done:
+    - A first package-level MCP integration concept is defined.
+    - The design identifies the initial governed resources, tools, and prompts most appropriate for MCP exposure.
+    - The package boundary is clear about what `reproducibleai` will scaffold or define versus what external MCP tooling should provide.
+  - Expected artifacts:
+    - updates to `dev/15_local_ai_architecture.md`
+    - possible later ADR if MCP-aware integration becomes a formal package direction
+
+- [ ] G5: Define competency-question evaluation structure for local and hybrid workflows
+  - Definition of done:
+    - A first evaluation structure is defined for competency-question-based workflow testing.
+    - The design identifies how local-context-aware behavior will be evaluated.
+    - The design identifies how hosted, local, and MCP-enabled workflows may be compared where appropriate.
+  - Expected artifacts:
+    - updates to `dev/15_local_ai_architecture.md`
+    - possible later test scaffolding in `tests/testthat/`
+
+- [ ] G6: Decide whether local/hybrid AI methodology should become a formal package decision
+  - Definition of done:
+    - The team has enough design and implementation clarity to decide whether this architecture direction should be promoted into:
+      - `dev/10_design.md`
+      - a new ADR in `dev/decisions/`
+    - Promotion criteria are explicit enough to avoid premature stabilization.
+  - Expected artifacts:
+    - possible update to `dev/10_design.md`
+    - possible new ADR in `dev/decisions/`
+    
