@@ -15,6 +15,32 @@ Instead, this document captures the proposed direction, rationale, architecture 
 - `dev/instructions/`
 - package helpers and handlers in `R/`
 
+
+## Quick orientation
+The current working direction is:
+
+- `reproducibleai` should support both frontier-model and local-model workflows
+- the package should standardize a hybrid methodology rather than assume one universal runtime
+- local workflows should be treated as governed workbenches rather than one-model replacements for hosted assistants
+- canonical human-readable instructions should remain the semantic source of truth
+- client-facing runtime artifacts should be derived from canonical instruction sources
+- MCP should be treated as a preferred integration direction for governed resources, tools, and prompts
+
+The current design work does not yet settle:
+
+- exact rule derivation mechanics
+- exact client adapter structure
+- exact MCP deployment mechanics
+- exact competency-question harness structure
+
+For implementation work, the immediate priorities are:
+
+- governed resource classification
+- Continue runtime rule deployment
+- first MCP-oriented capability design
+- first competency-question evaluation path
+
+
 ## Relationship to governance artifacts
 
 ### `dev/10_design.md`
@@ -342,7 +368,7 @@ Candidate abstraction families include:
 These abstractions should prevent Continue-specific or MCP-specific details from leaking across the whole package design.
 
 ## First implementation slice
-The package should begin with a narrow, high-value implementation slice rather than trying to implement the full architecture at once.
+The following items are the intended first implementation targets. They translate the current architecture direction into an initial practical work sequence without attempting to build the full system at once.
 
 ### 1. Governed resource classification
 Define the first explicit package convention for which repository artifacts count as governed AI context.
@@ -407,6 +433,8 @@ Open implementation questions:
 - how much deployment logic belongs in handlers versus supporting helpers
 - whether MCP-aware capabilities should be treated as a separate config-aware package capability
 
+These questions should be resolved incrementally through Milestone G work rather than by expanding the architecture spec prematurely.
+
 ## Risks and constraints
 The package should explicitly manage the following risks:
 
@@ -426,7 +454,7 @@ The package should explicitly manage the following risks:
    - Continue and MCP are important, but the package should retain a methodology-centered core rather than becoming client-bound.
 
 ## Current status and promotion path
-The current working direction is that `reproducibleai` should evolve toward:
+The current proposed package direction is:
 - support for both frontier and local workflows as first-class methodology targets
 - hybrid best-bet task routing rather than one universal runtime
 - canonical human-readable instruction sources as the semantic source of truth
