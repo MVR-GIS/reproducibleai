@@ -465,6 +465,75 @@ Based on the current analysis, `reproducibleai` should move toward the following
 - support MCP-aware integration as part of package methodology
 - expose governed capabilities through external-tool-friendly architecture rather than prompt text alone
 
+## First MCP-aware package architecture sketch
+
+This section sketches the first concrete package architecture direction for incorporating MCP-aware integration into `reproducibleai`.
+
+The goal is not to turn the package into a generic MCP platform.
+
+The goal is to define the package concepts, boundaries, and first implementation slice needed to support governed AI workflows in a multi-repository R package ecosystem.
+
+## Package responsibility boundary
+
+`reproducibleai` should define and scaffold governed capabilities for AI-assisted development workflows.
+
+It should not attempt to own all surrounding infrastructure.
+
+In particular, the package should aim to:
+
+- define canonical human-readable instruction sources
+- derive or support derivation of client-facing runtime rule artifacts
+- define governed repository context conventions
+- define reusable workflow prompts and methodology patterns
+- define evaluation structures for competency-question-based workflow testing
+- support client- and protocol-aware deployment patterns where needed
+
+It should not attempt to become:
+
+- a generic MCP runtime host
+- a general-purpose MCP server framework
+- a code editor client
+- a model-serving framework
+- a generic retrieval engine
+- a general agent orchestration platform
+
+## Core MCP-aware package concepts
+
+The package architecture should distinguish at least five core concepts.
+
+### 1. Canonical instruction sources
+These are the reviewed human-readable source materials that define team workflow expectations.
+
+Current examples include:
+- `inst/instructions/*.md`
+
+These sources should remain:
+- readable by humans
+- reviewable in Git
+- versioned with the package
+- the semantic source of truth for derived workflow artifacts
+
+### 2. Runtime rule and prompt artifacts
+These are client-facing artifacts intended for direct AI runtime use.
+
+Examples may include:
+- Continue workspace rule or prompt files
+- future client-specific runtime rule or prompt bundles
+
+These artifacts should:
+- be optimized for runtime behavior rather than long-form readability
+- preserve traceability to canonical instruction sources
+- support client-specific deployment without fragmenting the human-reviewed source of truth
+
+### 3. Governed repository resources
+These are repository artifacts that should be treated as governed context inputs for AI workflows.
+
+Candidate examples include:
+- `dev/05_plan.md`
+- `dev/10_design.md`
+- `dev`
+
+
 ## Remaining implementation questions
 
 The major architecture direction is now clear enough to state strongly.
