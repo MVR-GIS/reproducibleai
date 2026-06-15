@@ -1,6 +1,6 @@
 # Local AI Architecture
 
-Last updated: 2026-06-13
+Last updated: 2026-06-15
 
 ## Purpose
 This document records the working architecture proposal for how `reproducibleai` should support governed AI-assisted development workflows across frontier-model and local-model environments.
@@ -264,6 +264,42 @@ The package should distinguish between:
   - compressed or operationalized variants derived from canonical source instructions for use in local client rule systems
 
 This distinction should become a formal part of package methodology rather than an ad hoc practice.
+
+### First formal rule-tier taxonomy
+The package should treat the rule layer as a small governed taxonomy rather than a single undifferentiated body of instructions.
+
+The first formal rule tiers are:
+
+| Tier | Primary purpose | Typical content | What should not go here | Main audience |
+|---|---|---|---|---|
+| canonical instruction sources | reviewed semantic source of truth for repository workflow expectations | human-readable instruction modules, durable workflow guidance, reviewed behavioral expectations | client-specific formatting, highly compressed runtime phrasing, hidden client assumptions | humans first, with downstream derivation use |
+| core runtime rules | short always-on operational constraints for a runtime environment | concise cross-cutting rules, stable safety constraints, universal repo workflow reminders | long explanations, task-specific procedures, broad architecture summaries | AI client/runtime |
+| task overlays | activate only the rules needed for a specific task or workflow mode | editing-specific guidance, review-specific guidance, architecture-analysis guidance, domain overlays | always-on base constraints, unrelated domain instructions, large passive context dumps | AI client/runtime for a specific task |
+| local-adapted runtime artifacts | deployment-ready runtime-facing outputs derived from governed sources | workspace rule files, client-specific rule bundles, operationalized local rule text | unreviewed semantic source material, unrelated repository documents, opaque transformations without traceability | specific target client/runtime |
+
+This taxonomy implies several package expectations:
+
+- canonical instruction sources remain the semantic source of truth
+- core runtime rules should stay short enough to be practical in always-on local contexts
+- task overlays should be selectively activated rather than permanently attached to every workflow
+- local-adapted runtime artifacts may compress or operationalize source material, but should not silently change its intent
+- client-specific runtime artifacts should be derived from governed sources rather than authored as disconnected parallel instruction systems
+
+The boundaries between tiers should remain explicit.
+
+In particular:
+
+- a canonical instruction source is not the same thing as a runtime artifact
+- a task overlay is not the same thing as a governed repository resource
+- a runtime artifact may incorporate rule content derived from canonical sources, but it should not replace those sources as the reviewed human-readable reference
+- repository context artifacts such as plan, design, schema, and decision files may inform overlays or runtime artifacts without themselves becoming rules
+
+The first traceability expectation for this taxonomy is minimal but important:
+
+- for any local-adapted runtime artifact, the package methodology should preserve a visible link back to the canonical instruction source or sources that informed it
+- where task overlays are derived or standardized, their relationship to the relevant source instructions should also remain reviewable
+- exact derivation mechanics remain an implementation-stage question and should not be prematurely fixed here
+
 
 ### 4. Workflow layer
 The architecture should standardize workflow modes instead of assuming one generic chat protocol is sufficient.
