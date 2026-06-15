@@ -199,6 +199,57 @@ Recommended context patterns should include:
 
 The package should discourage indiscriminate broad workspace injection as a default workflow.
 
+### First-pass governed AI context resource classification
+The architecture now needs a stable first-pass classification for repository artifacts that should be treated as governed AI context.
+
+This classification is intended to support:
+- context selection guidance for local and hybrid workflows
+- later runtime-artifact derivation work
+- future MCP resource exposure
+- competency-question-based evaluation of whether workflows are using the right repository context
+
+The first-pass governed resource set is:
+
+| Artifact | Primary role | Typical use in AI workflows | Default context posture |
+|---|---|---|---|
+| `dev/05_plan.md` | active planning and next-step control | identify current priorities, determine smallest useful next step, align work with active milestone scope | task-conditional but frequently relevant |
+| `dev/10_design.md` | stable current architecture and package boundaries | answer questions about implemented architecture, invariants, and current supported package behavior | high-priority governance context for architecture and implementation tasks |
+| `dev/40_schemas.md` | structural contracts and explicit data or object expectations | validate assumptions about package structures, result objects, file conventions, and other maintained schemas | high-priority when touching structured package behavior |
+| `dev/decisions/` | durable decision provenance and scope boundaries | confirm accepted or proposed architectural direction, non-goals, and rationale before extending package behavior | task-conditional but high-value for architectural changes |
+| `dev/instructions/` | active repository-specific behavioral guidance | govern chat behavior, development workflow expectations, and module-specific instruction constraints | high-priority session-governance context |
+
+This classification distinguishes several context roles that should remain conceptually separate:
+
+- **behavioral governance context**
+  - instructions that shape how the AI assistant should behave in the repository
+  - currently centered on `dev/instructions/`
+- **stable architectural context**
+  - documents that describe implemented architecture and package boundaries
+  - currently centered on `dev/10_design.md`
+- **planning context**
+  - documents that define active priorities and work sequencing
+  - currently centered on `dev/05_plan.md`
+- **structural contract context**
+  - documents that define explicit schemas, result shapes, and maintained structural assumptions
+  - currently centered on `dev/40_schemas.md`
+- **decision provenance context**
+  - documents that explain why specific architectural directions were chosen or proposed
+  - currently centered on `dev/decisions/`
+
+This classification also implies a basic selection rule for local and hybrid workflows:
+
+- do not inject all governed artifacts into every task by default
+- always prefer the smallest context set that preserves correctness and governance fidelity
+- include `dev/instructions/` when behavioral constraints matter
+- include `dev/10_design.md` when the task touches current implemented architecture
+- include `dev/05_plan.md` when the task requires prioritization or milestone alignment
+- include `dev/40_schemas.md` when the task depends on structural correctness or schema assumptions
+- include `dev/decisions/` when the task depends on rationale, scope boundaries, or proposed architectural direction
+
+The distinction between governed repository resources and client-facing runtime artifacts should remain explicit.
+
+Governed repository resources are durable source context assets. Runtime artifacts are derived deployment outputs intended for direct use by AI clients. A repository document such as `dev/10_design.md` is not itself a runtime rule, even if it later informs one.
+
 ### 3. Rule layer
 The architecture should standardize rule tiers.
 
@@ -319,13 +370,13 @@ The package architecture should distinguish at least five MCP-aware concepts:
 These package concepts align naturally with MCP.
 
 #### MCP resources
-Natural candidates include:
+Natural candidates include:  
 - governed repository resources
 - package-generated summaries of architecture, schema, or API state
 - selected canonical instruction sources when they are useful as structured context
 
 #### MCP tools
-Natural candidates include:
+Natural candidates include:  
 - governed tools
 - validation helpers
 - derivation helpers
@@ -333,7 +384,7 @@ Natural candidates include:
 - cross-repo API inspection helpers
 
 #### MCP prompts
-Natural candidates include:
+Natural candidates include:  
 - workflow prompts and templates
 - standardized task entrypoints for governed repository work
 - hybrid workflow routing prompts
@@ -373,7 +424,7 @@ The following items are the intended first implementation targets. They translat
 ### 1. Governed resource classification
 Define the first explicit package convention for which repository artifacts count as governed AI context.
 
-This should likely start with:
+This should likely start with:  
 - `dev/05_plan.md`
 - `dev/10_design.md`
 - `dev/40_schemas.md`
@@ -384,7 +435,7 @@ This should likely start with:
 Define the first formal package support for deploying workspace-local Continue runtime rules derived from canonical instruction sources.
 
 ### 3. MCP-oriented capability design
-Define the first conceptual set of:
+Define the first conceptual set of:  
 - MCP resources
 - MCP tools
 - MCP prompts
@@ -392,7 +443,7 @@ Define the first conceptual set of:
 The first iteration may be documented or scaffolded before it is fully package-deployed.
 
 ### 4. Competency-question evaluation
-Define at least one evaluation path that tests whether:
+Define at least one evaluation path that tests whether:  
 - governed resources are usable as intended
 - runtime rules reflect the intended instruction source
 - the workflow improves local context awareness in a measurable way
@@ -402,32 +453,32 @@ This first implementation slice should prioritize architecture clarity and metho
 ## Remaining implementation questions
 
 ### 1. Rule derivation mechanics
-Open implementation questions:
+Open implementation questions:  
 - which parts of local-rule derivation can be automated safely
 - which parts require mandatory human editing or approval
 - how derivation lineage should be recorded
 
 ### 2. Client support sequence
-Open implementation questions:
+Open implementation questions:  
 - what the first Continue-specific scaffolding should include
 - how client-specific runtime artifacts should be abstracted so later clients can be supported without redesign
 
 ### 3. MCP deployment pattern
-Open implementation questions:
+Open implementation questions:  
 - which governed resources should be exposed first through MCP
 - which tools should be exposed first through MCP
 - which prompts or workflow templates belong in MCP versus static instruction modules
 - whether MCP helpers should be generated by the package, documented by the package, or both
 
 ### 4. Evaluation harness design
-Open implementation questions:
+Open implementation questions:  
 - how competency questions should be represented in package tests
 - what fixtures and scoring conventions should be used
 - how local-context-aware behavior should be tested consistently
 - how MCP-enabled workflows should be evaluated alongside non-MCP workflows
 
 ### 5. Recipe and deployment structure
-Open implementation questions:
+Open implementation questions:  
 - whether frontier-oriented and local-oriented workflows should be represented as separate recipe families
 - how hybrid workflow guidance should be exposed to users
 - how much deployment logic belongs in handlers versus supporting helpers
