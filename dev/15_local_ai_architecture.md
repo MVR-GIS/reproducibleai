@@ -265,7 +265,7 @@ The package should distinguish between:
 
 This distinction should become a formal part of package methodology rather than an ad hoc practice.
 
-### First formal rule-tier taxonomy
+#### First formal rule-tier taxonomy
 The package should treat the rule layer as a small governed taxonomy rather than a single undifferentiated body of instructions.
 
 The first formal rule tiers are:
@@ -339,6 +339,48 @@ This layer should include:
 - trust and deployment assumptions for local and hybrid integrations
 
 The integration layer is where `reproducibleai` should connect its governed internal artifacts to external AI tooling without becoming a generic AI platform itself.
+
+#### First Continue deployment boundary
+Continue should be treated as the first client integration target for local runtime-rule deployment, but Continue-specific deployment details should remain bounded within the integration layer.
+
+The first deployment boundary should distinguish three separate concerns:
+
+1. **canonical instruction sources**
+   - reviewed human-readable source materials maintained by the repository
+   - these remain the semantic source of truth
+   - they should continue to live in package-governed source locations rather than being replaced by client-facing rule files
+
+2. **repository-tracked derived Continue runtime artifacts**
+   - workspace-level artifacts derived from canonical instruction sources for Continue use
+   - these may include compressed always-on rules, task overlays, or other runtime-facing artifacts appropriate for repository-local activation
+   - these artifacts should remain reviewable, traceable, and clearly marked as derived outputs rather than primary source materials
+
+3. **user-local Continue or client configuration**
+   - personal model-provider settings
+   - local machine or account-specific runtime preferences
+   - private credentials, provider endpoints, and other environment-specific details
+   - these should not be treated as package-governed repository artifacts
+
+This boundary implies several package expectations:
+
+- the repository should own reviewed source instructions and any repo-governed derived runtime artifacts intended for shared team use
+- the individual user should own personal Continue configuration, personal model/provider choices unless the team explicitly standardizes some portion of them, and local secrets or environment settings
+- `reproducibleai` should help standardize shared repository-governed runtime artifacts without trying to own the entire local client environment
+- Continue-specific integration should be implemented through bounded adapters or deployment helpers rather than by spreading client-specific assumptions across the package core
+
+The first deployment boundary also implies a default repository posture:
+
+- canonical instruction sources should be versioned and reviewed as durable repository artifacts
+- shared derived Continue runtime artifacts may be versioned in the repository when they are part of the governed team workflow
+- user-local configuration should remain outside the package’s repository-governed source-of-truth model unless a team explicitly adopts a separate managed convention for it
+
+This boundary should remain compatible with later support for other clients.
+
+Continue is the first deployment target, not the only conceptual target. The package should define deployment responsibilities in a client-aware but client-bounded way so that future adapters do not require redesigning the core methodology.
+
+
+***
+
 
 ## MCP-aware package architecture
 
