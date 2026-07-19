@@ -80,12 +80,29 @@ function Wait-Url([string]$url, [int]$seconds = 30) {
   return $false
 }
 
+function Get-TcpListenerPid([int]$Port) {
+  try {
+    $c = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction Stop | Select-Object -First 1
+    if ($null -ne $c) { return [int]$c.OwningProcess }
+  } catch {}
+  return $null
+}
+
+function Assert-PortFree([int]$Port, [string]$Name) {
+  $pid = Get-TcpListenerPid -Port $Port
+  if ($null -ne $pid) {
+    $proc = Get-Process -Id $pid -ErrorAction SilentlyContinue
+    $pname = if ($proc) { $proc.ProcessName } else { "unknown" }
+    throw "$Name port $Port already in use by PID=$pid ($pname)."
+  }
+}
+
 function Stop-StaleWebUIProcesses {
   param([string]$PythonPath)
 
   Log "Stopping stale Open WebUI processes..."
 
-  # 1) Stop open-webui.exe wrappers if present
+  # Stop open-webui.exe wrappers
   Get-Process -Name "open-webui" -ErrorAction SilentlyContinue | ForEach-Object {
     try {
       Stop-Process -Id $_.Id -Force -ErrorAction Stop
@@ -95,16 +112,14 @@ function Stop-StaleWebUIProcesses {
     }
   }
 
-  # 2) Stop python processes running open_webui from target env
-  $pyName = [System.IO.Path]::GetFileName($PythonPath).ToLowerInvariant()
-  $pyDir  = [System.IO.Path]::GetDirectoryName($PythonPath).ToLowerInvariant()
-
+  # Stop python processes running open_webui from target env
+  $pyDir = [System.IO.Path]::GetDirectoryName($PythonPath).ToLowerInvariant()
   $candidates = Get-CimInstance Win32_Process -Filter "Name='python.exe'" -ErrorAction SilentlyContinue
   foreach ($p in $candidates) {
     $cmd = [string]$p.CommandLine
     if ([string]::IsNullOrWhiteSpace($cmd)) { continue }
-
     $cmdLower = $cmd.ToLowerInvariant()
+
     $isTargetEnvPython = $cmdLower.Contains($pyDir)
     $isOpenWebUI = $cmdLower.Contains("open_webui") -or $cmdLower.Contains("open-webui")
 
@@ -245,6 +260,10 @@ try {
 
   Stop-StaleWebUIProcesses -PythonPath $PythonExe
 
+  # Ensure target ports are free before launch
+  Assert-PortFree -Port 8080 -Name "Open WebUI"
+  # don't assert 11434 free: Ollama may already run and that's valid
+
   # Ensure Ollama
   if (-not (Get-Process "ollama" -ErrorAction SilentlyContinue)) {
     Log "Starting ollama serve..."
@@ -305,6 +324,13 @@ try {
     $tail = (Get-Content -Path $WebUILog -Tail 150 -ErrorAction SilentlyContinue) -join "`n"
     throw "Open WebUI not reachable on :8080. Log tail:`n$tail"
   }
+
+  # Validate that 8080 owner is the launched process (or child fallback scenario)
+  $portPid = Get-TcpListenerPid -Port 8080
+  if ($null -eq $portPid) {
+    throw "Open WebUI responded but no listener PID found on port 8080."
+  }
+  Log "Port 8080 listener PID=$portPid; launched PID=$($p.Id)"
 
   Log "Open WebUI reachable on :8080"
   Write-RunSummary -Status "SUCCESS" -Message "Open WebUI reachable and launch checks passed."

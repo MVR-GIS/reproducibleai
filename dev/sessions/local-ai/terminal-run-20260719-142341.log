@@ -1,0 +1,31 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260719142341
+Username: MVD\B5PMMMPD
+RunAs User: MVD\B5PMMMPD
+Configuration Name: 
+Machine: EMVRW07V05NBAEJ (Microsoft Windows NT 10.0.22631.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -noexit -command try { . "c:\workspace\positron\Positron\resources\app\out\vs\workbench\contrib\terminal\common\scripts\shellIntegration.ps1" } catch {}
+Process ID: 65388
+PSVersion: 5.1.22621.6931
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.22621.6931
+BuildVersion: 10.0.22621.6931
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is C:\workspace\MVR-GIS\reproducibleai\dev\sessions\local-ai\terminal-run-20260719-142341.log
+[LOAD] Skipping deploy.ps1 (use -Deploy to include it).
+[LOAD] Running launch.ps1 ...
+PS>TerminatingError(ConvertFrom-Json): "A parameter cannot be found that matches parameter name 'AsHashtable'."
+>> TerminatingError(): "open-webui-mcp-routing.json invalid UTF-8 JSON: A parameter cannot be found that matches parameter name 'AsHashtable'."
+[FAIL] launch.ps1: open-webui-mcp-routing.json invalid UTF-8 JSON: A parameter cannot be found that matches parameter name 'AsHashtable'.
+Diag log: C:\workspace\MVR-GIS\reproducibleai\dev\sessions\local-ai\launch-diag-20260719-142341.log
+Run summary: C:\workspace\MVR-GIS\reproducibleai\dev\sessions\local-ai\run-summary-20260719-142341.md
+PS>TerminatingError(): "open-webui-mcp-routing.json invalid UTF-8 JSON: A parameter cannot be found that matches parameter name 'AsHashtable'."
+**********************
+Windows PowerShell transcript end
+End time: 20260719142341
+**********************
