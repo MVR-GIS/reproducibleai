@@ -98,6 +98,17 @@ function Resolve-PythonExecutable {
     return $null
 }
 
+function Assert-WebUiPythonConfigured {
+    param(
+        [switch]$IsMcpOnly,
+        [string]$ConfiguredPython
+    )
+    if ($IsMcpOnly.IsPresent) { return }
+    if ([string]::IsNullOrWhiteSpace($ConfiguredPython)) {
+        throw "Non-McpOnly mode requires -OpenWebUiPython (or OPENWEBUI_PYTHON) for deterministic launch."
+    }
+}
+
 function Invoke-Python {
     param(
         [Parameter(Mandatory=$true)][string]$PythonExe,
@@ -343,11 +354,11 @@ $openWebUiImport = [pscustomobject]@{ ok = $false; message = "not checked" }
 if ($McpOnly.IsPresent) {
     Write-Diag "MCP-only mode enabled. Skipping Open WebUI launch."
 } else {
+    Assert-WebUiPythonConfigured -IsMcpOnly:$McpOnly.IsPresent -ConfiguredPython $OpenWebUiPython
     $pythonExe = Resolve-PythonExecutable -Preferred $OpenWebUiPython
 
     if ($null -eq $pythonExe) {
-        Write-Diag "WARNING: python not found for Open WebUI launch."
-        Write-Diag "Hint: set OPENWEBUI_PYTHON env var or pass -OpenWebUiPython."
+        throw ("Configured Open WebUI python could not be resolved: " + $OpenWebUiPython)
     } else {
         Write-Diag ("Python executable selected: " + $pythonExe)
 
@@ -400,6 +411,7 @@ if ($McpOnly.IsPresent) {
         Write-Diag ("Open WebUI health ok=" + $webuiCheck.ok)
     } else {
         Write-Diag "WARNING: Skipping Open WebUI launch due to failed import gate."
+        Write-Diag ("Deterministic fix command: `"" + $pythonExe + "`" -m pip install open-webui")
     }
 }
 
