@@ -11,9 +11,7 @@ $LogDir         = Join-Path $ExecutionDir "dev\sessions\local-ai"
 $ConfigDir      = Join-Path $ExecutionDir "dev\config"
 $RepoMcpPath    = Join-Path $ConfigDir "open-webui-mcp-routing.json"
 $BoundsPath     = Join-Path $ConfigDir "workspace-bounds.json"
-
-$McpOutPathPrimary = Join-Path $DataDir "mcp_config.json"
-$McpOutPathAlt     = Join-Path $DataDir "mcp.json"
+$McpOutPath     = Join-Path $DataDir "mcp_config.json"
 
 if (-not (Test-Path $LogDir)) { New-Item -ItemType Directory -Force -Path $LogDir | Out-Null }
 if (-not (Test-Path $DataDir)) { New-Item -ItemType Directory -Force -Path $DataDir | Out-Null }
@@ -80,7 +78,6 @@ function Merge-RepoConfig {
   foreach ($kv in $repo.mcpServers.GetEnumerator()) {
     $Cfg.mcpServers[$kv.Key] = $kv.Value
   }
-
   return $Cfg
 }
 
@@ -103,9 +100,7 @@ function Normalize-And-Validate {
       $s["args"] = @()
     } else {
       $resolved = @()
-      foreach ($a in $s["args"]) {
-        $resolved += (Resolve-TokenString -Text ([string]$a) -WorkspaceRoot $WorkspaceRoot)
-      }
+      foreach ($a in $s["args"]) { $resolved += (Resolve-TokenString -Text ([string]$a) -WorkspaceRoot $WorkspaceRoot) }
       $s["args"] = $resolved
     }
 
@@ -114,7 +109,7 @@ function Normalize-And-Validate {
     }
 
     $Cfg.mcpServers[$name] = $s
-    Log-Diag "MCP[$name] command=$($s["command"]) args=$([string]::Join(',', $s["args"]))"
+    Log-Diag "MCP[$name] command=$($s["command"])"
   }
 
   return $Cfg
@@ -133,6 +128,19 @@ function Wait-Ollama([int]$MaxSeconds = 25) {
   return $false
 }
 
+function Wait-WebUI([int]$MaxSeconds = 40) {
+  $deadline = (Get-Date).AddSeconds($MaxSeconds)
+  do {
+    try {
+      $resp = Invoke-WebRequest -Uri "http://localhost:8080" -UseBasicParsing -TimeoutSec 3
+      if ($resp.StatusCode -ge 200 -and $resp.StatusCode -lt 500) { return $true }
+    } catch {
+      Start-Sleep -Seconds 1
+    }
+  } while ((Get-Date) -lt $deadline)
+  return $false
+}
+
 try {
   $WorkspaceRoot = Get-WorkspaceRoot -ExecutionDir $ExecutionDir -BoundsPath $BoundsPath
   Log-Diag "WorkspaceRoot=$WorkspaceRoot"
@@ -142,19 +150,17 @@ try {
   $cfg = Normalize-And-Validate -Cfg $cfg -WorkspaceRoot $WorkspaceRoot
 
   $json = $cfg | ConvertTo-Json -Depth 50
-  Write-Utf8NoBom -Path $McpOutPathPrimary -Content $json
-  Write-Utf8NoBom -Path $McpOutPathAlt -Content $json
+  Write-Utf8NoBom -Path $McpOutPath -Content $json
+  Log-Diag "Wrote MCP config: $McpOutPath"
 
   # Runtime env
   $env:DATA_DIR = $DataDir
-
-  # Set multiple MCP env vars for compatibility across Open WebUI variants
-  $env:MCP_CONFIG_PATH = $McpOutPathPrimary
-  $env:MCP_CONFIG_FILE = $McpOutPathPrimary
-  $env:OPEN_WEBUI_MCP_CONFIG_PATH = $McpOutPathPrimary
-  $env:OPENWEBUI_MCP_CONFIG_PATH = $McpOutPathPrimary
-
+  $env:MCP_CONFIG_PATH = $McpOutPath
+  $env:MCP_CONFIG_FILE = $McpOutPath
+  $env:OPEN_WEBUI_MCP_CONFIG_PATH = $McpOutPath
+  $env:OPENWEBUI_MCP_CONFIG_PATH = $McpOutPath
   $env:ENABLE_MCP = "true"
+
   $env:OLLAMA_BASE_URL = "http://localhost:11434"
   $env:OLLAMA_MODELS   = Join-Path $LocalStackDir "ollama\models"
 
@@ -162,38 +168,50 @@ try {
   $env:OPENAI_API_BASE_URL = ""
   $env:OPENAI_API_BASE_URLS = ""
   $env:OPENAI_API_KEYS = ""
-
   $env:RAG_EMBEDDING_ENGINE = "ollama"
   $env:ENABLE_PERSISTENT_CONFIG = "false"
   $env:WEBUI_AUTH = "false"
 
-  Log-Diag "MCP env vars set:"
-  Log-Diag "  MCP_CONFIG_PATH=$env:MCP_CONFIG_PATH"
-  Log-Diag "  MCP_CONFIG_FILE=$env:MCP_CONFIG_FILE"
-  Log-Diag "  OPEN_WEBUI_MCP_CONFIG_PATH=$env:OPEN_WEBUI_MCP_CONFIG_PATH"
-  Log-Diag "  OPENWEBUI_MCP_CONFIG_PATH=$env:OPENWEBUI_MCP_CONFIG_PATH"
-
-  # Clean restart
   Get-Process -Name "open-webui" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
   Start-Sleep -Seconds 1
 
   if (-not (Get-Process "ollama" -ErrorAction SilentlyContinue)) {
     Start-Process -FilePath "ollama" -ArgumentList "serve" -WindowStyle Hidden
   }
-
   if (-not (Wait-Ollama -MaxSeconds 25)) {
     throw "Ollama health check failed at http://localhost:11434/api/tags"
   }
+  Log-Diag "Ollama healthy."
 
   $WebUIExe = Join-Path $env:USERPROFILE "AppData\Local\miniforge3\envs\open-webui-gov\Scripts\open-webui.exe"
   if (-not (Test-Path $WebUIExe)) { throw "Open WebUI executable not found: $WebUIExe" }
 
-  Start-Process -FilePath $WebUIExe -ArgumentList "serve" `
+  $p = Start-Process -FilePath $WebUIExe -ArgumentList "serve" `
     -RedirectStandardOutput $WebUILog `
     -RedirectStandardError $WebUILog `
-    -WindowStyle Hidden
+    -WindowStyle Hidden `
+    -PassThru
 
-  Write-Host "[SUCCESS] Local workstation launched." -ForegroundColor Green
+  Log-Diag "Open WebUI PID=$($p.Id)"
+  Start-Sleep -Seconds 2
+
+  if ($p.HasExited) {
+    $tail = ""
+    if (Test-Path $WebUILog) {
+      $tail = (Get-Content -Path $WebUILog -Tail 40 -ErrorAction SilentlyContinue) -join "`n"
+    }
+    throw "Open WebUI exited immediately (PID $($p.Id)). Log tail:`n$tail"
+  }
+
+  if (-not (Wait-WebUI -MaxSeconds 40)) {
+    $tail = ""
+    if (Test-Path $WebUILog) {
+      $tail = (Get-Content -Path $WebUILog -Tail 60 -ErrorAction SilentlyContinue) -join "`n"
+    }
+    throw "Open WebUI did not become reachable on http://localhost:8080 within timeout. Log tail:`n$tail"
+  }
+
+  Write-Host "[SUCCESS] Local workstation launched and WebUI is reachable." -ForegroundColor Green
   Write-Host "Open WebUI: http://localhost:8080" -ForegroundColor Yellow
   Write-Host "WebUI log: $WebUILog" -ForegroundColor Yellow
   Write-Host "Diag log: $DiagLog" -ForegroundColor Yellow
