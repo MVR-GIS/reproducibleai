@@ -1,9 +1,13 @@
 # ==============================================================================
-# LOAD.PS1: Canonical runner for deploy + launch from repo root
+# LOAD.PS1: Canonical test harness for local workstation scripts
 # ==============================================================================
+param(
+  [switch]$Deploy,
+  [switch]$DebugForeground
+)
+
 $ErrorActionPreference = "Stop"
 
-# Force execution relative to THIS file's location (repo root)
 $RepoRoot = $PSScriptRoot
 Set-Location $RepoRoot
 
@@ -14,16 +18,37 @@ if (-not (Test-Path $SessionDir)) {
 
 $ts = Get-Date -Format "yyyyMMdd-HHmmss"
 $TranscriptPath = Join-Path $SessionDir "terminal-run-$ts.log"
+$LatestTranscript = Join-Path $SessionDir "latest-terminal-run.log"
+
+$DeployScript = Join-Path $RepoRoot "inst\local-workstation\deploy.ps1"
+$LaunchScript = Join-Path $RepoRoot "inst\local-workstation\launch.ps1"
 
 Start-Transcript -Path $TranscriptPath -Force
 try {
   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-  & (Join-Path $RepoRoot "inst\local-workstation\deploy.ps1")
-  & (Join-Path $RepoRoot "inst\local-workstation\launch.ps1")
+
+  if ($Deploy) {
+    Write-Host "[LOAD] Running deploy.ps1 ..." -ForegroundColor Cyan
+    & $DeployScript
+  } else {
+    Write-Host "[LOAD] Skipping deploy.ps1 (use -Deploy to include it)." -ForegroundColor DarkYellow
+  }
+
+  Write-Host "[LOAD] Running launch.ps1 ..." -ForegroundColor Cyan
+  if ($DebugForeground) {
+    & $LaunchScript -DebugForeground
+  } else {
+    & $LaunchScript
+  }
 }
 finally {
   Stop-Transcript
 }
 
-Write-Host "Transcript: $TranscriptPath" -ForegroundColor Green
-Write-Host "All logs directory: $SessionDir" -ForegroundColor Green
+# Update "latest" pointer copy for easy diagnostics
+Copy-Item -Path $TranscriptPath -Destination $LatestTranscript -Force
+
+Write-Host "[LOAD] Transcript: $TranscriptPath" -ForegroundColor Green
+Write-Host "[LOAD] Latest transcript pointer: $LatestTranscript" -ForegroundColor Green
+Write-Host "[LOAD] Logs directory: $SessionDir" -ForegroundColor Green
+Write-Host "[LOAD] Tip: use .\load.ps1 -Deploy after dependency/version changes only." -ForegroundColor DarkGray
