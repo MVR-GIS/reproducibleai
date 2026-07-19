@@ -1,6 +1,10 @@
 # ==============================================================================
 # LAUNCH.PS1: Local AI Workspace Orchestrator (Native STDIO MCP)
 # ==============================================================================
+param(
+  [switch]$DebugForeground
+)
+
 $ErrorActionPreference = "Stop"
 
 $ExecutionDir  = (Get-Location).Path
@@ -65,7 +69,6 @@ try {
   $workspaceRoot = Get-WorkspaceRoot
   Log "workspaceRoot=$workspaceRoot"
 
-  # Build MCP config
   $cfg = @{
     mcpServers = @{
       local_filesystem = @{
@@ -79,9 +82,8 @@ try {
     }
   }
 
-  # Optional repo overrides
   if (Test-Path $RepoMcpPath) {
-    Log "Applying repo overrides from $RepoMcpPath"
+    Log "Applying overrides from $RepoMcpPath"
     $repo = (Get-Content -Raw -Path $RepoMcpPath -Encoding UTF8) | ConvertFrom-Json -AsHashtable
     if ($repo.ContainsKey("mcpServers")) {
       foreach ($kv in $repo.mcpServers.GetEnumerator()) {
@@ -90,12 +92,9 @@ try {
     }
   }
 
-  # Normalize + validate
   foreach ($name in @($cfg.mcpServers.Keys)) {
     $s = $cfg.mcpServers[$name]
-
     if (-not $s.ContainsKey("command")) { throw "MCP server '$name' missing command" }
-
     $s.command = Resolve-Token $s.command $workspaceRoot
 
     if (-not $s.ContainsKey("args") -or $null -eq $s.args) {
@@ -106,28 +105,21 @@ try {
       $s.args = $resolvedArgs
     }
 
-    if (-not (Test-Path $s.command)) {
-      throw "MCP command not found for '$name': $($s.command)"
-    }
-
+    if (-not (Test-Path $s.command)) { throw "MCP command not found for '$name': $($s.command)" }
     $cfg.mcpServers[$name] = $s
     Log "MCP[$name] command=$($s.command)"
   }
 
-  # Persist resolved config
   $json = $cfg | ConvertTo-Json -Depth 30
   Write-Utf8NoBom -path $McpOutPath -content $json
   Log "Wrote MCP config: $McpOutPath"
 
-  # Env for WebUI
   $env:DATA_DIR = $DataDir
   $env:MCP_CONFIG_PATH = $McpOutPath
   $env:ENABLE_MCP = "true"
-
   $env:OLLAMA_BASE_URL = "http://localhost:11434"
   $env:OLLAMA_MODELS   = Join-Path $LocalStackDir "ollama\models"
   $env:RAG_EMBEDDING_ENGINE = "ollama"
-
   $env:ENABLE_OPENAI_API = "false"
   $env:OPENAI_API_BASE_URL = ""
   $env:OPENAI_API_BASE_URLS = ""
@@ -135,7 +127,6 @@ try {
   $env:ENABLE_PERSISTENT_CONFIG = "false"
   $env:WEBUI_AUTH = "false"
 
-  # Restart services
   Get-Process -Name "open-webui" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
   Start-Sleep -Seconds 1
 
@@ -148,8 +139,13 @@ try {
   }
 
   $WebUIExe = Join-Path $env:USERPROFILE "AppData\Local\miniforge3\envs\open-webui-gov\Scripts\open-webui.exe"
-  if (-not (Test-Path $WebUIExe)) {
-    throw "open-webui.exe not found: $WebUIExe"
+  if (-not (Test-Path $WebUIExe)) { throw "open-webui.exe not found: $WebUIExe" }
+
+  if ($DebugForeground) {
+    Write-Host "[DEBUG] Running Open WebUI in foreground. Ctrl+C to stop." -ForegroundColor Yellow
+    Write-Host "[DEBUG] If this errors, copy terminal output from here." -ForegroundColor Yellow
+    & $WebUIExe serve
+    exit $LASTEXITCODE
   }
 
   $p = Start-Process -FilePath $WebUIExe -ArgumentList "serve" `
@@ -160,12 +156,12 @@ try {
 
   Start-Sleep -Seconds 2
   if ($p.HasExited) {
-    $tail = (Get-Content -Path $WebUILog -Tail 50 -ErrorAction SilentlyContinue) -join "`n"
+    $tail = (Get-Content -Path $WebUILog -Tail 80 -ErrorAction SilentlyContinue) -join "`n"
     throw "Open WebUI exited immediately. Log tail:`n$tail"
   }
 
   if (-not (Wait-Url "http://localhost:8080" 40)) {
-    $tail = (Get-Content -Path $WebUILog -Tail 80 -ErrorAction SilentlyContinue) -join "`n"
+    $tail = (Get-Content -Path $WebUILog -Tail 120 -ErrorAction SilentlyContinue) -join "`n"
     throw "Open WebUI not reachable on :8080. Log tail:`n$tail"
   }
 
