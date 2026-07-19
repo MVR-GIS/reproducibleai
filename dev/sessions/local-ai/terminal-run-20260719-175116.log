@@ -1,6 +1,6 @@
 ﻿**********************
 Windows PowerShell transcript start
-Start time: 20260719173129
+Start time: 20260719175116
 Username: MVD\B5PMMMPD
 RunAs User: MVD\B5PMMMPD
 Configuration Name: 
@@ -28,16 +28,7 @@ PS>TerminatingError(Invoke-WebRequest): "The operation has timed out."
 Ollama health ok=False
 PS>TerminatingError(Invoke-WebRequest): "The operation has timed out."
 Open WebUI health ok=False
-PS>TerminatingError(launch.ps1): "At C:\workspace\MVR-GIS\reproducibleai\inst\local-workstation\write-summary.ps1:59 char:12
-+ $lines.Add("```")
-+            ~~~~~~
-The string is missing the terminator: ".
-
-At C:\workspace\MVR-GIS\reproducibleai\inst\local-workstation\write-summary.ps1:61 char:62
-+ $lines | Out-File -FilePath $RunSummary -Encoding utf8 -Force
-+                                                              ~
-Missing ')' in method call."
-[LOAD] ERROR: At C:\workspace\MVR-GIS\reproducibleai\inst\local-workstation\write-summary.ps1:59 char:12
+WARNING: Summary generation failed (non-blocking): At C:\workspace\MVR-GIS\reproducibleai\inst\local-workstation\write-summary.ps1:59 char:12
 + $lines.Add("```")
 +            ~~~~~~
 The string is missing the terminator: ".
@@ -46,7 +37,9 @@ At C:\workspace\MVR-GIS\reproducibleai\inst\local-workstation\write-summary.ps1:
 + $lines | Out-File -FilePath $RunSummary -Encoding utf8 -Force
 +                                                              ~
 Missing ')' in method call.
+WARNING: Open WebUI not reachable yet. Check logs.
+[LOAD] launch.ps1 completed.
 **********************
 Windows PowerShell transcript end
-End time: 20260719173143
+End time: 20260719175130
 **********************

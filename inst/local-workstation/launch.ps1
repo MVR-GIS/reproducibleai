@@ -1,5 +1,5 @@
 # ==============================================================================
-# launch.ps1 - Hardened Local Open WebUI + MCP launcher
+# launch.ps1 - Hardened Local Open WebUI + MCP launcher (non-blocking logging)
 # ==============================================================================
 [CmdletBinding()]
 param(
@@ -29,8 +29,12 @@ $ResolvedMcp = Join-Path $LocalAiDir "latest-mcp-config.resolved.json"
 
 function Write-Diag {
     param([string]$Message)
-    $line = "[{0}] {1}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $Message
-    Add-Content -Path $DiagLog -Value $line
+    try {
+        $line = "[{0}] {1}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $Message
+        Add-Content -Path $DiagLog -Value $line
+    } catch {
+        # non-blocking logging
+    }
     Write-Host $Message
 }
 
@@ -73,21 +77,29 @@ function Test-HttpEndpoint {
     }
 }
 
-# reset latest-only files first
+# reset latest-only files first (non-blocking)
 $latestFiles = @($DiagLog, $WebUiOutLog, $WebUiErrLog, $RunSummary, $ResolvedMcp)
 foreach ($f in $latestFiles) {
-    if (Test-Path $f) { Remove-Item -Path $f -Force -ErrorAction SilentlyContinue }
-    New-Item -ItemType File -Path $f -Force | Out-Null
+    try {
+        if (Test-Path $f) { Remove-Item -Path $f -Force -ErrorAction SilentlyContinue }
+        New-Item -ItemType File -Path $f -Force | Out-Null
+    } catch {
+        Write-Host ("[WARN] Failed to reset log artifact: " + $f)
+    }
 }
 
-# prune legacy logs
+# prune legacy logs (non-blocking)
 if ($PruneLegacyLogs.IsPresent -or $PruneLegacyLogs) {
-    $legacyPatterns = @("open-webui-*.log","launch-diag-*.log","run-summary-*.md","terminal-run-*.log")
-    foreach ($pattern in $legacyPatterns) {
-        Get-ChildItem -Path $LocalAiDir -Filter $pattern -ErrorAction SilentlyContinue |
-            Remove-Item -Force -ErrorAction SilentlyContinue
+    try {
+        $legacyPatterns = @("open-webui-*.log","launch-diag-*.log","run-summary-*.md","terminal-run-*.log")
+        foreach ($pattern in $legacyPatterns) {
+            Get-ChildItem -Path $LocalAiDir -Filter $pattern -ErrorAction SilentlyContinue |
+                Remove-Item -Force -ErrorAction SilentlyContinue
+        }
+        Write-Diag "Legacy timestamped logs pruned."
+    } catch {
+        Write-Diag ("WARNING: Legacy log pruning failed (non-blocking): " + $_.Exception.Message)
     }
-    Write-Diag "Legacy timestamped logs pruned."
 }
 
 # defaults
@@ -104,7 +116,7 @@ $defaultMcp = [ordered]@{
     }
 }
 
-# optional override
+# optional override (non-blocking fallback to defaults)
 $overrideMcp = $null
 if (Test-Path $RoutingPath) {
     try {
@@ -151,10 +163,16 @@ foreach ($serverName in $mergedServers.Keys) {
 }
 
 $resolvedObject = [ordered]@{ mcpServers = $resolvedMcpServers }
-($resolvedObject | ConvertTo-Json -Depth 20) | Set-Content -Path $ResolvedMcp -Encoding UTF8
-Write-Diag ("Resolved MCP config written: " + $ResolvedMcp)
 
-# validate commands
+# write resolved MCP config (non-blocking)
+try {
+    ($resolvedObject | ConvertTo-Json -Depth 20) | Set-Content -Path $ResolvedMcp -Encoding UTF8
+    Write-Diag ("Resolved MCP config written: " + $ResolvedMcp)
+} catch {
+    Write-Diag ("WARNING: Failed writing resolved MCP config (non-blocking): " + $_.Exception.Message)
+}
+
+# validate commands (THIS remains a real gate unless bypass flag set)
 $mcpValidation = @()
 $unresolvedCount = 0
 
@@ -195,10 +213,9 @@ $env:ENABLE_MCP = "true"
 $env:MCP_CONFIG_PATH = $ResolvedMcp
 $env:OLLAMA_BASE_URL = "http://localhost:11434"
 $env:ENABLE_PERSISTENT_CONFIG = "false"
-
 Write-Diag "Environment prepared for Open WebUI launch."
 
-# health check: ollama
+# health check: ollama (non-blocking)
 $ollamaCheck = Test-HttpEndpoint -Url "http://localhost:11434/api/tags" -TimeoutSec 4
 Write-Diag ("Ollama health ok=" + $ollamaCheck.ok)
 
@@ -232,26 +249,30 @@ Write-Diag ("Open WebUI health ok=" + $webuiCheck.ok)
 $finalStatus = "FAIL"
 if (($unresolvedCount -eq 0) -and $webuiCheck.ok) { $finalStatus = "PASS" }
 
+# summary/log artifacts are NON-BLOCKING
 $summaryWriter = Join-Path $ScriptDir "write-summary.ps1"
-if (-not (Test-Path $summaryWriter)) {
-    throw ("Missing summary writer: " + $summaryWriter)
+try {
+    if (Test-Path $summaryWriter) {
+        & $summaryWriter `
+            -RunSummary $RunSummary `
+            -ResolvedMcp $ResolvedMcp `
+            -RepoRoot $RepoRoot `
+            -LaunchMode $launchMode `
+            -FinalStatus $finalStatus `
+            -DiagLog $DiagLog `
+            -WebUiOutLog $WebUiOutLog `
+            -WebUiErrLog $WebUiErrLog `
+            -UnresolvedCount $unresolvedCount `
+            -McpValidation $mcpValidation `
+            -OllamaCheck $ollamaCheck `
+            -WebUiCheck $webuiCheck
+        Write-Diag ("Run summary written: " + $RunSummary)
+    } else {
+        Write-Diag ("WARNING: Summary writer missing: " + $summaryWriter + " (non-blocking)")
+    }
+} catch {
+    Write-Diag ("WARNING: Summary generation failed (non-blocking): " + $_.Exception.Message)
 }
-
-& $summaryWriter `
-    -RunSummary $RunSummary `
-    -ResolvedMcp $ResolvedMcp `
-    -RepoRoot $RepoRoot `
-    -LaunchMode $launchMode `
-    -FinalStatus $finalStatus `
-    -DiagLog $DiagLog `
-    -WebUiOutLog $WebUiOutLog `
-    -WebUiErrLog $WebUiErrLog `
-    -UnresolvedCount $unresolvedCount `
-    -McpValidation $mcpValidation `
-    -OllamaCheck $ollamaCheck `
-    -WebUiCheck $webuiCheck
-
-Write-Diag ("Run summary written: " + $RunSummary)
 
 if ($webuiCheck.ok) {
     Write-Diag "SUCCESS: Open WebUI reachable at http://localhost:8080"
@@ -259,3 +280,6 @@ if ($webuiCheck.ok) {
 } else {
     Write-Diag "WARNING: Open WebUI not reachable yet. Check logs."
 }
+
+# do not fail because summary/logging failed
+exit 0
