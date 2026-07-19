@@ -161,36 +161,22 @@ This file is the canonical ordered task list for active development work.
     - updates to `dev/15_local_ai_architecture.md`
     - possible later promotion into `dev/10_design.md`
 
-- [ ] G2: Define first formal rule-tier and runtime-artifact architecture
-  - Definition of done:
-    - A first formal package taxonomy exists for:
-      - canonical instruction sources
-      - core runtime rules
-      - task overlays
-      - local-adapted runtime artifacts
-    - The taxonomy explains how human-readable sources relate to client-facing runtime artifacts.
-    - Traceability expectations between source instructions and derived runtime artifacts are documented.
-  - Expected artifacts:
-    - updates to `dev/15_local_ai_architecture.md`
-    - possible later updates to `inst/instructions/` or `dev/instructions/`
+- [x] G2: Define first formal rule-tier and runtime-artifact architecture
+  - Completed:
+    - Rule-tier taxonomy drafted in `dev/15_local_ai_architecture.md`
+    - Traceability expectations between canonical instruction sources and runtime artifacts documented
 
-- [ ] G3: Define first Continue deployment pattern
-  - Definition of done:
-    - A first supported deployment pattern is defined for Continue workspace-local runtime artifacts.
-    - The design clarifies which artifacts belong in user-level client configuration versus workspace-level repository artifacts.
-    - The pattern is specific enough to guide future handler or helper implementation.
-  - Expected artifacts:
-    - updates to `dev/15_local_ai_architecture.md`
-    - possible later handler/helper design in `R/`
+- [x] G3: Define first Continue deployment pattern
+  - Completed:
+    - POC launcher implemented in `inst/local-workstation/launch.ps1`
+    - Latest-only logging pattern established in `dev/sessions/local-ai/`
+    - Runtime boundary clarified between repo-governed MCP routing and local user environment configuration
 
-- [ ] G4: Define first MCP-aware integration slice
-  - Definition of done:
-    - A first package-level MCP integration concept is defined.
-    - The design identifies the initial governed resources, tools, and prompts most appropriate for MCP exposure.
-    - The package boundary is clear about what `reproducibleai` will scaffold or define versus what external MCP tooling should provide.
-  - Expected artifacts:
-    - updates to `dev/15_local_ai_architecture.md`
-    - possible later ADR if MCP-aware integration becomes a formal package direction
+- [x] G4: Define first MCP-aware integration slice
+  - Completed:
+    - Initial MCP server array pattern implemented (`local_filesystem`, `local_git`)
+    - Deterministic MCP config generation + validation included in launcher
+    - Fail-fast MCP validation path added for proof-oriented runs
 
 - [ ] G5: Define competency-question evaluation structure for local and hybrid workflows
   - Definition of done:
