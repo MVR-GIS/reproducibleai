@@ -1,0 +1,40 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260719131921
+Username: MVD\B5PMMMPD
+RunAs User: MVD\B5PMMMPD
+Configuration Name: 
+Machine: EMVRW07V05NBAEJ (Microsoft Windows NT 10.0.22631.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -noexit -command try { . "c:\workspace\positron\Positron\resources\app\out\vs\workbench\contrib\terminal\common\scripts\shellIntegration.ps1" } catch {}
+Process ID: 38788
+PSVersion: 5.1.22621.6931
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.22621.6931
+BuildVersion: 10.0.22621.6931
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is .\dev\sessions\local-ai\terminal-run-20260719-131921.log
+Configuring certificate and environment parameters...
+Locating conda...
+Ensuring conda env 'open-webui-gov' exists...
+Installing Open WebUI 0.10.2...
+
+Starting temporary Ollama daemon...
+Caching model: qwen2.5-coder:32b-instruct
+
+Stopping temporary Ollama daemon...
+
+[SUCCESS] Deployment completed.
+Operating Mode: REPO-ISOLATED (Project: reproducibleai-dev-sandbox)
+PS>TerminatingError(Invoke-RestMethod): "The operation has timed out."
+PS>TerminatingError(Start-Process): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: This command cannot be run because "RedirectStandardOutput" and "RedirectStandardError" are same. Give different inputs and Run your command again."
+[FAIL] launch.ps1: This command cannot be run because "RedirectStandardOutput" and "RedirectStandardError" are same. Give different inputs and Run your command again.
+Diag log: C:\workspace\MVR-GIS\reproducibleai\dev\sessions\local-ai\launch-diag-20260719-131929.log
+PS>TerminatingError(Start-Process): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: This command cannot be run because "RedirectStandardOutput" and "RedirectStandardError" are same. Give different inputs and Run your command again."
+**********************
+Windows PowerShell transcript end
+End time: 20260719131934
+**********************
