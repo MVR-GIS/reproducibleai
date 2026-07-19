@@ -1,12 +1,16 @@
-[2026-07-19 17:51:16] Legacy timestamped logs pruned.
-[2026-07-19 17:51:16] Loaded MCP override: C:\workspace\MVR-GIS\reproducibleai\dev\config\open-webui-mcp-routing.json
-[2026-07-19 17:51:16] Resolved MCP config written: C:\workspace\MVR-GIS\reproducibleai\dev\sessions\local-ai\latest-mcp-config.resolved.json
-[2026-07-19 17:51:16] MCP local_filesystem ok=True check=Test-Path cmd=C:\Users\B5PMMMPD\AppData\Roaming\npm\mcp-server-filesystem.cmd
-[2026-07-19 17:51:16] MCP local_git ok=True check=Test-Path cmd=C:\Users\B5PMMMPD\AppData\Roaming\npm\mcp-server-git.cmd
-[2026-07-19 17:51:16] Environment prepared for Open WebUI launch.
-[2026-07-19 17:51:20] Ollama health ok=False
-[2026-07-19 17:51:30] Open WebUI health ok=False
-[2026-07-19 17:51:30] WARNING: Summary generation failed (non-blocking): At C:\workspace\MVR-GIS\reproducibleai\inst\local-workstation\write-summary.ps1:59 char:12
+[2026-07-19 18:00:31] Legacy timestamped logs pruned.
+[2026-07-19 18:00:31] Loaded MCP override: C:\workspace\MVR-GIS\reproducibleai\dev\config\open-webui-mcp-routing.json
+[2026-07-19 18:00:31] Resolved MCP config written: C:\workspace\MVR-GIS\reproducibleai\dev\sessions\local-ai\latest-mcp-config.resolved.json
+[2026-07-19 18:00:31] MCP local_filesystem ok=True check=Test-Path cmd=C:\Users\B5PMMMPD\AppData\Roaming\npm\mcp-server-filesystem.cmd
+[2026-07-19 18:00:31] MCP local_git ok=True check=Test-Path cmd=C:\Users\B5PMMMPD\AppData\Roaming\npm\mcp-server-git.cmd
+[2026-07-19 18:00:32] MCP smoke local_filesystem ok=True msg=started (terminated after smoke interval)
+[2026-07-19 18:00:33] MCP smoke local_git ok=True msg=exited code 0
+[2026-07-19 18:00:33] Environment prepared for Open WebUI launch.
+[2026-07-19 18:00:37] Ollama health ok=False
+[2026-07-19 18:00:37] Python executable: C:\Users\B5PMMMPD\AppData\Local\miniforge3\python.exe
+[2026-07-19 18:00:37] open_webui import ok=False msg=Traceback (most recent call last):
+[2026-07-19 18:00:37] WARNING: Skipping Open WebUI launch due to failed import gate.
+[2026-07-19 18:00:37] WARNING: Summary generation failed (non-blocking): At C:\workspace\MVR-GIS\reproducibleai\inst\local-workstation\write-summary.ps1:59 char:12
 + $lines.Add("```")
 +            ~~~~~~
 The string is missing the terminator: ".
@@ -15,4 +19,4 @@ At C:\workspace\MVR-GIS\reproducibleai\inst\local-workstation\write-summary.ps1:
 + $lines | Out-File -FilePath $RunSummary -Encoding utf8 -Force
 +                                                              ~
 Missing ')' in method call.
-[2026-07-19 17:51:30] WARNING: Open WebUI not reachable yet. Check logs.
+[2026-07-19 18:00:37] WARNING: Open WebUI not reachable yet. Check logs.

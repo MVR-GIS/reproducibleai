@@ -1,6 +1,6 @@
 ﻿**********************
 Windows PowerShell transcript start
-Start time: 20260719175116
+Start time: 20260719180031
 Username: MVD\B5PMMMPD
 RunAs User: MVD\B5PMMMPD
 Configuration Name: 
@@ -23,11 +23,15 @@ Loaded MCP override: C:\workspace\MVR-GIS\reproducibleai\dev\config\open-webui-m
 Resolved MCP config written: C:\workspace\MVR-GIS\reproducibleai\dev\sessions\local-ai\latest-mcp-config.resolved.json
 MCP local_filesystem ok=True check=Test-Path cmd=C:\Users\B5PMMMPD\AppData\Roaming\npm\mcp-server-filesystem.cmd
 MCP local_git ok=True check=Test-Path cmd=C:\Users\B5PMMMPD\AppData\Roaming\npm\mcp-server-git.cmd
+MCP smoke local_filesystem ok=True msg=started (terminated after smoke interval)
+MCP smoke local_git ok=True msg=exited code 0
 Environment prepared for Open WebUI launch.
 PS>TerminatingError(Invoke-WebRequest): "The operation has timed out."
 Ollama health ok=False
-PS>TerminatingError(Invoke-WebRequest): "The operation has timed out."
-Open WebUI health ok=False
+Python executable: C:\Users\B5PMMMPD\AppData\Local\miniforge3\python.exe
+PS>TerminatingError(python.exe): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Traceback (most recent call last):"
+open_webui import ok=False msg=Traceback (most recent call last):
+WARNING: Skipping Open WebUI launch due to failed import gate.
 WARNING: Summary generation failed (non-blocking): At C:\workspace\MVR-GIS\reproducibleai\inst\local-workstation\write-summary.ps1:59 char:12
 + $lines.Add("```")
 +            ~~~~~~
@@ -41,5 +45,5 @@ WARNING: Open WebUI not reachable yet. Check logs.
 [LOAD] launch.ps1 completed.
 **********************
 Windows PowerShell transcript end
-End time: 20260719175130
+End time: 20260719180037
 **********************

@@ -77,6 +77,74 @@ function Test-HttpEndpoint {
     }
 }
 
+function Resolve-PythonExecutable {
+    $cmd = Get-Command python -ErrorAction SilentlyContinue
+    if ($null -eq $cmd) {
+        return $null
+    }
+    return $cmd.Source
+}
+
+function Test-OpenWebUiImport {
+    param(
+        [Parameter(Mandatory=$true)][string]$PythonExe
+    )
+    try {
+        $output = & $PythonExe -c "import open_webui; print('open_webui import OK')" 2>&1
+        return [pscustomobject]@{
+            ok = $true
+            message = ($output -join " ")
+        }
+    } catch {
+        return [pscustomobject]@{
+            ok = $false
+            message = $_.Exception.Message
+        }
+    }
+}
+
+function Test-McpCommandExecution {
+    param(
+        [Parameter(Mandatory=$true)][string]$Name,
+        [Parameter(Mandatory=$true)][string]$CommandPath
+    )
+
+    if (-not (Test-Path $CommandPath)) {
+        return [pscustomobject]@{
+            server = $Name
+            ok = $false
+            message = "command path not found"
+        }
+    }
+
+    try {
+        # Lightweight smoke test. We only verify process can start.
+        $p = Start-Process -FilePath $CommandPath -ArgumentList "--help" -WindowStyle Hidden -PassThru -ErrorAction Stop
+        Start-Sleep -Milliseconds 600
+
+        if (-not $p.HasExited) {
+            try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch {}
+            return [pscustomobject]@{
+                server = $Name
+                ok = $true
+                message = "started (terminated after smoke interval)"
+            }
+        }
+
+        return [pscustomobject]@{
+            server = $Name
+            ok = $true
+            message = ("exited code " + $p.ExitCode)
+        }
+    } catch {
+        return [pscustomobject]@{
+            server = $Name
+            ok = $false
+            message = $_.Exception.Message
+        }
+    }
+}
+
 # reset latest-only files first (non-blocking)
 $latestFiles = @($DiagLog, $WebUiOutLog, $WebUiErrLog, $RunSummary, $ResolvedMcp)
 foreach ($f in $latestFiles) {
@@ -172,7 +240,7 @@ try {
     Write-Diag ("WARNING: Failed writing resolved MCP config (non-blocking): " + $_.Exception.Message)
 }
 
-# validate commands (THIS remains a real gate unless bypass flag set)
+# validate commands (real gate unless bypass flag set)
 $mcpValidation = @()
 $unresolvedCount = 0
 
@@ -208,6 +276,12 @@ if (($unresolvedCount -gt 0) -and (-not $AllowMissingMcpCommands.IsPresent)) {
     throw ("MCP validation failed; unresolved commands: " + $unresolvedCount)
 }
 
+# MCP smoke test (non-blocking; proof-oriented)
+foreach ($serverName in $resolvedMcpServers.Keys) {
+    $smoke = Test-McpCommandExecution -Name $serverName -CommandPath ([string]$resolvedMcpServers[$serverName].command)
+    Write-Diag ("MCP smoke " + $smoke.server + " ok=" + $smoke.ok + " msg=" + $smoke.message)
+}
+
 # runtime env
 $env:ENABLE_MCP = "true"
 $env:MCP_CONFIG_PATH = $ResolvedMcp
@@ -219,37 +293,54 @@ Write-Diag "Environment prepared for Open WebUI launch."
 $ollamaCheck = Test-HttpEndpoint -Url "http://localhost:11434/api/tags" -TimeoutSec 4
 Write-Diag ("Ollama health ok=" + $ollamaCheck.ok)
 
-# launch Open WebUI
-$launchMode = ""
+# resolve python + import gate (non-blocking for script completion, but blocks futile launch attempt)
+$pythonExe = Resolve-PythonExecutable
+$openWebUiImport = [pscustomobject]@{ ok = $false; message = "python not checked" }
 
-if ($DebugForeground.IsPresent) {
-    try {
-        $launchMode = "python -m open_webui serve (foreground)"
-        & python -m open_webui serve
-        exit 0
-    } catch {
-        $launchMode = "open-webui.exe serve (foreground)"
-        & open-webui.exe serve
-        exit 0
-    }
+if ($null -eq $pythonExe) {
+    Write-Diag "WARNING: python not found on PATH; cannot launch Open WebUI."
 } else {
-    try {
-        $launchMode = "python -m open_webui serve"
-        Start-Process -FilePath "python" -ArgumentList "-m open_webui serve" -RedirectStandardOutput $WebUiOutLog -RedirectStandardError $WebUiErrLog -WindowStyle Hidden | Out-Null
-    } catch {
-        $launchMode = "open-webui.exe serve"
-        Start-Process -FilePath "open-webui.exe" -ArgumentList "serve" -RedirectStandardOutput $WebUiOutLog -RedirectStandardError $WebUiErrLog -WindowStyle Hidden | Out-Null
-    }
+    Write-Diag ("Python executable: " + $pythonExe)
+    $openWebUiImport = Test-OpenWebUiImport -PythonExe $pythonExe
+    Write-Diag ("open_webui import ok=" + $openWebUiImport.ok + " msg=" + $openWebUiImport.message)
 }
 
-Start-Sleep -Seconds 6
-$webuiCheck = Test-HttpEndpoint -Url "http://localhost:8080" -TimeoutSec 4
-Write-Diag ("Open WebUI health ok=" + $webuiCheck.ok)
+# launch Open WebUI only if import gate passes
+$launchMode = "not-started"
+$webuiCheck = [pscustomobject]@{ ok = $false; status = ""; message = "launch not attempted" }
+
+if ($openWebUiImport.ok) {
+    if ($DebugForeground.IsPresent) {
+        try {
+            $launchMode = $pythonExe + " -m open_webui serve (foreground)"
+            & $pythonExe -m open_webui serve
+            exit 0
+        } catch {
+            $launchMode = "open-webui.exe serve (foreground fallback)"
+            & open-webui.exe serve
+            exit 0
+        }
+    } else {
+        try {
+            $launchMode = $pythonExe + " -m open_webui serve"
+            Start-Process -FilePath $pythonExe -ArgumentList "-m open_webui serve" -RedirectStandardOutput $WebUiOutLog -RedirectStandardError $WebUiErrLog -WindowStyle Hidden | Out-Null
+        } catch {
+            $launchMode = "open-webui.exe serve (fallback)"
+            Start-Process -FilePath "open-webui.exe" -ArgumentList "serve" -RedirectStandardOutput $WebUiOutLog -RedirectStandardError $WebUiErrLog -WindowStyle Hidden | Out-Null
+        }
+    }
+
+    Start-Sleep -Seconds 6
+    $webuiCheck = Test-HttpEndpoint -Url "http://localhost:8080" -TimeoutSec 4
+    Write-Diag ("Open WebUI health ok=" + $webuiCheck.ok)
+} else {
+    Write-Diag "WARNING: Skipping Open WebUI launch due to failed import gate."
+}
 
 $finalStatus = "FAIL"
 if (($unresolvedCount -eq 0) -and $webuiCheck.ok) { $finalStatus = "PASS" }
 
-# summary/log artifacts are NON-BLOCKING
+# summary/log artifacts are non-blocking
 $summaryWriter = Join-Path $ScriptDir "write-summary.ps1"
 try {
     if (Test-Path $summaryWriter) {
