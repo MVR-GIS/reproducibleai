@@ -1,9 +1,0 @@
-{
-  "mcpServers": {
-    "unified_mcpo_engine": {
-      "type": "sse",
-      "url": "http://localhost:8001/sse",
-      "enabled": true
-    }
-  }
-}

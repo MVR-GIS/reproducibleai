@@ -1,11 +1,11 @@
 {
   "mcpServers": {
     "local_filesystem": {
-      "command": "C:/Users/B5PMMMPD/AppData/Roaming/npm/mcp-server-filesystem.cmd",
-      "args": ["C:/workspace/MVR-GIS"]
+      "command": "${APPDATA}/npm/mcp-server-filesystem.cmd",
+      "args": ["${WORKSPACE_ROOT}"]
     },
     "local_git": {
-      "command": "C:/Users/B5PMMMPD/AppData/Roaming/npm/mcp-server-git.cmd",
+      "command": "${APPDATA}/npm/mcp-server-git.cmd",
       "args": []
     }
   }
