@@ -86,6 +86,8 @@ if (Test-Path $RoutingPath) {
     } catch {
         Write-Diag ("WARNING: Failed to parse override file. Using defaults. Error: " + $_.Exception.Message)
     }
+} else {
+    Write-Diag ("No override file found at " + $RoutingPath + "; using defaults.")
 }
 
 $mergedServers = [ordered]@{}
@@ -110,6 +112,7 @@ foreach ($s in $resolved.mcpServers.PSObject.Properties) {
 
 $resolvedJson = $resolved | ConvertTo-Json -Depth 20
 Set-Content -Path $ResolvedMcp -Value $resolvedJson -Encoding UTF8
+Write-Diag ("Resolved MCP config written to " + $ResolvedMcp)
 
 $mcpValidation = @()
 $unresolvedCount = 0
@@ -149,6 +152,11 @@ $env:MCP_CONFIG_PATH = $ResolvedMcp
 $env:OLLAMA_BASE_URL = "http://localhost:11434"
 $env:ENABLE_PERSISTENT_CONFIG = "false"
 
+Write-Diag "Set ENABLE_MCP=true"
+Write-Diag ("Set MCP_CONFIG_PATH=" + $ResolvedMcp)
+Write-Diag ("Set OLLAMA_BASE_URL=" + $env:OLLAMA_BASE_URL)
+Write-Diag "Set ENABLE_PERSISTENT_CONFIG=false"
+
 function Test-HttpEndpoint {
     param([string]$Url,[int]$TimeoutSec = 3)
     try {
@@ -160,6 +168,7 @@ function Test-HttpEndpoint {
 }
 
 $ollamaCheck = Test-HttpEndpoint -Url "http://localhost:11434/api/tags" -TimeoutSec 3
+Write-Diag ("Ollama check: ok=" + $ollamaCheck.ok + " status=" + $ollamaCheck.status + " msg=" + $ollamaCheck.message)
 
 $launchMode = ""
 if ($DebugForeground) {
@@ -184,42 +193,31 @@ if ($DebugForeground) {
 
 Start-Sleep -Seconds 5
 $webuiCheck = Test-HttpEndpoint -Url "http://localhost:8080" -TimeoutSec 3
+Write-Diag ("Open WebUI check: ok=" + $webuiCheck.ok + " status=" + $webuiCheck.status + " msg=" + $webuiCheck.message)
 
-# Parser-safe summary write: array + Out-File (no -join, no escape-heavy strings)
 $finalStatus = "FAIL"
 if (($unresolvedCount -eq 0) -and $webuiCheck.ok) { $finalStatus = "PASS" }
 
-$summaryLines = @()
-$summaryLines += "# Local AI Launch Run Summary"
-$summaryLines += ""
-$summaryLines += ("- Timestamp: " + (Get-Date -Format "yyyy-MM-dd HH:mm:ss"))
-$summaryLines += ("- Repo root: " + $RepoRoot)
-$summaryLines += ("- Launch mode: " + $launchMode)
-$summaryLines += ("- POC status: " + $finalStatus)
-$summaryLines += ""
-$summaryLines += "## Health checks"
-$summaryLines += ("- Ollama: ok=" + $ollamaCheck.ok + ", status=" + $ollamaCheck.status + ", msg=" + $ollamaCheck.message)
-$summaryLines += ("- Open WebUI: ok=" + $webuiCheck.ok + ", status=" + $webuiCheck.status + ", msg=" + $webuiCheck.message)
-$summaryLines += ""
-$summaryLines += "## MCP validation"
-$summaryLines += ("- Unresolved MCP commands: " + $unresolvedCount)
-foreach ($row in $mcpValidation) {
-    $summaryLines += ("- " + $row.server + ": ok=" + $row.ok + ", check=" + $row.check + ", command=" + $row.command)
+$summaryWriter = Join-Path $PSScriptRoot "write-summary.ps1"
+if (-not (Test-Path $summaryWriter)) {
+    throw ("Missing summary writer: " + $summaryWriter)
 }
-$summaryLines += ""
-$summaryLines += "## Active files"
-$summaryLines += ("- Diagnostic log: " + $DiagLog)
-$summaryLines += ("- Open WebUI stdout log: " + $WebUiOutLog)
-$summaryLines += ("- Open WebUI stderr log: " + $WebUiErrLog)
-$summaryLines += ("- Run summary: " + $RunSummary)
-$summaryLines += ("- Resolved MCP config: " + $ResolvedMcp)
-$summaryLines += ""
-$summaryLines += "## MCP JSON preview"
-$summaryLines += "```json"
-$summaryLines += (Get-Content -Raw -Path $ResolvedMcp)
-$summaryLines += "```"
 
-$summaryLines | Out-File -FilePath $RunSummary -Encoding utf8
+& $summaryWriter `
+    -RunSummary $RunSummary `
+    -ResolvedMcp $ResolvedMcp `
+    -RepoRoot $RepoRoot `
+    -LaunchMode $launchMode `
+    -FinalStatus $finalStatus `
+    -DiagLog $DiagLog `
+    -WebUiOutLog $WebUiOutLog `
+    -WebUiErrLog $WebUiErrLog `
+    -UnresolvedCount $unresolvedCount `
+    -McpValidation $mcpValidation `
+    -OllamaCheck $ollamaCheck `
+    -WebUiCheck $webuiCheck
+
+Write-Diag ("Run summary written to " + $RunSummary)
 
 if ($webuiCheck.ok) {
     Write-Diag "SUCCESS: Open WebUI is reachable at http://localhost:8080"
