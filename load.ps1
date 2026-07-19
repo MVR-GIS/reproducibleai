@@ -1,5 +1,5 @@
 # ==============================================================================
-# load.ps1 - Local workstation runner with parser preflight
+# load.ps1 - Repo-root runner for local workstation scripts
 # ==============================================================================
 [CmdletBinding()]
 param(
@@ -10,8 +10,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$RepoRoot  = (Resolve-Path (Join-Path $ScriptDir "..\..")).Path
+# This script is at repo root
+$RepoRoot = (Resolve-Path $PSScriptRoot).Path
+$WorkstationDir = Join-Path $RepoRoot "inst\local-workstation"
 $LocalAiDir = Join-Path $RepoRoot "dev\sessions\local-ai"
 
 if (-not (Test-Path $LocalAiDir)) {
@@ -24,20 +25,20 @@ $terminalLog = Join-Path $LocalAiDir ("terminal-run-{0}.log" -f $ts)
 Start-Transcript -Path $terminalLog -Force
 
 try {
-    $deployPath = Join-Path $ScriptDir "deploy.ps1"
-    $launchPath = Join-Path $ScriptDir "launch.ps1"
+    $deployPath = Join-Path $WorkstationDir "deploy.ps1"
+    $launchPath = Join-Path $WorkstationDir "launch.ps1"
 
     if ($Deploy) {
         Write-Host "[LOAD] Running deploy.ps1 ..." -ForegroundColor Cyan
-        if (-not (Test-Path $deployPath)) { throw "deploy.ps1 not found at $deployPath" }
+        if (-not (Test-Path $deployPath)) { throw ("deploy.ps1 not found at " + $deployPath) }
         & $deployPath
     } else {
         Write-Host "[LOAD] Skipping deploy.ps1 (use -Deploy to include it)." -ForegroundColor Yellow
     }
 
-    if (-not (Test-Path $launchPath)) { throw "launch.ps1 not found at $launchPath" }
+    if (-not (Test-Path $launchPath)) { throw ("launch.ps1 not found at " + $launchPath) }
 
-    # --- Preflight: parse-check launch.ps1 before execution ---
+    # Preflight parse check
     $tokens = $null
     $parseErrors = @()
     [System.Management.Automation.Language.Parser]::ParseFile($launchPath, [ref]$tokens, [ref]$parseErrors) | Out-Null
