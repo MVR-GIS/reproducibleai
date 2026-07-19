@@ -28,11 +28,18 @@ $PythonExe     = Join-Path $CondaEnvRoot "python.exe"
 if (-not (Test-Path $LogDir))  { New-Item -ItemType Directory -Force -Path $LogDir | Out-Null }
 if (-not (Test-Path $DataDir)) { New-Item -ItemType Directory -Force -Path $DataDir | Out-Null }
 
-$Stamp             = Get-Date -Format "yyyyMMdd-HHmmss"
-$DiagLog           = Join-Path $LogDir "launch-diag-$Stamp.log"
-$WebUILog          = Join-Path $LogDir "open-webui-$Stamp.log"
-$RunSummary        = Join-Path $LogDir "run-summary-$Stamp.md"
-$LatestRunSummary  = Join-Path $LogDir "latest-run-summary.md"
+# Latest-only log pattern (no timestamped files)
+$DiagLog          = Join-Path $LogDir "latest-launch-diag.log"
+$WebUILog         = Join-Path $LogDir "latest-open-webui.log"
+$RunSummary       = Join-Path $LogDir "latest-run-summary.md"
+
+function Reset-File([string]$Path) {
+  if (Test-Path $Path) { Remove-Item -Path $Path -Force -ErrorAction SilentlyContinue }
+  New-Item -ItemType File -Path $Path -Force | Out-Null
+}
+
+Reset-File $DiagLog
+Reset-File $WebUILog
 
 function Log([string]$m) {
   Add-Content -Path $DiagLog -Value "$(Get-Date -Format o) | $m" -Encoding utf8
@@ -102,7 +109,6 @@ function Stop-StaleWebUIProcesses {
 
   Log "Stopping stale Open WebUI processes..."
 
-  # Stop open-webui.exe wrappers
   Get-Process -Name "open-webui" -ErrorAction SilentlyContinue | ForEach-Object {
     try {
       Stop-Process -Id $_.Id -Force -ErrorAction Stop
@@ -112,7 +118,6 @@ function Stop-StaleWebUIProcesses {
     }
   }
 
-  # Stop python processes running open_webui from target env
   $pyDir = [System.IO.Path]::GetDirectoryName($PythonPath).ToLowerInvariant()
   $candidates = Get-CimInstance Win32_Process -Filter "Name='python.exe'" -ErrorAction SilentlyContinue
   foreach ($p in $candidates) {
@@ -126,7 +131,7 @@ function Stop-StaleWebUIProcesses {
     if ($isTargetEnvPython -and $isOpenWebUI) {
       try {
         Stop-Process -Id $p.ProcessId -Force -ErrorAction Stop
-        Log "Stopped python OpenWebUI PID=$($p.ProcessId) CMD=$cmd"
+        Log "Stopped python OpenWebUI PID=$($p.ProcessId)"
       } catch {
         Log "Failed stopping python PID=$($p.ProcessId): $($_.Exception.Message)"
       }
@@ -136,12 +141,9 @@ function Stop-StaleWebUIProcesses {
   Start-Sleep -Seconds 1
 }
 
-function Test-CommandResolvable {
-  param([string]$CommandText)
-
+function Test-CommandResolvable([string]$CommandText) {
   if ([string]::IsNullOrWhiteSpace($CommandText)) { return $false }
 
-  # If looks like path, use Test-Path
   $looksLikePath =
     $CommandText.Contains('\') -or
     $CommandText.Contains('/') -or
@@ -151,80 +153,91 @@ function Test-CommandResolvable {
     $CommandText.EndsWith(".bat") -or
     $CommandText.EndsWith(".ps1")
 
-  if ($looksLikePath) {
-    return (Test-Path $CommandText)
-  }
+  if ($looksLikePath) { return (Test-Path $CommandText) }
 
-  # Otherwise resolve via PATH
   $resolved = Get-Command $CommandText -ErrorAction SilentlyContinue
   return ($null -ne $resolved)
 }
 
+function Set-Server([hashtable]$Map, [string]$Name, $Value) {
+  $Map[$Name] = @{
+    command = [string]$Value.command
+    args    = @($Value.args)
+  }
+}
+
 function Build-McpConfig([string]$workspaceRoot) {
-  $cfg = @{
-    mcpServers = @{
-      local_filesystem = @{
-        command = Join-Path $NpmBin "mcp-server-filesystem.cmd"
-        args    = @($workspaceRoot -replace '\\','/')
-      }
-      local_git = @{
-        command = Join-Path $NpmBin "mcp-server-git.cmd"
-        args    = @()
-      }
-    }
+  $servers = @{}
+
+  # Defaults
+  Set-Server -Map $servers -Name "local_filesystem" -Value @{
+    command = (Join-Path $NpmBin "mcp-server-filesystem.cmd")
+    args    = @($workspaceRoot -replace '\\','/')
+  }
+  Set-Server -Map $servers -Name "local_git" -Value @{
+    command = (Join-Path $NpmBin "mcp-server-git.cmd")
+    args    = @()
   }
 
+  # Repo overrides (NO -AsHashtable to eliminate that recurring error/noise)
   if (Test-Path $RepoMcpPath) {
     Log "Applying MCP overrides from $RepoMcpPath"
     try {
-      $repo = (Get-Content -Raw -Path $RepoMcpPath -Encoding UTF8) | ConvertFrom-Json -AsHashtable
+      $repo = (Get-Content -Raw -Path $RepoMcpPath -Encoding UTF8) | ConvertFrom-Json
     } catch {
       throw "open-webui-mcp-routing.json invalid UTF-8 JSON: $($_.Exception.Message)"
     }
 
-    if ($repo.ContainsKey("mcpServers")) {
-      foreach ($kv in $repo.mcpServers.GetEnumerator()) {
-        $cfg.mcpServers[$kv.Key] = $kv.Value
-      }
-    } else {
+    if (-not $repo.mcpServers) {
       throw "Repo MCP config missing top-level 'mcpServers': $RepoMcpPath"
+    }
+
+    foreach ($prop in $repo.mcpServers.PSObject.Properties) {
+      Set-Server -Map $servers -Name $prop.Name -Value $prop.Value
     }
   } else {
     Log "No repo MCP override file found. Using defaults."
   }
 
-  foreach ($name in @($cfg.mcpServers.Keys)) {
-    $s = $cfg.mcpServers[$name]
-    if (-not $s.ContainsKey("command")) { throw "MCP server '$name' missing command." }
+  # Normalize + validate
+  foreach ($name in @($servers.Keys)) {
+    $s = $servers[$name]
+    if ([string]::IsNullOrWhiteSpace($s.command)) {
+      throw "MCP server '$name' missing command."
+    }
 
     $s.command = Resolve-Token $s.command $workspaceRoot
 
-    if (-not $s.ContainsKey("args") -or $null -eq $s.args) {
-      $s.args = @()
-    } else {
-      $resolvedArgs = @()
-      foreach ($a in $s.args) {
-        $resolvedArgs += (Resolve-Token ([string]$a) $workspaceRoot)
-      }
-      $s.args = $resolvedArgs
+    $resolvedArgs = @()
+    foreach ($a in @($s.args)) {
+      $resolvedArgs += (Resolve-Token ([string]$a) $workspaceRoot)
     }
+    $s.args = $resolvedArgs
 
-    if (-not (Test-CommandResolvable -CommandText ([string]$s.command))) {
+    if (-not (Test-CommandResolvable -CommandText $s.command)) {
       throw "MCP command not resolvable for '$name': $($s.command)"
     }
 
-    $cfg.mcpServers[$name] = $s
+    $servers[$name] = $s
     Log "MCP[$name] command=$($s.command) args=$([string]::Join(',', $s.args))"
   }
 
-  return $cfg
+  return @{ mcpServers = $servers }
 }
 
 function Write-RunSummary {
   param(
     [string]$Status,
-    [string]$Message
+    [string]$Message,
+    [string[]]$SolvedThisIteration
   )
+
+  $solved = ""
+  if ($SolvedThisIteration -and $SolvedThisIteration.Count -gt 0) {
+    $solved = ($SolvedThisIteration | ForEach-Object { "- $_" }) -join "`n"
+  } else {
+    $solved = "- (none recorded)"
+  }
 
   $content = @"
 # Local AI Run Summary
@@ -232,6 +245,15 @@ function Write-RunSummary {
 - Timestamp: $(Get-Date -Format o)
 - Status: $Status
 - Message: $Message
+
+## What this launcher validates
+- Workspace path anchoring from repo root
+- MCP config generation + command resolvability
+- Ollama health endpoint reachability
+- Open WebUI process launch and port 8080 readiness
+
+## Problems solved in this iteration
+$solved
 
 ## Paths
 - Diag Log: $DiagLog
@@ -245,7 +267,6 @@ function Write-RunSummary {
 "@
 
   Write-Utf8NoBom -path $RunSummary -content $content
-  Write-Utf8NoBom -path $LatestRunSummary -content $content
 }
 
 try {
@@ -282,12 +303,8 @@ try {
   Log "ENV ENABLE_MCP=$env:ENABLE_MCP"
 
   Stop-StaleWebUIProcesses -PythonPath $PythonExe
-
-  # Ensure target ports are free before launch
   Assert-PortFree -Port 8080 -Name "Open WebUI"
-  # port 11434 may already be in use by valid ollama service
 
-  # Ensure Ollama
   if (-not (Get-Process "ollama" -ErrorAction SilentlyContinue)) {
     Log "Starting ollama serve..."
     Start-Process -FilePath "ollama" -ArgumentList "serve" -WindowStyle Hidden
@@ -307,14 +324,21 @@ try {
     & $PythonExe -m open_webui serve
     $exitCode = $LASTEXITCODE
     if ($exitCode -eq 0) {
-      Write-RunSummary -Status "SUCCESS" -Message "Foreground run exited cleanly."
+      Write-RunSummary -Status "SUCCESS" -Message "Foreground run exited cleanly." -SolvedThisIteration @(
+        "Switched to latest-only logs (no timestamped files)."
+        "Removed ConvertFrom-Json -AsHashtable usage."
+        "Added human-readable latest-run-summary.md."
+      )
     } else {
-      Write-RunSummary -Status "FAIL" -Message "Foreground run exited with code $exitCode."
+      Write-RunSummary -Status "FAIL" -Message "Foreground run exited with code $exitCode." -SolvedThisIteration @(
+        "Switched to latest-only logs (no timestamped files)."
+        "Removed ConvertFrom-Json -AsHashtable usage."
+        "Added human-readable latest-run-summary.md."
+      )
     }
     exit $exitCode
   }
 
-  # Prefer python module launch
   Log "Launching Open WebUI via python -m open_webui serve"
   $p = Start-Process -FilePath $PythonExe -ArgumentList "-m open_webui serve" `
     -RedirectStandardOutput $WebUILog `
@@ -353,9 +377,13 @@ try {
     throw "Open WebUI responded but no listener PID found on port 8080."
   }
   Log "Port 8080 listener PID=$portPid; launched PID=$($p.Id)"
-
   Log "Open WebUI reachable on :8080"
-  Write-RunSummary -Status "SUCCESS" -Message "Open WebUI reachable and launch checks passed."
+
+  Write-RunSummary -Status "SUCCESS" -Message "Open WebUI reachable and launch checks passed." -SolvedThisIteration @(
+    "Switched to latest-only logs (no timestamped files)."
+    "Removed ConvertFrom-Json -AsHashtable usage."
+    "Added human-readable latest-run-summary.md."
+  )
 
   Write-Host "[SUCCESS] Local workstation launched and healthy." -ForegroundColor Green
   Write-Host "Open WebUI: http://localhost:8080" -ForegroundColor Yellow
@@ -367,7 +395,12 @@ try {
 catch {
   $err = $_.Exception.Message
   Log "FAIL: $err"
-  Write-RunSummary -Status "FAIL" -Message $err
+
+  Write-RunSummary -Status "FAIL" -Message $err -SolvedThisIteration @(
+    "Switched to latest-only logs (no timestamped files)."
+    "Removed ConvertFrom-Json -AsHashtable usage."
+    "Added human-readable latest-run-summary.md."
+  )
 
   Write-Host "[FAIL] launch.ps1: $err" -ForegroundColor Red
   Write-Host "Diag log: $DiagLog" -ForegroundColor Red

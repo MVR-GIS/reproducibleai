@@ -1,7 +1,0 @@
-﻿2026-07-19T14:14:04.8537407-05:00 | ExecutionDir=C:\workspace\MVR-GIS\reproducibleai
-2026-07-19T14:14:04.8557408-05:00 | ConfigDir=C:\workspace\MVR-GIS\reproducibleai\dev\config
-2026-07-19T14:14:04.8567455-05:00 | DataDir=C:\Users\B5PMMMPD\AppData\Local\LocalAIStack\open-webui-data
-2026-07-19T14:14:04.8597452-05:00 | Workspace mode: REPO-ISOLATED project_name=reproducibleai-dev-sandbox
-2026-07-19T14:14:04.8607451-05:00 | workspaceRoot=C:\workspace\MVR-GIS\reproducibleai
-2026-07-19T14:14:04.8637455-05:00 | Applying MCP overrides from C:\workspace\MVR-GIS\reproducibleai\dev\config\open-webui-mcp-routing.json
-2026-07-19T14:14:04.8672668-05:00 | FAIL: open-webui-mcp-routing.json invalid UTF-8 JSON: A parameter cannot be found that matches parameter name 'AsHashtable'.

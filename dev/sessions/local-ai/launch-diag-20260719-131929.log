@@ -1,5 +1,0 @@
-﻿2026-07-19T13:19:29.2200598-05:00 | TargetScopePath=C:\workspace\MVR-GIS\reproducibleai
-2026-07-19T13:19:29.2230614-05:00 | Applying repo overrides from C:\workspace\MVR-GIS\reproducibleai\dev\config\open-webui-mcp-routing.json
-2026-07-19T13:19:29.2323589-05:00 | Server 'local_filesystem' normalized. command=C:\Users\B5PMMMPD\AppData\Roaming/npm/mcp-server-filesystem.cmd
-2026-07-19T13:19:29.2343578-05:00 | Server 'local_git' normalized. command=C:\Users\B5PMMMPD\AppData\Roaming/npm/mcp-server-git.cmd
-2026-07-19T13:19:29.2430801-05:00 | Resolved MCP config written to C:\Users\B5PMMMPD\AppData\Local\LocalAIStack\open-webui-data\mcp_config.json
