@@ -52,10 +52,9 @@ First read:
 5. @dev/decisions/adr-0004-hybrid-ai-methodology-and-mcp-aware-integration.md for the proposed architectural decision
 
 After reading these base documents, analyze this new approach:
-- then read @dev/checkpoint
-- @dev/checkpoint captures the results of my latest testing of a local ai workstation architecture
-- in this session, within the context of this project, I'd like continue development of this approach
-- once determined that this is a feasible workstation architecture, then I'd like to incorporate it into this package
+- then read @dev/checkpoint-local-ai-workstation.md. This file captures recent testing of a local ai workstation architecture
+- then read @dev/checkpoint-launch-poc.md. This document captures the state of the last chat session
+- the objective of this chat is to complete the proof of concept for configuring an array of MCP servers for a local open-source vibe-coding ai workstation.
 
 Only then propose concrete edits or code changes.
 "
