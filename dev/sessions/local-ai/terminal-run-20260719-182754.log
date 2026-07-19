@@ -1,6 +1,6 @@
 ﻿**********************
 Windows PowerShell transcript start
-Start time: 20260719181905
+Start time: 20260719182754
 Username: MVD\B5PMMMPD
 RunAs User: MVD\B5PMMMPD
 Configuration Name: 
@@ -30,7 +30,13 @@ PS>TerminatingError(Invoke-WebRequest): "The operation has timed out."
 Ollama health ok=False
 Python executable selected: C:\Users\B5PMMMPD\AppData\Local\miniforge3\python.exe
 Python version check ok=True msg=Python 3.13.12
+Python runtime sys.executable=C:\Users\B5PMMMPD\AppData\Local\miniforge3\python.exe
+PS>TerminatingError(python.exe): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: WARNING: Package(s) not found: open-webui"
+>> TerminatingError(python.exe): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: WARNING: Package(s) not found: open-webui"
+open-webui package installed=False
+Install hint: "C:\Users\B5PMMMPD\AppData\Local\miniforge3\python.exe" -m pip install open-webui
 PS>TerminatingError(python.exe): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Traceback (most recent call last):"
+>> TerminatingError(python.exe): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Traceback (most recent call last):"
 open_webui import ok=False msg=Traceback (most recent call last):
 WARNING: Skipping Open WebUI launch due to failed import gate.
 WARNING: Summary generation failed (non-blocking): At C:\workspace\MVR-GIS\reproducibleai\inst\local-workstation\write-summary.ps1:59 char:12
@@ -47,5 +53,5 @@ FINAL STATUS: PASS
 [LOAD] launch.ps1 completed.
 **********************
 Windows PowerShell transcript end
-End time: 20260719181913
+End time: 20260719182800
 **********************

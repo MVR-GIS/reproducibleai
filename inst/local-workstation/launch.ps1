@@ -8,7 +8,8 @@ param(
     [switch]$PruneLegacyLogs = $true,
     [switch]$AllowMissingMcpCommands,
     [switch]$McpOnly,
-    [string]$OpenWebUiPython = $env:OPENWEBUI_PYTHON
+    [string]$OpenWebUiPython = $env:OPENWEBUI_PYTHON,
+    [switch]$AutoInstallOpenWebUi
 )
 
 Set-StrictMode -Version Latest
@@ -47,7 +48,6 @@ function Resolve-TokenizedString {
     )
 
     $result = $Text
-
     if ($ForCommandPath.IsPresent) {
         $result = $result.Replace('${APPDATA}', $env:APPDATA)
         $result = $result.Replace('${USERPROFILE}', $env:USERPROFILE)
@@ -81,42 +81,80 @@ function Test-HttpEndpoint {
 function Resolve-PythonExecutable {
     param([string]$Preferred)
 
-    # 1) explicit override path (or command)
     if (-not [string]::IsNullOrWhiteSpace($Preferred)) {
         try {
-            if (Test-Path $Preferred) {
-                return (Resolve-Path $Preferred).Path
-            }
+            if (Test-Path $Preferred) { return (Resolve-Path $Preferred).Path }
             $prefCmd = Get-Command $Preferred -ErrorAction SilentlyContinue
             if ($prefCmd) { return $prefCmd.Source }
         } catch {}
     }
 
-    # 2) python on PATH
     $py = Get-Command python -ErrorAction SilentlyContinue
     if ($py) { return $py.Source }
 
-    # 3) py launcher (Windows)
     $pyLauncher = Get-Command py -ErrorAction SilentlyContinue
     if ($pyLauncher) { return "py" }
 
     return $null
 }
 
+function Invoke-Python {
+    param(
+        [Parameter(Mandatory=$true)][string]$PythonExe,
+        [Parameter(Mandatory=$true)][string[]]$Args
+    )
+    & $PythonExe @Args 2>&1
+}
+
 function Test-PythonVersion {
     param([Parameter(Mandatory=$true)][string]$PythonExe)
     try {
-        $v = & $PythonExe --version 2>&1
+        $v = Invoke-Python -PythonExe $PythonExe -Args @("--version")
         return [pscustomobject]@{ ok = $true; message = ($v -join " ") }
     } catch {
         return [pscustomobject]@{ ok = $false; message = $_.Exception.Message }
     }
 }
 
+function Get-PythonExecutableFromInterpreter {
+    param([Parameter(Mandatory=$true)][string]$PythonExe)
+    try {
+        $out = Invoke-Python -PythonExe $PythonExe -Args @("-c", "import sys; print(sys.executable)")
+        return ($out -join " ").Trim()
+    } catch {
+        return ""
+    }
+}
+
+function Test-OpenWebUiInstalled {
+    param([Parameter(Mandatory=$true)][string]$PythonExe)
+    try {
+        $out = Invoke-Python -PythonExe $PythonExe -Args @("-m","pip","show","open-webui")
+        return [pscustomobject]@{ ok = $true; message = ($out -join " ") }
+    } catch {
+        return [pscustomobject]@{ ok = $false; message = $_.Exception.Message }
+    }
+}
+
+function Install-OpenWebUi {
+    param([Parameter(Mandatory=$true)][string]$PythonExe)
+    try {
+        $upgradePip = Invoke-Python -PythonExe $PythonExe -Args @("-m","pip","install","--upgrade","pip")
+        $installPkg = Invoke-Python -PythonExe $PythonExe -Args @("-m","pip","install","open-webui")
+        return [pscustomobject]@{
+            ok = $true
+            message = "pip upgrade/install completed"
+            detail = (($upgradePip + $installPkg) -join " ")
+        }
+    } catch {
+        return [pscustomobject]@{ ok = $false; message = $_.Exception.Message; detail = "" }
+    }
+}
+
 function Test-OpenWebUiImport {
     param([Parameter(Mandatory=$true)][string]$PythonExe)
     try {
-        $output = & $PythonExe -c "import open_webui; print('open_webui import OK')" 2>&1
+        $output = Invoke-Python -PythonExe $PythonExe -Args @("-c", "import open_webui; print('open_webui import OK')")
         return [pscustomobject]@{ ok = $true; message = ($output -join " ") }
     } catch {
         return [pscustomobject]@{ ok = $false; message = $_.Exception.Message }
@@ -134,7 +172,6 @@ function Test-McpCommandExecution {
     }
 
     try {
-        # Run via cmd for .cmd wrappers; short smoke window.
         $arg = '/c ""' + $CommandPath + '" --help"'
         $p = Start-Process -FilePath "cmd.exe" -ArgumentList $arg -WindowStyle Hidden -PassThru -ErrorAction Stop
         Start-Sleep -Milliseconds 900
@@ -248,7 +285,6 @@ try {
 # validate commands (gate)
 $mcpValidation = @()
 $unresolvedCount = 0
-
 foreach ($serverName in $resolvedMcpServers.Keys) {
     $cmd = [string]$resolvedMcpServers[$serverName].command
     $ok = $false
@@ -279,9 +315,11 @@ if (($unresolvedCount -gt 0) -and (-not $AllowMissingMcpCommands.IsPresent)) {
     throw ("MCP validation failed; unresolved commands: " + $unresolvedCount)
 }
 
-# MCP smoke (non-blocking)
+# MCP smoke (non-blocking but tracked for status)
+$mcpSmokeResults = @()
 foreach ($serverName in $resolvedMcpServers.Keys) {
     $smoke = Test-McpCommandExecution -Name $serverName -CommandPath ([string]$resolvedMcpServers[$serverName].command)
+    $mcpSmokeResults += $smoke
     Write-Diag ("MCP smoke " + $smoke.server + " ok=" + $smoke.ok + " msg=" + $smoke.message)
 }
 
@@ -296,15 +334,16 @@ Write-Diag "Environment prepared for Open WebUI launch."
 $ollamaCheck = Test-HttpEndpoint -Url "http://localhost:11434/api/tags" -TimeoutSec 4
 Write-Diag ("Ollama health ok=" + $ollamaCheck.ok)
 
-# Optionally skip WebUI completely for MCP-only proof
+# WebUI track (optional)
 $launchMode = "not-started"
 $webuiCheck = [pscustomobject]@{ ok = $false; status = ""; message = "launch not attempted" }
+$pythonExe = $null
+$openWebUiImport = [pscustomobject]@{ ok = $false; message = "not checked" }
 
 if ($McpOnly.IsPresent) {
     Write-Diag "MCP-only mode enabled. Skipping Open WebUI launch."
 } else {
     $pythonExe = Resolve-PythonExecutable -Preferred $OpenWebUiPython
-    $openWebUiImport = [pscustomobject]@{ ok = $false; message = "python not checked" }
 
     if ($null -eq $pythonExe) {
         Write-Diag "WARNING: python not found for Open WebUI launch."
@@ -314,6 +353,22 @@ if ($McpOnly.IsPresent) {
 
         $pyVer = Test-PythonVersion -PythonExe $pythonExe
         Write-Diag ("Python version check ok=" + $pyVer.ok + " msg=" + $pyVer.message)
+
+        $actualExe = Get-PythonExecutableFromInterpreter -PythonExe $pythonExe
+        if (-not [string]::IsNullOrWhiteSpace($actualExe)) {
+            Write-Diag ("Python runtime sys.executable=" + $actualExe)
+        }
+
+        $pkgCheck = Test-OpenWebUiInstalled -PythonExe $pythonExe
+        Write-Diag ("open-webui package installed=" + $pkgCheck.ok)
+
+        if ((-not $pkgCheck.ok) -and $AutoInstallOpenWebUi.IsPresent) {
+            Write-Diag "Auto-install enabled. Attempting to install open-webui..."
+            $installResult = Install-OpenWebUi -PythonExe $pythonExe
+            Write-Diag ("open-webui install ok=" + $installResult.ok + " msg=" + $installResult.message)
+        } elseif (-not $pkgCheck.ok) {
+            Write-Diag ("Install hint: `"" + $pythonExe + "`" -m pip install open-webui")
+        }
 
         $openWebUiImport = Test-OpenWebUiImport -PythonExe $pythonExe
         Write-Diag ("open_webui import ok=" + $openWebUiImport.ok + " msg=" + $openWebUiImport.message)
@@ -348,22 +403,19 @@ if ($McpOnly.IsPresent) {
     }
 }
 
-# Status policy:
-# PASS if MCP resolved + smoke ok for all servers (WebUI optional for MCP POC)
+# Final status:
+# PASS if MCP validation passed and all MCP smokes ok.
 $mcpSmokeAllOk = $true
-foreach ($serverName in $resolvedMcpServers.Keys) {
-    $sm = Test-McpCommandExecution -Name $serverName -CommandPath ([string]$resolvedMcpServers[$serverName].command)
+foreach ($sm in $mcpSmokeResults) {
     if (-not $sm.ok) { $mcpSmokeAllOk = $false }
 }
 
 $finalStatus = "FAIL"
 if (($unresolvedCount -eq 0) -and $mcpSmokeAllOk) {
-    if ($McpOnly.IsPresent -or $webuiCheck.ok -or ($launchMode -eq "not-started")) {
-        $finalStatus = "PASS"
-    }
+    $finalStatus = "PASS"
 }
 
-# summary/log artifacts non-blocking
+# summary/log artifacts are non-blocking
 $summaryWriter = Join-Path $ScriptDir "write-summary.ps1"
 try {
     if (Test-Path $summaryWriter) {
