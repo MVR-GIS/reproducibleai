@@ -1,23 +1,25 @@
 # ==============================================================================
-# LAUNCH.PS1: Pure Production Local AI Workspace Orchestrator (Native STDIO)
+# LAUNCH.PS1: Local AI Workspace Orchestrator (Native STDIO MCP)
 # ==============================================================================
 $ErrorActionPreference = "Stop"
 
 $ExecutionDir = Get-Location | Select-Object -ExpandProperty Path
-$LocalStackDir = "$env:USERPROFILE\AppData\Local\LocalAIStack"
+$LocalStackDir = Join-Path $env:USERPROFILE "AppData\Local\LocalAIStack"
+$DataDir = Join-Path $LocalStackDir "open-webui-data"
+$NpmBin = Join-Path $env:APPDATA "npm"
+$FsCmd = Join-Path $NpmBin "mcp-server-filesystem.cmd"
+$GitCmd = Join-Path $NpmBin "mcp-server-git.cmd"
 
-# 1. PARSE OPERATIONAL BOUNDARIES (Single Repo vs Workspace Context)
-$ConfigPath = "$ExecutionDir\dev\config\workspace-bounds.json"
+# 1) Determine scope
+$ConfigPath = Join-Path $ExecutionDir "dev\config\workspace-bounds.json"
 $TargetScopePath = ""
 $ContextMode = ""
 
 if (Test-Path $ConfigPath) {
-    # Repo-Level Context Detected: Limit AI file operations to THIS specific folder
     $RepoConfig = Get-Content -Raw -Path $ConfigPath | ConvertFrom-Json
     $TargetScopePath = $ExecutionDir
     $ContextMode = "REPO-ISOLATED (Project: $($RepoConfig.project_name))"
 } else {
-    # Workspace-Level Context: Fallback to the parent folder containing multiple repos
     $TargetScopePath = Split-Path -Path $ExecutionDir -Parent
     $ContextMode = "MULTI-REPO WORKSPACE (Directory: $TargetScopePath)"
 }
@@ -25,58 +27,83 @@ if (Test-Path $ConfigPath) {
 Write-Host "Initializing Local AI Orchestration Ecosystem" -ForegroundColor Cyan
 Write-Host "Operating Mode: $ContextMode" -ForegroundColor Yellow
 
-# 2. RE-GENERATE DYNAMIC USER PATHINGS
-$env:DATA_DIR = "$LocalStackDir\open-webui-data"
-if (-not (Test-Path $env:DATA_DIR)) { New-Item -ItemType Directory -Force -Path $env:DATA_DIR | Out-Null }
+# 2) Preflight checks
+if (-not (Test-Path $FsCmd)) { throw "Missing MCP filesystem server: $FsCmd" }
+if (-not (Test-Path $GitCmd)) { throw "Missing MCP git server: $GitCmd" }
 
+if (-not (Test-Path $DataDir)) {
+    New-Item -ItemType Directory -Force -Path $DataDir | Out-Null
+}
+
+# 3) Build MCP config dynamically
+$McpConfigPath = Join-Path $DataDir "mcp_config.json"
 $DynamicMcpConfig = @{
     mcpServers = @{
         local_filesystem = @{
-            command = "C:/Users/$env:USERNAME/AppData/Roaming/npm/mcp-server-filesystem.cmd"
-            args    = @( $TargetScopePath.Replace("\", "/") )
+            command = $FsCmd
+            args    = @($TargetScopePath.Replace("\", "/"))
         }
         local_git = @{
-            command = "C:/Users/$env:USERNAME/AppData/Roaming/npm/mcp-server-git.cmd"
+            command = $GitCmd
             args    = @()
         }
     }
 }
-$DynamicMcpConfig | ConvertTo-Json -Depth 5 | Out-File "$env:DATA_DIR\mcp_config.json" -Encoding utf8 -Force
-Write-Host "Successfully synchronized repo tool configurations to local AI stack execution path." -ForegroundColor Green
 
-# 3. PASS CONFIGURATIONS TO OPEN WEBUI VIA SYSTEM ENVIRONMENT VARIABLES
-# Connect Open WebUI to your local compute engine for text models
+$DynamicMcpConfig | ConvertTo-Json -Depth 8 | Out-File $McpConfigPath -Encoding utf8 -Force
+Write-Host "MCP config written: $McpConfigPath" -ForegroundColor Green
+
+# 4) Runtime environment for Open WebUI
+$env:DATA_DIR = $DataDir
+$env:MCP_CONFIG_PATH = $McpConfigPath
+$env:ENABLE_MCP = "true"
+
 $env:OLLAMA_BASE_URL = "http://localhost:11434"
-$env:OLLAMA_MODELS = "$LocalStackDir\ollama\models"
+$env:OLLAMA_MODELS = Join-Path $LocalStackDir "ollama\models"
 
-# Disable the OpenAI API panel completely to prevent loop conflicts
 $env:ENABLE_OPENAI_API = "false"
 $env:OPENAI_API_BASE_URL = ""
 $env:OPENAI_API_BASE_URLS = ""
 $env:OPENAI_API_KEYS = ""
 
-# Enable MCP system capabilities natively
-$env:ENABLE_MCP = "true"
 $env:RAG_EMBEDDING_ENGINE = "ollama"
-
-# Prevent cached SQLite configurations from overriding launch environment variables
 $env:ENABLE_PERSISTENT_CONFIG = "false"
-$env:WEBUI_AUTH = "false" 
+$env:WEBUI_AUTH = "false"
 
-# Kill any lingering background open-webui servers from old tests to prevent port jamming
+# 5) Ensure clean Open WebUI start
 Get-Process -Name "open-webui" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 1
 
-# Start your local model server background process thread if offline
 if (-not (Get-Process "ollama" -ErrorAction SilentlyContinue)) {
     Start-Process -FilePath "ollama" -ArgumentList "serve" -WindowStyle Hidden
     Start-Sleep -Seconds 2
 }
 
-# Execute the isolated frontend server framework via your verified Miniforge environment
-$WebUIExe = "$env:USERPROFILE\AppData\Local\miniforge3\envs\open-webui-gov\Scripts\open-webui.exe"
-Start-Process -FilePath $WebUIExe -ArgumentList "serve" -WindowStyle Hidden
+# 6) Resolve Open WebUI executable
+$WebUIExeCandidates = @(
+    (Join-Path $env:USERPROFILE "AppData\Local\miniforge3\envs\open-webui-gov\Scripts\open-webui.exe"),
+    (Join-Path $env:USERPROFILE "AppData\Local\miniforge3\envs\open-webui-gov\Scripts\open-webui")
+)
 
-Write-Host "`n[SUCCESS] Local Vibe-Coding Core actively routing." -ForegroundColor Green
-Write-Host "Launch Dashboard Link: http://localhost:8080" -ForegroundColor Yellow
+$WebUIExe = $WebUIExeCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $WebUIExe) {
+    throw "Could not find Open WebUI executable in open-webui-gov env."
+}
+
+# 7) Log output for debugging
+$LogDir = Join-Path $ExecutionDir "dev\sessions\local-ai"
+if (-not (Test-Path $LogDir)) {
+    New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
+}
+$Stamp = Get-Date -Format "yyyyMMdd-HHmmss"
+$WebUILog = Join-Path $LogDir "open-webui-$Stamp.log"
+
+Start-Process -FilePath $WebUIExe -ArgumentList "serve" `
+    -RedirectStandardOutput $WebUILog `
+    -RedirectStandardError $WebUILog `
+    -WindowStyle Hidden
+
+Write-Host "`n[SUCCESS] Local workstation launched." -ForegroundColor Green
+Write-Host "Open WebUI: http://localhost:8080" -ForegroundColor Yellow
+Write-Host "Log file: $WebUILog" -ForegroundColor Yellow
 Start-Process "http://localhost:8080"
