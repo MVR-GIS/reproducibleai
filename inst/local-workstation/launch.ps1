@@ -33,78 +33,121 @@ function Resolve-TokenString {
   return $x
 }
 
-function Get-WorkspaceScope {
+function Get-WorkspaceRoot {
   param([string]$ExecutionDir, [string]$BoundsPath)
   if (Test-Path $BoundsPath) {
-    $obj = (Get-Content -Raw -Path $BoundsPath -Encoding UTF8) | ConvertFrom-Json
-    return @{ Path = $ExecutionDir; Mode = "REPO-ISOLATED (Project: $($obj.project_name))" }
+    try {
+      $obj = (Get-Content -Raw -Path $BoundsPath -Encoding UTF8) | ConvertFrom-Json
+      Log-Diag "Mode=REPO-ISOLATED project_name=$($obj.project_name)"
+      return $ExecutionDir
+    } catch {
+      throw "Failed parsing workspace-bounds.json as UTF-8 JSON: $($_.Exception.Message)"
+    }
   } else {
     $parent = Split-Path -Path $ExecutionDir -Parent
-    return @{ Path = $parent; Mode = "MULTI-REPO WORKSPACE (Directory: $parent)" }
+    Log-Diag "Mode=MULTI-REPO root=$parent"
+    return $parent
   }
 }
 
-function New-DefaultMcpConfig {
+function New-ServerObj {
+  param(
+    [string]$Command,
+    [array]$Args,
+    [bool]$Enabled = $true
+  )
+  # Return deterministic plain hashtable shape for JSON stability
+  return @{
+    command = $Command
+    args    = @($Args)
+    enabled = $Enabled
+  }
+}
+
+function Build-BaseConfig {
   param([string]$WorkspaceRoot, [string]$NpmBin)
-  [pscustomobject]@{
-    mcpServers = [pscustomobject]@{
-      local_filesystem = [pscustomobject]@{
-        command = (Join-Path $NpmBin "mcp-server-filesystem.cmd")
-        args    = @($WorkspaceRoot -replace '\\','/')
-        enabled = $true
-      }
-      local_git = [pscustomobject]@{
-        command = (Join-Path $NpmBin "mcp-server-git.cmd")
-        args    = @()
-        enabled = $true
-      }
+  $fs = Join-Path $NpmBin "mcp-server-filesystem.cmd"
+  $git = Join-Path $NpmBin "mcp-server-git.cmd"
+
+  return @{
+    mcpServers = @{
+      local_filesystem = New-ServerObj -Command $fs -Args @($WorkspaceRoot -replace '\\','/') -Enabled $true
+      local_git        = New-ServerObj -Command $git -Args @() -Enabled $true
     }
   }
 }
 
-function Normalize-McpConfig {
-  param([psobject]$ConfigObj, [string]$WorkspaceRoot)
+function Merge-RepoOverrides {
+  param([hashtable]$BaseConfig, [string]$RepoMcpPath)
 
-  if (-not $ConfigObj.mcpServers) { throw "MCP config missing top-level 'mcpServers'." }
+  if (-not (Test-Path $RepoMcpPath)) {
+    Log-Diag "No repo MCP override file found."
+    return $BaseConfig
+  }
 
-  foreach ($p in $ConfigObj.mcpServers.PSObject.Properties) {
-    $name = $p.Name
-    $s = $p.Value
+  try {
+    $repo = (Get-Content -Raw -Path $RepoMcpPath -Encoding UTF8) | ConvertFrom-Json -AsHashtable
+  } catch {
+    throw "Failed parsing open-webui-mcp-routing.json as UTF-8 JSON: $($_.Exception.Message)"
+  }
 
-    if ($null -eq $s.enabled) { $s | Add-Member -NotePropertyName enabled -NotePropertyValue $true -Force }
-    if ($s.enabled -eq $false) { continue }
+  if (-not $repo.ContainsKey("mcpServers")) {
+    throw "Repo MCP override exists but missing top-level 'mcpServers'."
+  }
 
-    if (-not $s.command) { throw "Enabled MCP server '$name' missing required 'command'." }
-    $s.command = Resolve-TokenString -Text ([string]$s.command) -WorkspaceRoot $WorkspaceRoot
+  foreach ($kv in $repo.mcpServers.GetEnumerator()) {
+    $BaseConfig.mcpServers[$kv.Key] = $kv.Value
+    Log-Diag "Override applied for server: $($kv.Key)"
+  }
 
-    if ($null -eq $s.args) {
-      $s | Add-Member -NotePropertyName args -NotePropertyValue @() -Force
+  return $BaseConfig
+}
+
+function Normalize-Config {
+  param([hashtable]$Cfg, [string]$WorkspaceRoot)
+
+  foreach ($name in @($Cfg.mcpServers.Keys)) {
+    $s = $Cfg.mcpServers[$name]
+
+    if (-not $s.ContainsKey("enabled")) { $s["enabled"] = $true }
+    if ($s["enabled"] -eq $false) { $Cfg.mcpServers[$name] = $s; continue }
+
+    if (-not $s.ContainsKey("command")) {
+      throw "Enabled server '$name' missing command."
+    }
+
+    $s["command"] = Resolve-TokenString -Text ([string]$s["command"]) -WorkspaceRoot $WorkspaceRoot
+
+    if (-not $s.ContainsKey("args") -or $null -eq $s["args"]) {
+      $s["args"] = @()
     } else {
       $resolvedArgs = @()
-      foreach ($a in $s.args) { $resolvedArgs += (Resolve-TokenString -Text ([string]$a -as [string]) -WorkspaceRoot $WorkspaceRoot) }
-      $s.args = $resolvedArgs
+      foreach ($a in $s["args"]) {
+        $resolvedArgs += (Resolve-TokenString -Text ([string]$a) -WorkspaceRoot $WorkspaceRoot)
+      }
+      $s["args"] = $resolvedArgs
     }
 
-    $ConfigObj.mcpServers.$name = $s
-    Log-Diag "MCP[$name] command=$($s.command)"
+    $Cfg.mcpServers[$name] = $s
+    Log-Diag "Normalized server '$name' command=$($s["command"])"
   }
 
-  return $ConfigObj
+  return $Cfg
 }
 
-function Assert-McpCommandsExist {
-  param([psobject]$ConfigObj)
-  foreach ($p in $ConfigObj.mcpServers.PSObject.Properties) {
-    $name = $p.Name
-    $s = $p.Value
-    if ($s.enabled -eq $false) { continue }
-    if (-not (Test-Path $s.command)) {
-      throw "Enabled MCP server '$name' command not found: $($s.command)"
+function Validate-ServerCommands {
+  param([hashtable]$Cfg)
+  foreach ($name in @($Cfg.mcpServers.Keys)) {
+    $s = $Cfg.mcpServers[$name]
+    if ($s["enabled"] -eq $false) { continue }
+    if (-not (Test-Path $s["command"])) {
+      throw "Enabled server '$name' command not found: $($s["command"])"
     }
   }
 }
 
-function Write-Utf8NoBom([string]$Path, [string]$Content) {
+function Write-Utf8NoBom {
+  param([string]$Path, [string]$Content)
   $enc = New-Object System.Text.UTF8Encoding($false)
   [System.IO.File]::WriteAllText($Path, $Content, $enc)
 }
@@ -123,26 +166,17 @@ function Wait-Ollama([int]$MaxSeconds = 25) {
 }
 
 try {
-  $scope = Get-WorkspaceScope -ExecutionDir $ExecutionDir -BoundsPath $BoundsPath
-  $TargetScopePath = $scope.Path
-  Write-Host "Operating Mode: $($scope.Mode)" -ForegroundColor Yellow
+  $WorkspaceRoot = Get-WorkspaceRoot -ExecutionDir $ExecutionDir -BoundsPath $BoundsPath
 
-  $cfg = New-DefaultMcpConfig -WorkspaceRoot $TargetScopePath -NpmBin $NpmBin
-  if (Test-Path $RepoMcpPath) {
-    $repo = (Get-Content -Raw -Path $RepoMcpPath -Encoding UTF8) | ConvertFrom-Json
-    if (-not $repo.mcpServers) { throw "Repo MCP config missing 'mcpServers': $RepoMcpPath" }
-    foreach ($p in $repo.mcpServers.PSObject.Properties) {
-      $cfg.mcpServers | Add-Member -NotePropertyName $p.Name -NotePropertyValue $p.Value -Force
-    }
-  }
+  $cfg = Build-BaseConfig -WorkspaceRoot $WorkspaceRoot -NpmBin $NpmBin
+  $cfg = Merge-RepoOverrides -BaseConfig $cfg -RepoMcpPath $RepoMcpPath
+  $cfg = Normalize-Config -Cfg $cfg -WorkspaceRoot $WorkspaceRoot
+  Validate-ServerCommands -Cfg $cfg
 
-  $cfg = Normalize-McpConfig -ConfigObj $cfg -WorkspaceRoot $TargetScopePath
-  Assert-McpCommandsExist -ConfigObj $cfg
-
-  $json = $cfg | ConvertTo-Json -Depth 30
+  $json = $cfg | ConvertTo-Json -Depth 50 -Compress:$false
   Write-Utf8NoBom -Path $McpOutPath -Content $json
-  Log-Diag "Resolved MCP config path: $McpOutPath"
-  Log-Diag "Resolved MCP config content: $json"
+  Log-Diag "Wrote resolved MCP config to $McpOutPath"
+  Log-Diag "MCP JSON: $json"
 
   $env:DATA_DIR = $DataDir
   $env:MCP_CONFIG_PATH = $McpOutPath
@@ -157,17 +191,12 @@ try {
   $env:ENABLE_PERSISTENT_CONFIG = "false"
   $env:WEBUI_AUTH = "false"
 
-  Log-Diag "ENV MCP_CONFIG_PATH=$env:MCP_CONFIG_PATH"
-  Log-Diag "ENV ENABLE_MCP=$env:ENABLE_MCP"
-  Log-Diag "ENV DATA_DIR=$env:DATA_DIR"
-
   Get-Process -Name "open-webui" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
   Start-Sleep -Seconds 1
 
   if (-not (Get-Process "ollama" -ErrorAction SilentlyContinue)) {
     Start-Process -FilePath "ollama" -ArgumentList "serve" -WindowStyle Hidden
   }
-
   if (-not (Wait-Ollama -MaxSeconds 25)) {
     throw "Ollama health check failed at http://localhost:11434/api/tags"
   }
