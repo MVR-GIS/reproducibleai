@@ -7,9 +7,10 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# Anchor paths to repo root even if invoked from elsewhere
-$ExecutionDir  = Resolve-Path (Join-Path $PSScriptRoot "..\..")
-$ExecutionDir  = $ExecutionDir.Path
+# Anchor to repo root regardless of current working directory
+$ExecutionDir = Resolve-Path (Join-Path $PSScriptRoot "..\..")
+$ExecutionDir = $ExecutionDir.Path
+
 $ConfigDir     = Join-Path $ExecutionDir "dev\config"
 $LogDir        = Join-Path $ExecutionDir "dev\sessions\local-ai"
 $LocalStackDir = Join-Path $env:USERPROFILE "AppData\Local\LocalAIStack"
@@ -27,9 +28,11 @@ $PythonExe     = Join-Path $CondaEnvRoot "python.exe"
 if (-not (Test-Path $LogDir))  { New-Item -ItemType Directory -Force -Path $LogDir | Out-Null }
 if (-not (Test-Path $DataDir)) { New-Item -ItemType Directory -Force -Path $DataDir | Out-Null }
 
-$Stamp    = Get-Date -Format "yyyyMMdd-HHmmss"
-$DiagLog  = Join-Path $LogDir "launch-diag-$Stamp.log"
-$WebUILog = Join-Path $LogDir "open-webui-$Stamp.log"
+$Stamp             = Get-Date -Format "yyyyMMdd-HHmmss"
+$DiagLog           = Join-Path $LogDir "launch-diag-$Stamp.log"
+$WebUILog          = Join-Path $LogDir "open-webui-$Stamp.log"
+$RunSummary        = Join-Path $LogDir "run-summary-$Stamp.md"
+$LatestRunSummary  = Join-Path $LogDir "latest-run-summary.md"
 
 function Log([string]$m) {
   Add-Content -Path $DiagLog -Value "$(Get-Date -Format o) | $m" -Encoding utf8
@@ -51,13 +54,17 @@ function Write-Utf8NoBom([string]$path, [string]$content) {
 function Get-WorkspaceRoot {
   if (Test-Path $BoundsPath) {
     try {
-      $null = (Get-Content -Raw -Path $BoundsPath -Encoding UTF8) | ConvertFrom-Json
+      $bounds = (Get-Content -Raw -Path $BoundsPath -Encoding UTF8) | ConvertFrom-Json
+      Log "Workspace mode: REPO-ISOLATED project_name=$($bounds.project_name)"
       return $ExecutionDir
     } catch {
       throw "workspace-bounds.json invalid UTF-8 JSON: $($_.Exception.Message)"
     }
   }
-  return (Split-Path -Path $ExecutionDir -Parent)
+
+  $parent = Split-Path -Path $ExecutionDir -Parent
+  Log "Workspace mode: MULTI-REPO root=$parent"
+  return $parent
 }
 
 function Wait-Url([string]$url, [int]$seconds = 30) {
@@ -66,7 +73,9 @@ function Wait-Url([string]$url, [int]$seconds = 30) {
     try {
       $r = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 3
       if ($r.StatusCode -ge 200 -and $r.StatusCode -lt 500) { return $true }
-    } catch { Start-Sleep -Seconds 1 }
+    } catch {
+      Start-Sleep -Seconds 1
+    }
   } while ((Get-Date) -lt $deadline)
   return $false
 }
@@ -86,18 +95,28 @@ function Build-McpConfig([string]$workspaceRoot) {
   }
 
   if (Test-Path $RepoMcpPath) {
-    Log "Applying overrides from $RepoMcpPath"
-    $repo = (Get-Content -Raw -Path $RepoMcpPath -Encoding UTF8) | ConvertFrom-Json -AsHashtable
+    Log "Applying MCP overrides from $RepoMcpPath"
+    try {
+      $repo = (Get-Content -Raw -Path $RepoMcpPath -Encoding UTF8) | ConvertFrom-Json -AsHashtable
+    } catch {
+      throw "open-webui-mcp-routing.json invalid UTF-8 JSON: $($_.Exception.Message)"
+    }
+
     if ($repo.ContainsKey("mcpServers")) {
       foreach ($kv in $repo.mcpServers.GetEnumerator()) {
         $cfg.mcpServers[$kv.Key] = $kv.Value
       }
+    } else {
+      throw "Repo MCP config missing top-level 'mcpServers': $RepoMcpPath"
     }
+  } else {
+    Log "No repo MCP override file found. Using defaults."
   }
 
   foreach ($name in @($cfg.mcpServers.Keys)) {
     $s = $cfg.mcpServers[$name]
-    if (-not $s.ContainsKey("command")) { throw "MCP server '$name' missing command" }
+
+    if (-not $s.ContainsKey("command")) { throw "MCP server '$name' missing command." }
 
     $s.command = Resolve-Token $s.command $workspaceRoot
 
@@ -105,28 +124,65 @@ function Build-McpConfig([string]$workspaceRoot) {
       $s.args = @()
     } else {
       $resolvedArgs = @()
-      foreach ($a in $s.args) { $resolvedArgs += (Resolve-Token ([string]$a) $workspaceRoot) }
+      foreach ($a in $s.args) {
+        $resolvedArgs += (Resolve-Token ([string]$a) $workspaceRoot)
+      }
       $s.args = $resolvedArgs
     }
 
-    if (-not (Test-Path $s.command)) { throw "MCP command not found for '$name': $($s.command)" }
+    if (-not (Test-Path $s.command)) {
+      throw "MCP command not found for '$name': $($s.command)"
+    }
+
     $cfg.mcpServers[$name] = $s
-    Log "MCP[$name] command=$($s.command)"
+    Log "MCP[$name] command=$($s.command) args=$([string]::Join(',', $s.args))"
   }
 
   return $cfg
 }
 
+function Write-RunSummary {
+  param(
+    [string]$Status,
+    [string]$Message
+  )
+
+  $content = @"
+# Local AI Run Summary
+
+- Timestamp: $(Get-Date -Format o)
+- Status: $Status
+- Message: $Message
+
+## Paths
+- Diag Log: $DiagLog
+- WebUI Log: $WebUILog
+- MCP Config: $McpOutPath
+- Data Dir: $DataDir
+
+## Endpoints
+- Open WebUI: http://localhost:8080
+- Ollama: http://localhost:11434
+"@
+
+  Write-Utf8NoBom -path $RunSummary -content $content
+  Write-Utf8NoBom -path $LatestRunSummary -content $content
+}
+
 try {
+  Log "ExecutionDir=$ExecutionDir"
+  Log "ConfigDir=$ConfigDir"
+  Log "DataDir=$DataDir"
+
   $workspaceRoot = Get-WorkspaceRoot
   Log "workspaceRoot=$workspaceRoot"
 
-  $cfg = Build-McpConfig -workspaceRoot $workspaceRoot
+  $cfg  = Build-McpConfig -workspaceRoot $workspaceRoot
   $json = $cfg | ConvertTo-Json -Depth 30
   Write-Utf8NoBom -path $McpOutPath -content $json
   Log "Wrote MCP config: $McpOutPath"
 
-  # Env vars
+  # Runtime environment
   $env:DATA_DIR = $DataDir
   $env:MCP_CONFIG_PATH = $McpOutPath
   $env:ENABLE_MCP = "true"
@@ -142,30 +198,43 @@ try {
   $env:ENABLE_PERSISTENT_CONFIG = "false"
   $env:WEBUI_AUTH = "false"
 
-  # Restart services
+  Log "ENV DATA_DIR=$env:DATA_DIR"
+  Log "ENV MCP_CONFIG_PATH=$env:MCP_CONFIG_PATH"
+  Log "ENV ENABLE_MCP=$env:ENABLE_MCP"
+
+  # Clean restart Open WebUI
   Get-Process -Name "open-webui" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
   Start-Sleep -Seconds 1
 
+  # Ensure Ollama
   if (-not (Get-Process "ollama" -ErrorAction SilentlyContinue)) {
+    Log "Starting ollama serve..."
     Start-Process -FilePath "ollama" -ArgumentList "serve" -WindowStyle Hidden
   }
+
   if (-not (Wait-Url "http://localhost:11434/api/tags" 25)) {
     throw "Ollama not reachable at http://localhost:11434/api/tags"
   }
+  Log "Ollama reachable."
 
-  # Launch strategy:
-  # 1) Prefer python -m open_webui (more reliable in Conda on Windows)
-  # 2) Fallback to open-webui.exe
   if (-not (Test-Path $PythonExe)) {
     throw "python.exe not found in env: $PythonExe"
   }
 
   if ($DebugForeground) {
-    Write-Host "[DEBUG] Launching foreground with python -m open_webui serve" -ForegroundColor Yellow
+    Write-Host "[DEBUG] Launching foreground: python -m open_webui serve" -ForegroundColor Yellow
     & $PythonExe -m open_webui serve
-    exit $LASTEXITCODE
+    $exitCode = $LASTEXITCODE
+    if ($exitCode -eq 0) {
+      Write-RunSummary -Status "SUCCESS" -Message "Foreground run exited cleanly."
+    } else {
+      Write-RunSummary -Status "FAIL" -Message "Foreground run exited with code $exitCode."
+    }
+    exit $exitCode
   }
 
+  # Prefer python module launch
+  Log "Launching Open WebUI via python -m open_webui serve"
   $p = Start-Process -FilePath $PythonExe -ArgumentList "-m open_webui serve" `
     -RedirectStandardOutput $WebUILog `
     -RedirectStandardError $WebUILog `
@@ -174,8 +243,11 @@ try {
 
   Start-Sleep -Seconds 3
   if ($p.HasExited) {
-    Log "python -m open_webui exited quickly, trying open-webui.exe fallback"
-    if (-not (Test-Path $WebUIExe)) { throw "open-webui.exe not found: $WebUIExe" }
+    Log "python module launch exited quickly. Trying open-webui.exe fallback."
+    if (-not (Test-Path $WebUIExe)) {
+      $tail = (Get-Content -Path $WebUILog -Tail 120 -ErrorAction SilentlyContinue) -join "`n"
+      throw "python launch exited immediately and open-webui.exe not found at: $WebUIExe`nLog tail:`n$tail"
+    }
 
     $p = Start-Process -FilePath $WebUIExe -ArgumentList "serve" `
       -RedirectStandardOutput $WebUILog `
@@ -195,14 +267,23 @@ try {
     throw "Open WebUI not reachable on :8080. Log tail:`n$tail"
   }
 
+  Log "Open WebUI reachable on :8080"
+  Write-RunSummary -Status "SUCCESS" -Message "Open WebUI reachable and launch checks passed."
+
   Write-Host "[SUCCESS] Local workstation launched and healthy." -ForegroundColor Green
   Write-Host "Open WebUI: http://localhost:8080" -ForegroundColor Yellow
   Write-Host "Diag log: $DiagLog" -ForegroundColor Yellow
   Write-Host "WebUI log: $WebUILog" -ForegroundColor Yellow
+  Write-Host "Run summary: $RunSummary" -ForegroundColor Yellow
   Start-Process "http://localhost:8080"
 }
 catch {
-  Write-Host "[FAIL] launch.ps1: $($_.Exception.Message)" -ForegroundColor Red
+  $err = $_.Exception.Message
+  Log "FAIL: $err"
+  Write-RunSummary -Status "FAIL" -Message $err
+
+  Write-Host "[FAIL] launch.ps1: $err" -ForegroundColor Red
   Write-Host "Diag log: $DiagLog" -ForegroundColor Red
+  Write-Host "Run summary: $RunSummary" -ForegroundColor Red
   throw
 }
