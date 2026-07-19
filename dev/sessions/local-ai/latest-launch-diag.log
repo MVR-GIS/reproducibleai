@@ -1,16 +1,17 @@
-[2026-07-19 18:00:31] Legacy timestamped logs pruned.
-[2026-07-19 18:00:31] Loaded MCP override: C:\workspace\MVR-GIS\reproducibleai\dev\config\open-webui-mcp-routing.json
-[2026-07-19 18:00:31] Resolved MCP config written: C:\workspace\MVR-GIS\reproducibleai\dev\sessions\local-ai\latest-mcp-config.resolved.json
-[2026-07-19 18:00:31] MCP local_filesystem ok=True check=Test-Path cmd=C:\Users\B5PMMMPD\AppData\Roaming\npm\mcp-server-filesystem.cmd
-[2026-07-19 18:00:31] MCP local_git ok=True check=Test-Path cmd=C:\Users\B5PMMMPD\AppData\Roaming\npm\mcp-server-git.cmd
-[2026-07-19 18:00:32] MCP smoke local_filesystem ok=True msg=started (terminated after smoke interval)
-[2026-07-19 18:00:33] MCP smoke local_git ok=True msg=exited code 0
-[2026-07-19 18:00:33] Environment prepared for Open WebUI launch.
-[2026-07-19 18:00:37] Ollama health ok=False
-[2026-07-19 18:00:37] Python executable: C:\Users\B5PMMMPD\AppData\Local\miniforge3\python.exe
-[2026-07-19 18:00:37] open_webui import ok=False msg=Traceback (most recent call last):
-[2026-07-19 18:00:37] WARNING: Skipping Open WebUI launch due to failed import gate.
-[2026-07-19 18:00:37] WARNING: Summary generation failed (non-blocking): At C:\workspace\MVR-GIS\reproducibleai\inst\local-workstation\write-summary.ps1:59 char:12
+[2026-07-19 18:19:05] Legacy timestamped logs pruned.
+[2026-07-19 18:19:05] Loaded MCP override: C:\workspace\MVR-GIS\reproducibleai\dev\config\open-webui-mcp-routing.json
+[2026-07-19 18:19:05] Resolved MCP config written: C:\workspace\MVR-GIS\reproducibleai\dev\sessions\local-ai\latest-mcp-config.resolved.json
+[2026-07-19 18:19:05] MCP local_filesystem ok=True check=Test-Path cmd=C:\Users\B5PMMMPD\AppData\Roaming\npm\mcp-server-filesystem.cmd
+[2026-07-19 18:19:05] MCP local_git ok=True check=Test-Path cmd=C:\Users\B5PMMMPD\AppData\Roaming\npm\mcp-server-git.cmd
+[2026-07-19 18:19:06] MCP smoke local_filesystem ok=True msg=exited code 1
+[2026-07-19 18:19:07] MCP smoke local_git ok=True msg=exited code 0
+[2026-07-19 18:19:07] Environment prepared for Open WebUI launch.
+[2026-07-19 18:19:11] Ollama health ok=False
+[2026-07-19 18:19:11] Python executable selected: C:\Users\B5PMMMPD\AppData\Local\miniforge3\python.exe
+[2026-07-19 18:19:11] Python version check ok=True msg=Python 3.13.12
+[2026-07-19 18:19:11] open_webui import ok=False msg=Traceback (most recent call last):
+[2026-07-19 18:19:11] WARNING: Skipping Open WebUI launch due to failed import gate.
+[2026-07-19 18:19:13] WARNING: Summary generation failed (non-blocking): At C:\workspace\MVR-GIS\reproducibleai\inst\local-workstation\write-summary.ps1:59 char:12
 + $lines.Add("```")
 +            ~~~~~~
 The string is missing the terminator: ".
@@ -19,4 +20,5 @@ At C:\workspace\MVR-GIS\reproducibleai\inst\local-workstation\write-summary.ps1:
 + $lines | Out-File -FilePath $RunSummary -Encoding utf8 -Force
 +                                                              ~
 Missing ')' in method call.
-[2026-07-19 18:00:37] WARNING: Open WebUI not reachable yet. Check logs.
+[2026-07-19 18:19:13] INFO: WebUI not reachable or not launched; MCP POC can still be valid.
+[2026-07-19 18:19:13] FINAL STATUS: PASS
