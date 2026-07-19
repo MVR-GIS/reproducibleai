@@ -136,6 +136,30 @@ function Stop-StaleWebUIProcesses {
   Start-Sleep -Seconds 1
 }
 
+function Test-CommandResolvable {
+  param([string]$CommandText)
+
+  if ([string]::IsNullOrWhiteSpace($CommandText)) { return $false }
+
+  # If looks like path, use Test-Path
+  $looksLikePath =
+    $CommandText.Contains('\') -or
+    $CommandText.Contains('/') -or
+    $CommandText.Contains(':') -or
+    $CommandText.EndsWith(".cmd") -or
+    $CommandText.EndsWith(".exe") -or
+    $CommandText.EndsWith(".bat") -or
+    $CommandText.EndsWith(".ps1")
+
+  if ($looksLikePath) {
+    return (Test-Path $CommandText)
+  }
+
+  # Otherwise resolve via PATH
+  $resolved = Get-Command $CommandText -ErrorAction SilentlyContinue
+  return ($null -ne $resolved)
+}
+
 function Build-McpConfig([string]$workspaceRoot) {
   $cfg = @{
     mcpServers = @{
@@ -171,7 +195,6 @@ function Build-McpConfig([string]$workspaceRoot) {
 
   foreach ($name in @($cfg.mcpServers.Keys)) {
     $s = $cfg.mcpServers[$name]
-
     if (-not $s.ContainsKey("command")) { throw "MCP server '$name' missing command." }
 
     $s.command = Resolve-Token $s.command $workspaceRoot
@@ -186,8 +209,8 @@ function Build-McpConfig([string]$workspaceRoot) {
       $s.args = $resolvedArgs
     }
 
-    if (-not (Test-Path $s.command)) {
-      throw "MCP command not found for '$name': $($s.command)"
+    if (-not (Test-CommandResolvable -CommandText ([string]$s.command))) {
+      throw "MCP command not resolvable for '$name': $($s.command)"
     }
 
     $cfg.mcpServers[$name] = $s
@@ -262,7 +285,7 @@ try {
 
   # Ensure target ports are free before launch
   Assert-PortFree -Port 8080 -Name "Open WebUI"
-  # don't assert 11434 free: Ollama may already run and that's valid
+  # port 11434 may already be in use by valid ollama service
 
   # Ensure Ollama
   if (-not (Get-Process "ollama" -ErrorAction SilentlyContinue)) {
@@ -325,7 +348,6 @@ try {
     throw "Open WebUI not reachable on :8080. Log tail:`n$tail"
   }
 
-  # Validate that 8080 owner is the launched process (or child fallback scenario)
   $portPid = Get-TcpListenerPid -Port 8080
   if ($null -eq $portPid) {
     throw "Open WebUI responded but no listener PID found on port 8080."
