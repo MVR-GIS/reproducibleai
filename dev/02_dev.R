@@ -41,6 +41,26 @@ After reading, briefly summarize:
 Only then propose concrete edits or code changes.
 "
 
+"
+This session is based on MVR-GIS/reproducibleai on main.
+
+First read:
+1. @dev/instructions/CHAT_INSTRUCTIONS.md
+2. @dev/10_design.md for the stable current implemented architecture
+3. @dev/05_plan.md with attention to Milestone G
+4. @dev/15_local_ai_architecture.md for the active local/hybrid AI architecture proposal
+5. @dev/decisions/adr-0004-hybrid-ai-methodology-and-mcp-aware-integration.md for the proposed architectural decision
+
+After reading these base documents, analyze this new approach:
+- then read @dev/checkpoint
+- @dev/checkpoint captures the results of my latest testing of a local ai workstation architecture
+- in this session, within the context of this project, I'd like continue development of this approach
+- once determined that this is a feasible workstation architecture, then I'd like to incorporate it into this package
+
+Only then propose concrete edits or code changes.
+"
+
+
 ## Update AI Chat Artifacts
 reproducibleai::extract_copilot_chat(file.path(
   Sys.getenv("USERPROFILE"), "Downloads", "copilot_export.zip")
