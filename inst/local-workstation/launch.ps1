@@ -80,6 +80,47 @@ function Wait-Url([string]$url, [int]$seconds = 30) {
   return $false
 }
 
+function Stop-StaleWebUIProcesses {
+  param([string]$PythonPath)
+
+  Log "Stopping stale Open WebUI processes..."
+
+  # 1) Stop open-webui.exe wrappers if present
+  Get-Process -Name "open-webui" -ErrorAction SilentlyContinue | ForEach-Object {
+    try {
+      Stop-Process -Id $_.Id -Force -ErrorAction Stop
+      Log "Stopped process open-webui PID=$($_.Id)"
+    } catch {
+      Log "Failed stopping open-webui PID=$($_.Id): $($_.Exception.Message)"
+    }
+  }
+
+  # 2) Stop python processes running open_webui from target env
+  $pyName = [System.IO.Path]::GetFileName($PythonPath).ToLowerInvariant()
+  $pyDir  = [System.IO.Path]::GetDirectoryName($PythonPath).ToLowerInvariant()
+
+  $candidates = Get-CimInstance Win32_Process -Filter "Name='python.exe'" -ErrorAction SilentlyContinue
+  foreach ($p in $candidates) {
+    $cmd = [string]$p.CommandLine
+    if ([string]::IsNullOrWhiteSpace($cmd)) { continue }
+
+    $cmdLower = $cmd.ToLowerInvariant()
+    $isTargetEnvPython = $cmdLower.Contains($pyDir)
+    $isOpenWebUI = $cmdLower.Contains("open_webui") -or $cmdLower.Contains("open-webui")
+
+    if ($isTargetEnvPython -and $isOpenWebUI) {
+      try {
+        Stop-Process -Id $p.ProcessId -Force -ErrorAction Stop
+        Log "Stopped python OpenWebUI PID=$($p.ProcessId) CMD=$cmd"
+      } catch {
+        Log "Failed stopping python PID=$($p.ProcessId): $($_.Exception.Message)"
+      }
+    }
+  }
+
+  Start-Sleep -Seconds 1
+}
+
 function Build-McpConfig([string]$workspaceRoot) {
   $cfg = @{
     mcpServers = @{
@@ -202,9 +243,7 @@ try {
   Log "ENV MCP_CONFIG_PATH=$env:MCP_CONFIG_PATH"
   Log "ENV ENABLE_MCP=$env:ENABLE_MCP"
 
-  # Clean restart Open WebUI
-  Get-Process -Name "open-webui" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-  Start-Sleep -Seconds 1
+  Stop-StaleWebUIProcesses -PythonPath $PythonExe
 
   # Ensure Ollama
   if (-not (Get-Process "ollama" -ErrorAction SilentlyContinue)) {
