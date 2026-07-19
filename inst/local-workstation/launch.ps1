@@ -71,42 +71,22 @@ function Normalize-McpConfig {
     $name = $p.Name
     $s = $p.Value
 
-    # default enabled=true
-    if ($null -eq $s.enabled) {
-      $s | Add-Member -NotePropertyName enabled -NotePropertyValue $true -Force
-    }
+    if ($null -eq $s.enabled) { $s | Add-Member -NotePropertyName enabled -NotePropertyValue $true -Force }
+    if ($s.enabled -eq $false) { continue }
 
-    # if disabled, skip strict validation
-    if ($s.enabled -eq $false) {
-      Log-Diag "Server '$name' is disabled; skipping command/path validation."
-      continue
-    }
-
-    if (-not $s.command) {
-      throw "Enabled MCP server '$name' missing required 'command'."
-    }
-
+    if (-not $s.command) { throw "Enabled MCP server '$name' missing required 'command'." }
     $s.command = Resolve-TokenString -Text ([string]$s.command) -WorkspaceRoot $WorkspaceRoot
 
     if ($null -eq $s.args) {
       $s | Add-Member -NotePropertyName args -NotePropertyValue @() -Force
     } else {
       $resolvedArgs = @()
-      foreach ($a in $s.args) {
-        $resolvedArgs += (Resolve-TokenString -Text ([string]$a) -WorkspaceRoot $WorkspaceRoot)
-      }
+      foreach ($a in $s.args) { $resolvedArgs += (Resolve-TokenString -Text ([string]$a -as [string]) -WorkspaceRoot $WorkspaceRoot) }
       $s.args = $resolvedArgs
     }
 
-    # optional nested env token resolution
-    if ($s.env) {
-      foreach ($ep in $s.env.PSObject.Properties) {
-        $s.env.$($ep.Name) = Resolve-TokenString -Text ([string]$ep.Value) -WorkspaceRoot $WorkspaceRoot
-      }
-    }
-
     $ConfigObj.mcpServers.$name = $s
-    Log-Diag "Server '$name' normalized. command=$($s.command)"
+    Log-Diag "MCP[$name] command=$($s.command)"
   }
 
   return $ConfigObj
@@ -114,12 +94,10 @@ function Normalize-McpConfig {
 
 function Assert-McpCommandsExist {
   param([psobject]$ConfigObj)
-
   foreach ($p in $ConfigObj.mcpServers.PSObject.Properties) {
     $name = $p.Name
     $s = $p.Value
     if ($s.enabled -eq $false) { continue }
-
     if (-not (Test-Path $s.command)) {
       throw "Enabled MCP server '$name' command not found: $($s.command)"
     }
@@ -148,20 +126,14 @@ try {
   $scope = Get-WorkspaceScope -ExecutionDir $ExecutionDir -BoundsPath $BoundsPath
   $TargetScopePath = $scope.Path
   Write-Host "Operating Mode: $($scope.Mode)" -ForegroundColor Yellow
-  Log-Diag "TargetScopePath=$TargetScopePath"
 
   $cfg = New-DefaultMcpConfig -WorkspaceRoot $TargetScopePath -NpmBin $NpmBin
-
   if (Test-Path $RepoMcpPath) {
-    Log-Diag "Applying repo overrides from $RepoMcpPath"
     $repo = (Get-Content -Raw -Path $RepoMcpPath -Encoding UTF8) | ConvertFrom-Json
     if (-not $repo.mcpServers) { throw "Repo MCP config missing 'mcpServers': $RepoMcpPath" }
-
     foreach ($p in $repo.mcpServers.PSObject.Properties) {
       $cfg.mcpServers | Add-Member -NotePropertyName $p.Name -NotePropertyValue $p.Value -Force
     }
-  } else {
-    Log-Diag "No repo MCP overrides found."
   }
 
   $cfg = Normalize-McpConfig -ConfigObj $cfg -WorkspaceRoot $TargetScopePath
@@ -169,23 +141,25 @@ try {
 
   $json = $cfg | ConvertTo-Json -Depth 30
   Write-Utf8NoBom -Path $McpOutPath -Content $json
-  Log-Diag "Resolved MCP config written to $McpOutPath"
+  Log-Diag "Resolved MCP config path: $McpOutPath"
+  Log-Diag "Resolved MCP config content: $json"
 
   $env:DATA_DIR = $DataDir
   $env:MCP_CONFIG_PATH = $McpOutPath
   $env:ENABLE_MCP = "true"
-
   $env:OLLAMA_BASE_URL = "http://localhost:11434"
-  $env:OLLAMA_MODELS   = Join-Path $LocalStackDir "ollama\models"
-
-  $env:ENABLE_OPENAI_API    = "false"
-  $env:OPENAI_API_BASE_URL  = ""
+  $env:OLLAMA_MODELS = Join-Path $LocalStackDir "ollama\models"
+  $env:ENABLE_OPENAI_API = "false"
+  $env:OPENAI_API_BASE_URL = ""
   $env:OPENAI_API_BASE_URLS = ""
-  $env:OPENAI_API_KEYS      = ""
-
-  $env:RAG_EMBEDDING_ENGINE     = "ollama"
+  $env:OPENAI_API_KEYS = ""
+  $env:RAG_EMBEDDING_ENGINE = "ollama"
   $env:ENABLE_PERSISTENT_CONFIG = "false"
-  $env:WEBUI_AUTH               = "false"
+  $env:WEBUI_AUTH = "false"
+
+  Log-Diag "ENV MCP_CONFIG_PATH=$env:MCP_CONFIG_PATH"
+  Log-Diag "ENV ENABLE_MCP=$env:ENABLE_MCP"
+  Log-Diag "ENV DATA_DIR=$env:DATA_DIR"
 
   Get-Process -Name "open-webui" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
   Start-Sleep -Seconds 1
@@ -198,12 +172,8 @@ try {
     throw "Ollama health check failed at http://localhost:11434/api/tags"
   }
 
-  $WebUICandidates = @(
-    (Join-Path $env:USERPROFILE "AppData\Local\miniforge3\envs\open-webui-gov\Scripts\open-webui.exe"),
-    (Join-Path $env:USERPROFILE "AppData\Local\miniforge3\envs\open-webui-gov\Scripts\open-webui")
-  )
-  $WebUIExe = $WebUICandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-  if (-not $WebUIExe) { throw "Open WebUI executable not found in env open-webui-gov." }
+  $WebUIExe = Join-Path $env:USERPROFILE "AppData\Local\miniforge3\envs\open-webui-gov\Scripts\open-webui.exe"
+  if (-not (Test-Path $WebUIExe)) { throw "Open WebUI executable not found: $WebUIExe" }
 
   Start-Process -FilePath $WebUIExe -ArgumentList "serve" `
     -RedirectStandardOutput $WebUILog `
