@@ -7,7 +7,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$ExecutionDir  = (Get-Location).Path
+# Anchor paths to repo root even if invoked from elsewhere
+$ExecutionDir  = Resolve-Path (Join-Path $PSScriptRoot "..\..")
+$ExecutionDir  = $ExecutionDir.Path
 $ConfigDir     = Join-Path $ExecutionDir "dev\config"
 $LogDir        = Join-Path $ExecutionDir "dev\sessions\local-ai"
 $LocalStackDir = Join-Path $env:USERPROFILE "AppData\Local\LocalAIStack"
@@ -17,6 +19,10 @@ $NpmBin        = Join-Path $env:APPDATA "npm"
 $BoundsPath    = Join-Path $ConfigDir "workspace-bounds.json"
 $RepoMcpPath   = Join-Path $ConfigDir "open-webui-mcp-routing.json"
 $McpOutPath    = Join-Path $DataDir "mcp_config.json"
+
+$CondaEnvRoot  = Join-Path $env:USERPROFILE "AppData\Local\miniforge3\envs\open-webui-gov"
+$WebUIExe      = Join-Path $CondaEnvRoot "Scripts\open-webui.exe"
+$PythonExe     = Join-Path $CondaEnvRoot "python.exe"
 
 if (-not (Test-Path $LogDir))  { New-Item -ItemType Directory -Force -Path $LogDir | Out-Null }
 if (-not (Test-Path $DataDir)) { New-Item -ItemType Directory -Force -Path $DataDir | Out-Null }
@@ -65,10 +71,7 @@ function Wait-Url([string]$url, [int]$seconds = 30) {
   return $false
 }
 
-try {
-  $workspaceRoot = Get-WorkspaceRoot
-  Log "workspaceRoot=$workspaceRoot"
-
+function Build-McpConfig([string]$workspaceRoot) {
   $cfg = @{
     mcpServers = @{
       local_filesystem = @{
@@ -95,6 +98,7 @@ try {
   foreach ($name in @($cfg.mcpServers.Keys)) {
     $s = $cfg.mcpServers[$name]
     if (-not $s.ContainsKey("command")) { throw "MCP server '$name' missing command" }
+
     $s.command = Resolve-Token $s.command $workspaceRoot
 
     if (-not $s.ContainsKey("args") -or $null -eq $s.args) {
@@ -110,16 +114,27 @@ try {
     Log "MCP[$name] command=$($s.command)"
   }
 
+  return $cfg
+}
+
+try {
+  $workspaceRoot = Get-WorkspaceRoot
+  Log "workspaceRoot=$workspaceRoot"
+
+  $cfg = Build-McpConfig -workspaceRoot $workspaceRoot
   $json = $cfg | ConvertTo-Json -Depth 30
   Write-Utf8NoBom -path $McpOutPath -content $json
   Log "Wrote MCP config: $McpOutPath"
 
+  # Env vars
   $env:DATA_DIR = $DataDir
   $env:MCP_CONFIG_PATH = $McpOutPath
   $env:ENABLE_MCP = "true"
+
   $env:OLLAMA_BASE_URL = "http://localhost:11434"
   $env:OLLAMA_MODELS   = Join-Path $LocalStackDir "ollama\models"
   $env:RAG_EMBEDDING_ENGINE = "ollama"
+
   $env:ENABLE_OPENAI_API = "false"
   $env:OPENAI_API_BASE_URL = ""
   $env:OPENAI_API_BASE_URLS = ""
@@ -127,41 +142,56 @@ try {
   $env:ENABLE_PERSISTENT_CONFIG = "false"
   $env:WEBUI_AUTH = "false"
 
+  # Restart services
   Get-Process -Name "open-webui" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
   Start-Sleep -Seconds 1
 
   if (-not (Get-Process "ollama" -ErrorAction SilentlyContinue)) {
     Start-Process -FilePath "ollama" -ArgumentList "serve" -WindowStyle Hidden
   }
-
   if (-not (Wait-Url "http://localhost:11434/api/tags" 25)) {
     throw "Ollama not reachable at http://localhost:11434/api/tags"
   }
 
-  $WebUIExe = Join-Path $env:USERPROFILE "AppData\Local\miniforge3\envs\open-webui-gov\Scripts\open-webui.exe"
-  if (-not (Test-Path $WebUIExe)) { throw "open-webui.exe not found: $WebUIExe" }
+  # Launch strategy:
+  # 1) Prefer python -m open_webui (more reliable in Conda on Windows)
+  # 2) Fallback to open-webui.exe
+  if (-not (Test-Path $PythonExe)) {
+    throw "python.exe not found in env: $PythonExe"
+  }
 
   if ($DebugForeground) {
-    Write-Host "[DEBUG] Running Open WebUI in foreground. Ctrl+C to stop." -ForegroundColor Yellow
-    Write-Host "[DEBUG] If this errors, copy terminal output from here." -ForegroundColor Yellow
-    & $WebUIExe serve
+    Write-Host "[DEBUG] Launching foreground with python -m open_webui serve" -ForegroundColor Yellow
+    & $PythonExe -m open_webui serve
     exit $LASTEXITCODE
   }
 
-  $p = Start-Process -FilePath $WebUIExe -ArgumentList "serve" `
+  $p = Start-Process -FilePath $PythonExe -ArgumentList "-m open_webui serve" `
     -RedirectStandardOutput $WebUILog `
     -RedirectStandardError $WebUILog `
     -WindowStyle Hidden `
     -PassThru
 
-  Start-Sleep -Seconds 2
+  Start-Sleep -Seconds 3
   if ($p.HasExited) {
-    $tail = (Get-Content -Path $WebUILog -Tail 80 -ErrorAction SilentlyContinue) -join "`n"
-    throw "Open WebUI exited immediately. Log tail:`n$tail"
+    Log "python -m open_webui exited quickly, trying open-webui.exe fallback"
+    if (-not (Test-Path $WebUIExe)) { throw "open-webui.exe not found: $WebUIExe" }
+
+    $p = Start-Process -FilePath $WebUIExe -ArgumentList "serve" `
+      -RedirectStandardOutput $WebUILog `
+      -RedirectStandardError $WebUILog `
+      -WindowStyle Hidden `
+      -PassThru
+
+    Start-Sleep -Seconds 2
+    if ($p.HasExited) {
+      $tail = (Get-Content -Path $WebUILog -Tail 120 -ErrorAction SilentlyContinue) -join "`n"
+      throw "Both launch methods exited immediately. Log tail:`n$tail"
+    }
   }
 
-  if (-not (Wait-Url "http://localhost:8080" 40)) {
-    $tail = (Get-Content -Path $WebUILog -Tail 120 -ErrorAction SilentlyContinue) -join "`n"
+  if (-not (Wait-Url "http://localhost:8080" 45)) {
+    $tail = (Get-Content -Path $WebUILog -Tail 150 -ErrorAction SilentlyContinue) -join "`n"
     throw "Open WebUI not reachable on :8080. Log tail:`n$tail"
   }
 
