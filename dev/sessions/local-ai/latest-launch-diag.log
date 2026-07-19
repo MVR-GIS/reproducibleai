@@ -1,14 +1,8 @@
-﻿2026-07-19T14:40:26.2542026-05:00 | ExecutionDir=C:\workspace\MVR-GIS\reproducibleai
-2026-07-19T14:40:26.2542026-05:00 | ConfigDir=C:\workspace\MVR-GIS\reproducibleai\dev\config
-2026-07-19T14:40:26.2552085-05:00 | DataDir=C:\Users\B5PMMMPD\AppData\Local\LocalAIStack\open-webui-data
-2026-07-19T14:40:26.2582096-05:00 | Workspace mode: REPO-ISOLATED project_name=reproducibleai-dev-sandbox
-2026-07-19T14:40:26.2582096-05:00 | workspaceRoot=C:\workspace\MVR-GIS\reproducibleai
-2026-07-19T14:40:26.2642015-05:00 | Applying MCP overrides from C:\workspace\MVR-GIS\reproducibleai\dev\config\open-webui-mcp-routing.json
-2026-07-19T14:40:26.2852194-05:00 | MCP[local_filesystem] command=C:\Users\B5PMMMPD\AppData\Roaming/npm/mcp-server-filesystem.cmd args=C:/workspace/MVR-GIS/reproducibleai
-2026-07-19T14:40:26.2887416-05:00 | MCP[local_git] command=C:\Users\B5PMMMPD\AppData\Roaming/npm/mcp-server-git.cmd args=
-2026-07-19T14:40:26.2907412-05:00 | Wrote MCP config: C:\Users\B5PMMMPD\AppData\Local\LocalAIStack\open-webui-data\mcp_config.json
-2026-07-19T14:40:26.2927417-05:00 | ENV DATA_DIR=C:\Users\B5PMMMPD\AppData\Local\LocalAIStack\open-webui-data
-2026-07-19T14:40:26.2937412-05:00 | ENV MCP_CONFIG_PATH=C:\Users\B5PMMMPD\AppData\Local\LocalAIStack\open-webui-data\mcp_config.json
-2026-07-19T14:40:26.2947378-05:00 | ENV ENABLE_MCP=true
-2026-07-19T14:40:26.2967379-05:00 | Stopping stale Open WebUI processes...
-2026-07-19T14:40:29.0256153-05:00 | FAIL: Cannot overwrite variable PID because it is read-only or constant.
+[2026-07-19 17:31:29] Legacy timestamped logs pruned.
+[2026-07-19 17:31:29] Loaded MCP override: C:\workspace\MVR-GIS\reproducibleai\dev\config\open-webui-mcp-routing.json
+[2026-07-19 17:31:29] Resolved MCP config written: C:\workspace\MVR-GIS\reproducibleai\dev\sessions\local-ai\latest-mcp-config.resolved.json
+[2026-07-19 17:31:29] MCP local_filesystem ok=True check=Test-Path cmd=C:\Users\B5PMMMPD\AppData\Roaming\npm\mcp-server-filesystem.cmd
+[2026-07-19 17:31:29] MCP local_git ok=True check=Test-Path cmd=C:\Users\B5PMMMPD\AppData\Roaming\npm\mcp-server-git.cmd
+[2026-07-19 17:31:29] Environment prepared for Open WebUI launch.
+[2026-07-19 17:31:33] Ollama health ok=False
+[2026-07-19 17:31:43] Open WebUI health ok=False

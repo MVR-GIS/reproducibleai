@@ -1,0 +1,16 @@
+﻿{
+    "mcpServers":  {
+                       "local_filesystem":  {
+                                                "command":  "C:\\Users\\B5PMMMPD\\AppData\\Roaming\\npm\\mcp-server-filesystem.cmd",
+                                                "args":  [
+                                                             "C:/workspace/MVR-GIS/reproducibleai"
+                                                         ]
+                                            },
+                       "local_git":  {
+                                         "command":  "C:\\Users\\B5PMMMPD\\AppData\\Roaming\\npm\\mcp-server-git.cmd",
+                                         "args":  [
+
+                                                  ]
+                                     }
+                   }
+}

@@ -1,34 +1,31 @@
 # ==============================================================================
-# launch.ps1 - Local Open WebUI + MCP POC launcher (repo-anchored, latest-only logs)
+# launch.ps1 - Hardened Local Open WebUI + MCP launcher
 # ==============================================================================
-$ErrorActionPreference = "Stop"
-
+[CmdletBinding()]
 param(
     [switch]$DebugForeground,
     [switch]$PruneLegacyLogs = $true,
-    [switch]$AllowMissingMcpCommands = $false
+    [switch]$AllowMissingMcpCommands
 )
 
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$RepoRoot  = (Resolve-Path (Join-Path $ScriptDir "..\..")).Path
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
 
-$LocalAiDir  = Join-Path $RepoRoot "dev\sessions\local-ai"
-$ConfigDir   = Join-Path $RepoRoot "dev\config"
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RepoRoot = (Resolve-Path (Join-Path $ScriptDir "..\..")).Path
+
+$LocalAiDir = Join-Path $RepoRoot "dev\sessions\local-ai"
+$ConfigDir = Join-Path $RepoRoot "dev\config"
 $RoutingPath = Join-Path $ConfigDir "open-webui-mcp-routing.json"
 
-if (-not (Test-Path $LocalAiDir)) { New-Item -ItemType Directory -Force -Path $LocalAiDir | Out-Null }
-if (-not (Test-Path $ConfigDir))  { New-Item -ItemType Directory -Force -Path $ConfigDir | Out-Null }
+if (-not (Test-Path $LocalAiDir)) { New-Item -ItemType Directory -Path $LocalAiDir -Force | Out-Null }
+if (-not (Test-Path $ConfigDir))  { New-Item -ItemType Directory -Path $ConfigDir -Force | Out-Null }
 
-$DiagLog     = Join-Path $LocalAiDir "latest-launch-diag.log"
+$DiagLog = Join-Path $LocalAiDir "latest-launch-diag.log"
 $WebUiOutLog = Join-Path $LocalAiDir "latest-open-webui.out.log"
 $WebUiErrLog = Join-Path $LocalAiDir "latest-open-webui.err.log"
-$RunSummary  = Join-Path $LocalAiDir "latest-run-summary.md"
+$RunSummary = Join-Path $LocalAiDir "latest-run-summary.md"
 $ResolvedMcp = Join-Path $LocalAiDir "latest-mcp-config.resolved.json"
-
-@($DiagLog, $WebUiOutLog, $WebUiErrLog, $RunSummary, $ResolvedMcp) | ForEach-Object {
-    if (Test-Path $_) { Remove-Item -Force $_ -ErrorAction SilentlyContinue }
-    New-Item -ItemType File -Path $_ -Force | Out-Null
-}
 
 function Write-Diag {
     param([string]$Message)
@@ -37,141 +34,178 @@ function Write-Diag {
     Write-Host $Message
 }
 
-if ($PruneLegacyLogs) {
-    $legacyPatterns = @("open-webui-*.log","launch-diag-*.log","run-summary-*.md","terminal-run-*.log")
-    foreach ($p in $legacyPatterns) {
-        Get-ChildItem -Path $LocalAiDir -Filter $p -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
-    }
-}
-
 function Resolve-TokenizedString {
-    param([string]$Text,[string]$WorkspaceRoot,[switch]$ForCommandPath)
-    if ([string]::IsNullOrWhiteSpace($Text)) { return $Text }
+    param(
+        [Parameter(Mandatory=$true)][string]$Text,
+        [Parameter(Mandatory=$true)][string]$WorkspaceRoot,
+        [switch]$ForCommandPath
+    )
 
-    $r = $Text
-    if ($ForCommandPath) {
-        $r = $r -replace [regex]::Escape('${APPDATA}'), $env:APPDATA
-        $r = $r -replace [regex]::Escape('${USERPROFILE}'), $env:USERPROFILE
-        $r = $r -replace [regex]::Escape('${WORKSPACE_ROOT}'), $WorkspaceRoot
-        return ($r -replace '/', '\')
+    $result = $Text
+
+    if ($ForCommandPath.IsPresent) {
+        $result = $result.Replace('${APPDATA}', $env:APPDATA)
+        $result = $result.Replace('${USERPROFILE}', $env:USERPROFILE)
+        $result = $result.Replace('${WORKSPACE_ROOT}', $WorkspaceRoot)
+        return $result.Replace('/', '\')
     }
 
-    $r = $r -replace [regex]::Escape('${APPDATA}'), ($env:APPDATA -replace '\\','/')
-    $r = $r -replace [regex]::Escape('${USERPROFILE}'), ($env:USERPROFILE -replace '\\','/')
-    $r = $r -replace [regex]::Escape('${WORKSPACE_ROOT}'), ($WorkspaceRoot -replace '\\','/')
-    return $r
+    $appDataUnix = ($env:APPDATA -replace '\\','/')
+    $userProfileUnix = ($env:USERPROFILE -replace '\\','/')
+    $workspaceUnix = ($WorkspaceRoot -replace '\\','/')
+
+    $result = $result.Replace('${APPDATA}', $appDataUnix)
+    $result = $result.Replace('${USERPROFILE}', $userProfileUnix)
+    $result = $result.Replace('${WORKSPACE_ROOT}', $workspaceUnix)
+    return $result
 }
 
+function Test-HttpEndpoint {
+    param(
+        [Parameter(Mandatory=$true)][string]$Url,
+        [int]$TimeoutSec = 4
+    )
+    try {
+        $resp = Invoke-WebRequest -Uri $Url -Method GET -UseBasicParsing -TimeoutSec $TimeoutSec
+        return [pscustomobject]@{ ok = $true; status = $resp.StatusCode; message = "OK" }
+    } catch {
+        return [pscustomobject]@{ ok = $false; status = ""; message = $_.Exception.Message }
+    }
+}
+
+# reset latest-only files first
+$latestFiles = @($DiagLog, $WebUiOutLog, $WebUiErrLog, $RunSummary, $ResolvedMcp)
+foreach ($f in $latestFiles) {
+    if (Test-Path $f) { Remove-Item -Path $f -Force -ErrorAction SilentlyContinue }
+    New-Item -ItemType File -Path $f -Force | Out-Null
+}
+
+# prune legacy logs
+if ($PruneLegacyLogs.IsPresent -or $PruneLegacyLogs) {
+    $legacyPatterns = @("open-webui-*.log","launch-diag-*.log","run-summary-*.md","terminal-run-*.log")
+    foreach ($pattern in $legacyPatterns) {
+        Get-ChildItem -Path $LocalAiDir -Filter $pattern -ErrorAction SilentlyContinue |
+            Remove-Item -Force -ErrorAction SilentlyContinue
+    }
+    Write-Diag "Legacy timestamped logs pruned."
+}
+
+# defaults
 $defaultMcp = [ordered]@{
     mcpServers = [ordered]@{
         local_filesystem = [ordered]@{
             command = '${APPDATA}/npm/mcp-server-filesystem.cmd'
-            args    = @('${WORKSPACE_ROOT}')
+            args = @('${WORKSPACE_ROOT}')
         }
         local_git = [ordered]@{
             command = '${APPDATA}/npm/mcp-server-git.cmd'
-            args    = @()
+            args = @()
         }
     }
 }
 
+# optional override
 $overrideMcp = $null
 if (Test-Path $RoutingPath) {
     try {
         $overrideRaw = Get-Content -Raw -Path $RoutingPath
         if (-not [string]::IsNullOrWhiteSpace($overrideRaw)) {
             $overrideMcp = $overrideRaw | ConvertFrom-Json
-            Write-Diag ("Loaded overrides from " + $RoutingPath)
+            Write-Diag ("Loaded MCP override: " + $RoutingPath)
         }
     } catch {
-        Write-Diag ("WARNING: Failed to parse override file. Using defaults. Error: " + $_.Exception.Message)
+        Write-Diag ("WARNING: MCP override parse failed. Using defaults. Error: " + $_.Exception.Message)
     }
 } else {
-    Write-Diag ("No override file found at " + $RoutingPath + "; using defaults.")
+    Write-Diag ("No MCP override file found at " + $RoutingPath + ". Using defaults.")
 }
 
+# merge servers
 $mergedServers = [ordered]@{}
-foreach ($s in $defaultMcp.mcpServers.PSObject.Properties) { $mergedServers[$s.Name] = $s.Value }
+foreach ($p in $defaultMcp.mcpServers.PSObject.Properties) { $mergedServers[$p.Name] = $p.Value }
 if ($overrideMcp -and $overrideMcp.mcpServers) {
-    foreach ($s in $overrideMcp.mcpServers.PSObject.Properties) { $mergedServers[$s.Name] = $s.Value }
-}
-$resolved = [pscustomobject]@{ mcpServers = [pscustomobject]$mergedServers }
-
-foreach ($s in $resolved.mcpServers.PSObject.Properties) {
-    if ($s.Value.command) {
-        $s.Value.command = Resolve-TokenizedString -Text ([string]$s.Value.command) -WorkspaceRoot $RepoRoot -ForCommandPath
-    }
-    if ($s.Name -eq "local_filesystem" -and $s.Value.args) {
-        $argsFixed = @()
-        foreach ($a in $s.Value.args) {
-            $argsFixed += (Resolve-TokenizedString -Text ([string]$a) -WorkspaceRoot $RepoRoot)
-        }
-        $s.Value.args = $argsFixed
-    }
+    foreach ($p in $overrideMcp.mcpServers.PSObject.Properties) { $mergedServers[$p.Name] = $p.Value }
 }
 
-$resolvedJson = $resolved | ConvertTo-Json -Depth 20
-Set-Content -Path $ResolvedMcp -Value $resolvedJson -Encoding UTF8
-Write-Diag ("Resolved MCP config written to " + $ResolvedMcp)
+# resolve tokens
+$resolvedMcpServers = [ordered]@{}
+foreach ($serverName in $mergedServers.Keys) {
+    $sv = $mergedServers[$serverName]
+    $cmdRaw = ""
+    $argsRaw = @()
 
+    if ($sv.PSObject.Properties["command"]) { $cmdRaw = [string]$sv.command }
+    if ($sv.PSObject.Properties["args"])    { $argsRaw = @($sv.args) }
+
+    $cmdResolved = Resolve-TokenizedString -Text $cmdRaw -WorkspaceRoot $RepoRoot -ForCommandPath
+
+    $argsResolved = @()
+    foreach ($a in $argsRaw) {
+        $argsResolved += (Resolve-TokenizedString -Text ([string]$a) -WorkspaceRoot $RepoRoot)
+    }
+
+    $resolvedMcpServers[$serverName] = [ordered]@{
+        command = $cmdResolved
+        args = $argsResolved
+    }
+}
+
+$resolvedObject = [ordered]@{ mcpServers = $resolvedMcpServers }
+($resolvedObject | ConvertTo-Json -Depth 20) | Set-Content -Path $ResolvedMcp -Encoding UTF8
+Write-Diag ("Resolved MCP config written: " + $ResolvedMcp)
+
+# validate commands
 $mcpValidation = @()
 $unresolvedCount = 0
-foreach ($s in $resolved.mcpServers.PSObject.Properties) {
-    $name = $s.Name
-    $cmd  = [string]$s.Value.command
-    $ok   = $false
-    $how  = ""
+
+foreach ($serverName in $resolvedMcpServers.Keys) {
+    $cmd = [string]$resolvedMcpServers[$serverName].command
+    $ok = $false
+    $check = ""
 
     if ([string]::IsNullOrWhiteSpace($cmd)) {
-        $ok = $false; $how = "missing command"
+        $ok = $false
+        $check = "missing command"
     } elseif (Test-Path $cmd) {
-        $ok = $true; $how = "Test-Path"
+        $ok = $true
+        $check = "Test-Path"
     } else {
         $gc = Get-Command $cmd -ErrorAction SilentlyContinue
-        if ($gc) { $ok = $true; $how = "Get-Command" } else { $ok = $false; $how = "not found" }
+        if ($gc) { $ok = $true; $check = "Get-Command" } else { $ok = $false; $check = "not found" }
     }
 
-    if (-not $ok) { $unresolvedCount++ }
+    if (-not $ok) { $unresolvedCount = $unresolvedCount + 1 }
 
     $mcpValidation += [pscustomobject]@{
-        server  = $name
+        server = $serverName
         command = $cmd
-        ok      = $ok
-        check   = $how
+        ok = $ok
+        check = $check
     }
 
-    Write-Diag ("MCP " + $name + " ok=" + $ok + " check=" + $how + " cmd=" + $cmd)
+    Write-Diag ("MCP " + $serverName + " ok=" + $ok + " check=" + $check + " cmd=" + $cmd)
 }
 
-if (($unresolvedCount -gt 0) -and (-not $AllowMissingMcpCommands)) {
+if (($unresolvedCount -gt 0) -and (-not $AllowMissingMcpCommands.IsPresent)) {
     throw ("MCP validation failed; unresolved commands: " + $unresolvedCount)
 }
 
+# runtime env
 $env:ENABLE_MCP = "true"
 $env:MCP_CONFIG_PATH = $ResolvedMcp
 $env:OLLAMA_BASE_URL = "http://localhost:11434"
 $env:ENABLE_PERSISTENT_CONFIG = "false"
 
-Write-Diag "Set ENABLE_MCP=true"
-Write-Diag ("Set MCP_CONFIG_PATH=" + $ResolvedMcp)
-Write-Diag ("Set OLLAMA_BASE_URL=" + $env:OLLAMA_BASE_URL)
-Write-Diag "Set ENABLE_PERSISTENT_CONFIG=false"
+Write-Diag "Environment prepared for Open WebUI launch."
 
-function Test-HttpEndpoint {
-    param([string]$Url,[int]$TimeoutSec = 3)
-    try {
-        $r = Invoke-WebRequest -Uri $Url -Method GET -UseBasicParsing -TimeoutSec $TimeoutSec
-        return [pscustomobject]@{ ok = $true; status = $r.StatusCode; message = "OK" }
-    } catch {
-        return [pscustomobject]@{ ok = $false; status = ""; message = $_.Exception.Message }
-    }
-}
+# health check: ollama
+$ollamaCheck = Test-HttpEndpoint -Url "http://localhost:11434/api/tags" -TimeoutSec 4
+Write-Diag ("Ollama health ok=" + $ollamaCheck.ok)
 
-$ollamaCheck = Test-HttpEndpoint -Url "http://localhost:11434/api/tags" -TimeoutSec 3
-Write-Diag ("Ollama check: ok=" + $ollamaCheck.ok + " status=" + $ollamaCheck.status + " msg=" + $ollamaCheck.message)
-
+# launch Open WebUI
 $launchMode = ""
-if ($DebugForeground) {
+
+if ($DebugForeground.IsPresent) {
     try {
         $launchMode = "python -m open_webui serve (foreground)"
         & python -m open_webui serve
@@ -191,14 +225,14 @@ if ($DebugForeground) {
     }
 }
 
-Start-Sleep -Seconds 5
-$webuiCheck = Test-HttpEndpoint -Url "http://localhost:8080" -TimeoutSec 3
-Write-Diag ("Open WebUI check: ok=" + $webuiCheck.ok + " status=" + $webuiCheck.status + " msg=" + $webuiCheck.message)
+Start-Sleep -Seconds 6
+$webuiCheck = Test-HttpEndpoint -Url "http://localhost:8080" -TimeoutSec 4
+Write-Diag ("Open WebUI health ok=" + $webuiCheck.ok)
 
 $finalStatus = "FAIL"
 if (($unresolvedCount -eq 0) -and $webuiCheck.ok) { $finalStatus = "PASS" }
 
-$summaryWriter = Join-Path $PSScriptRoot "write-summary.ps1"
+$summaryWriter = Join-Path $ScriptDir "write-summary.ps1"
 if (-not (Test-Path $summaryWriter)) {
     throw ("Missing summary writer: " + $summaryWriter)
 }
@@ -217,10 +251,10 @@ if (-not (Test-Path $summaryWriter)) {
     -OllamaCheck $ollamaCheck `
     -WebUiCheck $webuiCheck
 
-Write-Diag ("Run summary written to " + $RunSummary)
+Write-Diag ("Run summary written: " + $RunSummary)
 
 if ($webuiCheck.ok) {
-    Write-Diag "SUCCESS: Open WebUI is reachable at http://localhost:8080"
+    Write-Diag "SUCCESS: Open WebUI reachable at http://localhost:8080"
     Start-Process "http://localhost:8080" | Out-Null
 } else {
     Write-Diag "WARNING: Open WebUI not reachable yet. Check logs."

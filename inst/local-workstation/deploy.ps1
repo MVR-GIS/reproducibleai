@@ -1,70 +1,199 @@
 # ==============================================================================
-# DEPLOY-STACK.PS1: Complete Workspace Installer & Core Model Provisioner
+# deploy.ps1 - Hardened local workstation dependency/bootstrap script
 # ==============================================================================
+[CmdletBinding()]
+param(
+    [switch]$SkipNodeChecks,
+    [switch]$SkipPythonChecks,
+    [switch]$SkipOllamaChecks
+)
+
+Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-Write-Host "Configuring certificate and environment parameters..." -ForegroundColor Cyan
-$env:SSL_CERT_RECTYPE = "win"
-$env:UV_CERT_BUNDLE = "win"
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RepoRoot = (Resolve-Path (Join-Path $ScriptDir "..\..")).Path
+$LocalAiDir = Join-Path $RepoRoot "dev\sessions\local-ai"
 
-$LocalStackDir = Join-Path $env:USERPROFILE "AppData\Local\LocalAIStack"
-if (-not (Test-Path $LocalStackDir)) { New-Item -ItemType Directory -Force -Path $LocalStackDir | Out-Null }
-
-$PossibleCertPath = Join-Path $env:USERPROFILE ".config\reproducibleai\dod_root.pem"
-if (Test-Path $PossibleCertPath) {
-    $env:AWS_CA_BUNDLE = $PossibleCertPath
-    $env:REQUESTS_CA_BUNDLE = $PossibleCertPath
-    $env:NODE_EXTRA_CA_CERTS = $PossibleCertPath
+if (-not (Test-Path $LocalAiDir)) {
+    New-Item -ItemType Directory -Path $LocalAiDir -Force | Out-Null
 }
 
-$OpenWebUIVersion = "0.10.2"
-$EnvTargetName = "open-webui-gov"
-$ModelToCache = "qwen2.5-coder:32b-instruct"
+$DeployLog = Join-Path $LocalAiDir "latest-deploy-diag.log"
+if (Test-Path $DeployLog) {
+    Remove-Item -Path $DeployLog -Force -ErrorAction SilentlyContinue
+}
+New-Item -ItemType File -Path $DeployLog -Force | Out-Null
 
-# 1) Locate conda
-Write-Host "Locating conda..." -ForegroundColor Cyan
-$CondaCandidates = @(
-    (Join-Path $env:USERPROFILE "AppData\Local\miniforge3\Scripts\conda.exe"),
-    (Get-Command "conda" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source)
-) | Where-Object { $_ -and (Test-Path $_) }
-
-$CondaBin = $CondaCandidates | Select-Object -First 1
-if (-not $CondaBin) { throw "Conda not found. Install Miniforge or ensure conda is on PATH." }
-
-# 2) Ensure env exists
-Write-Host "Ensuring conda env '$EnvTargetName' exists..." -ForegroundColor Cyan
-$EnvCheck = & $CondaBin env list | Out-String
-if (-not ($EnvCheck -match $EnvTargetName)) {
-    & $CondaBin create --name $EnvTargetName python=3.11 --yes --quiet
+function Write-DeployLog {
+    param([string]$Message)
+    $line = "[{0}] {1}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $Message
+    Add-Content -Path $DeployLog -Value $line
+    Write-Host $Message
 }
 
-$CondaRoot = Split-Path (Split-Path $CondaBin -Parent) -Parent
-$CondaPipExe = Join-Path $CondaRoot "envs\$EnvTargetName\Scripts\pip.exe"
-if (-not (Test-Path $CondaPipExe)) {
-    throw "pip.exe not found for env '$EnvTargetName': $CondaPipExe"
+function Test-CommandAvailable {
+    param([Parameter(Mandatory=$true)][string]$Name)
+    $cmd = Get-Command $Name -ErrorAction SilentlyContinue
+    return ($null -ne $cmd)
 }
 
-# 3) Install Open WebUI
-Write-Host "Installing Open WebUI $OpenWebUIVersion..." -ForegroundColor Yellow
-& $CondaPipExe install "open-webui==$OpenWebUIVersion" --no-cache-dir
-
-# 4) Prepare Ollama model storage and cache model
-$env:OLLAMA_MODELS = Join-Path $LocalStackDir "ollama\models"
-if (-not (Test-Path $env:OLLAMA_MODELS)) { New-Item -ItemType Directory -Force -Path $env:OLLAMA_MODELS | Out-Null }
-
-if (Get-Process "ollama" -ErrorAction SilentlyContinue) {
-    Stop-Process -Name "ollama" -Force -ErrorAction SilentlyContinue
-    Start-Sleep -Seconds 1
+function Assert-CommandAvailable {
+    param(
+        [Parameter(Mandatory=$true)][string]$Name,
+        [Parameter(Mandatory=$true)][string]$InstallHint
+    )
+    if (-not (Test-CommandAvailable -Name $Name)) {
+        throw ("Required command not found: " + $Name + ". " + $InstallHint)
+    }
+    Write-DeployLog ("Verified command: " + $Name)
 }
 
-Write-Host "Starting temporary Ollama daemon..." -ForegroundColor Cyan
-$TempOllamaServe = Start-Process -FilePath "ollama" -ArgumentList "serve" -WindowStyle Hidden -PassThru
-Start-Sleep -Seconds 3
+function Test-HttpEndpoint {
+    param(
+        [Parameter(Mandatory=$true)][string]$Url,
+        [int]$TimeoutSec = 4
+    )
+    try {
+        $resp = Invoke-WebRequest -Uri $Url -Method GET -UseBasicParsing -TimeoutSec $TimeoutSec
+        return [pscustomobject]@{
+            ok = $true
+            status = $resp.StatusCode
+            message = "OK"
+        }
+    }
+    catch {
+        return [pscustomobject]@{
+            ok = $false
+            status = ""
+            message = $_.Exception.Message
+        }
+    }
+}
 
-Write-Host "Caching model: $ModelToCache" -ForegroundColor Yellow
-& ollama pull $ModelToCache
+Write-DeployLog "Starting hardened deploy preflight checks."
+Write-DeployLog ("RepoRoot: " + $RepoRoot)
+Write-DeployLog ("LocalAiDir: " + $LocalAiDir)
 
-Write-Host "Stopping temporary Ollama daemon..." -ForegroundColor Cyan
-Stop-Process -Id $TempOllamaServe.Id -Force -ErrorAction SilentlyContinue
+# ------------------------------------------------------------------------------
+# Core command checks
+# ------------------------------------------------------------------------------
+if (-not $SkipPythonChecks.IsPresent) {
+    Assert-CommandAvailable -Name "python" -InstallHint "Install Python 3.10+ and ensure python.exe is on PATH."
+    try {
+        $pyVersion = & python --version 2>&1
+        Write-DeployLog ("python --version => " + $pyVersion)
+    }
+    catch {
+        throw ("Python is present but failed to execute: " + $_.Exception.Message)
+    }
+}
+else {
+    Write-DeployLog "Skipping Python checks by request."
+}
 
-Write-Host "`n[SUCCESS] Deployment completed." -ForegroundColor Green
+if (-not $SkipNodeChecks.IsPresent) {
+    Assert-CommandAvailable -Name "node" -InstallHint "Install Node.js LTS and ensure node.exe is on PATH."
+    Assert-CommandAvailable -Name "npm" -InstallHint "Install npm with Node.js and ensure npm.cmd is on PATH."
+    try {
+        $nodeVersion = & node --version 2>&1
+        $npmVersion = & npm --version 2>&1
+        Write-DeployLog ("node --version => " + $nodeVersion)
+        Write-DeployLog ("npm --version => " + $npmVersion)
+    }
+    catch {
+        throw ("Node/npm failed version checks: " + $_.Exception.Message)
+    }
+}
+else {
+    Write-DeployLog "Skipping Node/npm checks by request."
+}
+
+# ------------------------------------------------------------------------------
+# MCP command wrappers (expected for launch defaults)
+# ------------------------------------------------------------------------------
+$appDataNpm = Join-Path $env:APPDATA "npm"
+$filesystemMcp = Join-Path $appDataNpm "mcp-server-filesystem.cmd"
+$gitMcp = Join-Path $appDataNpm "mcp-server-git.cmd"
+
+if (-not $SkipNodeChecks.IsPresent) {
+    if (Test-Path $filesystemMcp) {
+        Write-DeployLog ("Verified MCP wrapper: " + $filesystemMcp)
+    }
+    else {
+        Write-DeployLog ("WARNING: Missing MCP wrapper: " + $filesystemMcp)
+        Write-DeployLog "Install suggestion: npm i -g @modelcontextprotocol/server-filesystem"
+    }
+
+    if (Test-Path $gitMcp) {
+        Write-DeployLog ("Verified MCP wrapper: " + $gitMcp)
+    }
+    else {
+        Write-DeployLog ("WARNING: Missing MCP wrapper: " + $gitMcp)
+        Write-DeployLog "Install suggestion: npm i -g @modelcontextprotocol/server-git"
+    }
+}
+
+# ------------------------------------------------------------------------------
+# Open WebUI module availability check
+# ------------------------------------------------------------------------------
+if (-not $SkipPythonChecks.IsPresent) {
+    try {
+        & python -c "import open_webui; print('open_webui import OK')" 2>&1 | ForEach-Object { Write-DeployLog $_ }
+    }
+    catch {
+        Write-DeployLog "WARNING: open_webui import failed in current python environment."
+        Write-DeployLog "Install suggestion: pip install open-webui"
+    }
+}
+
+# ------------------------------------------------------------------------------
+# Ollama checks (runtime + endpoint)
+# ------------------------------------------------------------------------------
+if (-not $SkipOllamaChecks.IsPresent) {
+    if (Test-CommandAvailable -Name "ollama") {
+        Write-DeployLog "Verified command: ollama"
+    }
+    else {
+        Write-DeployLog "WARNING: ollama command not found on PATH."
+        Write-DeployLog "Install suggestion: install Ollama and ensure ollama.exe is on PATH."
+    }
+
+    $ollamaHealth = Test-HttpEndpoint -Url "http://localhost:11434/api/tags" -TimeoutSec 4
+    if ($ollamaHealth.ok) {
+        Write-DeployLog ("Ollama endpoint reachable: status=" + $ollamaHealth.status)
+    }
+    else {
+        Write-DeployLog ("WARNING: Ollama endpoint not reachable: " + $ollamaHealth.message)
+        Write-DeployLog "If expected, start Ollama service before launch."
+    }
+}
+else {
+    Write-DeployLog "Skipping Ollama checks by request."
+}
+
+# ------------------------------------------------------------------------------
+# Optional repo config checks
+# ------------------------------------------------------------------------------
+$routingPath = Join-Path $RepoRoot "dev\config\open-webui-mcp-routing.json"
+if (Test-Path $routingPath) {
+    try {
+        $raw = Get-Content -Raw -Path $routingPath
+        if ([string]::IsNullOrWhiteSpace($raw)) {
+            Write-DeployLog ("WARNING: MCP routing file exists but is empty: " + $routingPath)
+        }
+        else {
+            $null = $raw | ConvertFrom-Json
+            Write-DeployLog ("Verified MCP routing JSON parse: " + $routingPath)
+        }
+    }
+    catch {
+        Write-DeployLog ("WARNING: MCP routing JSON parse failed: " + $_.Exception.Message)
+    }
+}
+else {
+    Write-DeployLog ("MCP routing file not found (optional): " + $routingPath)
+}
+
+Write-DeployLog "Deploy preflight checks complete."
+Write-Host ("[DEPLOY] Completed. Log: " + $DeployLog) -ForegroundColor Green
