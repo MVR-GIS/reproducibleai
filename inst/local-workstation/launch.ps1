@@ -3,188 +3,154 @@
 # ==============================================================================
 $ErrorActionPreference = "Stop"
 
-$ExecutionDir   = (Get-Location).Path
-$LocalStackDir  = Join-Path $env:USERPROFILE "AppData\Local\LocalAIStack"
-$DataDir        = Join-Path $LocalStackDir "open-webui-data"
-$NpmBin         = Join-Path $env:APPDATA "npm"
-$LogDir         = Join-Path $ExecutionDir "dev\sessions\local-ai"
-$ConfigDir      = Join-Path $ExecutionDir "dev\config"
-$RepoMcpPath    = Join-Path $ConfigDir "open-webui-mcp-routing.json"
-$BoundsPath     = Join-Path $ConfigDir "workspace-bounds.json"
-$McpOutPath     = Join-Path $DataDir "mcp_config.json"
+$ExecutionDir  = (Get-Location).Path
+$ConfigDir     = Join-Path $ExecutionDir "dev\config"
+$LogDir        = Join-Path $ExecutionDir "dev\sessions\local-ai"
+$LocalStackDir = Join-Path $env:USERPROFILE "AppData\Local\LocalAIStack"
+$DataDir       = Join-Path $LocalStackDir "open-webui-data"
+$NpmBin        = Join-Path $env:APPDATA "npm"
 
-if (-not (Test-Path $LogDir)) { New-Item -ItemType Directory -Force -Path $LogDir | Out-Null }
+$BoundsPath    = Join-Path $ConfigDir "workspace-bounds.json"
+$RepoMcpPath   = Join-Path $ConfigDir "open-webui-mcp-routing.json"
+$McpOutPath    = Join-Path $DataDir "mcp_config.json"
+
+if (-not (Test-Path $LogDir))  { New-Item -ItemType Directory -Force -Path $LogDir | Out-Null }
 if (-not (Test-Path $DataDir)) { New-Item -ItemType Directory -Force -Path $DataDir | Out-Null }
 
 $Stamp    = Get-Date -Format "yyyyMMdd-HHmmss"
-$WebUILog = Join-Path $LogDir "open-webui-$Stamp.log"
 $DiagLog  = Join-Path $LogDir "launch-diag-$Stamp.log"
+$WebUILog = Join-Path $LogDir "open-webui-$Stamp.log"
 
-function Log-Diag([string]$msg) {
-  Add-Content -Path $DiagLog -Value "$(Get-Date -Format o) | $msg" -Encoding UTF8
+function Log([string]$m) {
+  Add-Content -Path $DiagLog -Value "$(Get-Date -Format o) | $m" -Encoding utf8
 }
 
-function Resolve-TokenString {
-  param([string]$Text, [string]$WorkspaceRoot)
-  if ([string]::IsNullOrWhiteSpace($Text)) { return $Text }
-  $x = $Text.Replace('${APPDATA}', $env:APPDATA)
-  $x = $x.Replace('${WORKSPACE_ROOT}', ($WorkspaceRoot -replace '\\','/'))
+function Resolve-Token([string]$txt, [string]$workspaceRoot) {
+  if ([string]::IsNullOrWhiteSpace($txt)) { return $txt }
+  $x = $txt.Replace('${APPDATA}', $env:APPDATA)
   $x = $x.Replace('${USERPROFILE}', $env:USERPROFILE)
+  $x = $x.Replace('${WORKSPACE_ROOT}', ($workspaceRoot -replace '\\','/'))
   return $x
 }
 
-function Write-Utf8NoBom([string]$Path, [string]$Content) {
+function Write-Utf8NoBom([string]$path, [string]$content) {
   $enc = New-Object System.Text.UTF8Encoding($false)
-  [System.IO.File]::WriteAllText($Path, $Content, $enc)
+  [System.IO.File]::WriteAllText($path, $content, $enc)
 }
 
 function Get-WorkspaceRoot {
-  param([string]$ExecutionDir, [string]$BoundsPath)
   if (Test-Path $BoundsPath) {
-    $obj = (Get-Content -Raw -Path $BoundsPath -Encoding UTF8) | ConvertFrom-Json
-    return $ExecutionDir
-  } else {
-    return (Split-Path -Path $ExecutionDir -Parent)
-  }
-}
-
-function New-DefaultConfig {
-  param([string]$WorkspaceRoot, [string]$NpmBin)
-  @{
-    mcpServers = @{
-      local_filesystem = @{
-        command = (Join-Path $NpmBin "mcp-server-filesystem.cmd")
-        args    = @($WorkspaceRoot -replace '\\','/')
-        enabled = $true
-      }
-      local_git = @{
-        command = (Join-Path $NpmBin "mcp-server-git.cmd")
-        args    = @()
-        enabled = $true
-      }
+    try {
+      $null = (Get-Content -Raw -Path $BoundsPath -Encoding UTF8) | ConvertFrom-Json
+      return $ExecutionDir
+    } catch {
+      throw "workspace-bounds.json invalid UTF-8 JSON: $($_.Exception.Message)"
     }
   }
+  return (Split-Path -Path $ExecutionDir -Parent)
 }
 
-function Merge-RepoConfig {
-  param([hashtable]$Cfg, [string]$RepoMcpPath)
-  if (-not (Test-Path $RepoMcpPath)) { return $Cfg }
-
-  $repo = (Get-Content -Raw -Path $RepoMcpPath -Encoding UTF8) | ConvertFrom-Json -AsHashtable
-  if (-not $repo.ContainsKey("mcpServers")) {
-    throw "Repo MCP config missing top-level mcpServers: $RepoMcpPath"
-  }
-
-  foreach ($kv in $repo.mcpServers.GetEnumerator()) {
-    $Cfg.mcpServers[$kv.Key] = $kv.Value
-  }
-  return $Cfg
-}
-
-function Normalize-And-Validate {
-  param([hashtable]$Cfg, [string]$WorkspaceRoot)
-
-  foreach ($name in @($Cfg.mcpServers.Keys)) {
-    $s = $Cfg.mcpServers[$name]
-
-    if (-not $s.ContainsKey("enabled")) { $s["enabled"] = $true }
-    if ($s["enabled"] -eq $false) { continue }
-
-    if (-not $s.ContainsKey("command")) {
-      throw "Enabled MCP server '$name' missing command."
-    }
-
-    $s["command"] = Resolve-TokenString -Text ([string]$s["command"]) -WorkspaceRoot $WorkspaceRoot
-
-    if (-not $s.ContainsKey("args") -or $null -eq $s["args"]) {
-      $s["args"] = @()
-    } else {
-      $resolved = @()
-      foreach ($a in $s["args"]) { $resolved += (Resolve-TokenString -Text ([string]$a) -WorkspaceRoot $WorkspaceRoot) }
-      $s["args"] = $resolved
-    }
-
-    if (-not (Test-Path $s["command"])) {
-      throw "Enabled MCP server '$name' command not found: $($s["command"])"
-    }
-
-    $Cfg.mcpServers[$name] = $s
-    Log-Diag "MCP[$name] command=$($s["command"])"
-  }
-
-  return $Cfg
-}
-
-function Wait-Ollama([int]$MaxSeconds = 25) {
-  $deadline = (Get-Date).AddSeconds($MaxSeconds)
+function Wait-Url([string]$url, [int]$seconds = 30) {
+  $deadline = (Get-Date).AddSeconds($seconds)
   do {
     try {
-      Invoke-RestMethod -Uri "http://localhost:11434/api/tags" -Method Get -TimeoutSec 3 | Out-Null
-      return $true
-    } catch {
-      Start-Sleep -Seconds 1
-    }
-  } while ((Get-Date) -lt $deadline)
-  return $false
-}
-
-function Wait-WebUI([int]$MaxSeconds = 40) {
-  $deadline = (Get-Date).AddSeconds($MaxSeconds)
-  do {
-    try {
-      $resp = Invoke-WebRequest -Uri "http://localhost:8080" -UseBasicParsing -TimeoutSec 3
-      if ($resp.StatusCode -ge 200 -and $resp.StatusCode -lt 500) { return $true }
-    } catch {
-      Start-Sleep -Seconds 1
-    }
+      $r = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 3
+      if ($r.StatusCode -ge 200 -and $r.StatusCode -lt 500) { return $true }
+    } catch { Start-Sleep -Seconds 1 }
   } while ((Get-Date) -lt $deadline)
   return $false
 }
 
 try {
-  $WorkspaceRoot = Get-WorkspaceRoot -ExecutionDir $ExecutionDir -BoundsPath $BoundsPath
-  Log-Diag "WorkspaceRoot=$WorkspaceRoot"
+  $workspaceRoot = Get-WorkspaceRoot
+  Log "workspaceRoot=$workspaceRoot"
 
-  $cfg = New-DefaultConfig -WorkspaceRoot $WorkspaceRoot -NpmBin $NpmBin
-  $cfg = Merge-RepoConfig -Cfg $cfg -RepoMcpPath $RepoMcpPath
-  $cfg = Normalize-And-Validate -Cfg $cfg -WorkspaceRoot $WorkspaceRoot
+  # Build MCP config
+  $cfg = @{
+    mcpServers = @{
+      local_filesystem = @{
+        command = Join-Path $NpmBin "mcp-server-filesystem.cmd"
+        args    = @($workspaceRoot -replace '\\','/')
+      }
+      local_git = @{
+        command = Join-Path $NpmBin "mcp-server-git.cmd"
+        args    = @()
+      }
+    }
+  }
 
-  $json = $cfg | ConvertTo-Json -Depth 50
-  Write-Utf8NoBom -Path $McpOutPath -Content $json
-  Log-Diag "Wrote MCP config: $McpOutPath"
+  # Optional repo overrides
+  if (Test-Path $RepoMcpPath) {
+    Log "Applying repo overrides from $RepoMcpPath"
+    $repo = (Get-Content -Raw -Path $RepoMcpPath -Encoding UTF8) | ConvertFrom-Json -AsHashtable
+    if ($repo.ContainsKey("mcpServers")) {
+      foreach ($kv in $repo.mcpServers.GetEnumerator()) {
+        $cfg.mcpServers[$kv.Key] = $kv.Value
+      }
+    }
+  }
 
-  # Runtime env
+  # Normalize + validate
+  foreach ($name in @($cfg.mcpServers.Keys)) {
+    $s = $cfg.mcpServers[$name]
+
+    if (-not $s.ContainsKey("command")) { throw "MCP server '$name' missing command" }
+
+    $s.command = Resolve-Token $s.command $workspaceRoot
+
+    if (-not $s.ContainsKey("args") -or $null -eq $s.args) {
+      $s.args = @()
+    } else {
+      $resolvedArgs = @()
+      foreach ($a in $s.args) { $resolvedArgs += (Resolve-Token ([string]$a) $workspaceRoot) }
+      $s.args = $resolvedArgs
+    }
+
+    if (-not (Test-Path $s.command)) {
+      throw "MCP command not found for '$name': $($s.command)"
+    }
+
+    $cfg.mcpServers[$name] = $s
+    Log "MCP[$name] command=$($s.command)"
+  }
+
+  # Persist resolved config
+  $json = $cfg | ConvertTo-Json -Depth 30
+  Write-Utf8NoBom -path $McpOutPath -content $json
+  Log "Wrote MCP config: $McpOutPath"
+
+  # Env for WebUI
   $env:DATA_DIR = $DataDir
   $env:MCP_CONFIG_PATH = $McpOutPath
-  $env:MCP_CONFIG_FILE = $McpOutPath
-  $env:OPEN_WEBUI_MCP_CONFIG_PATH = $McpOutPath
-  $env:OPENWEBUI_MCP_CONFIG_PATH = $McpOutPath
   $env:ENABLE_MCP = "true"
 
   $env:OLLAMA_BASE_URL = "http://localhost:11434"
   $env:OLLAMA_MODELS   = Join-Path $LocalStackDir "ollama\models"
+  $env:RAG_EMBEDDING_ENGINE = "ollama"
 
   $env:ENABLE_OPENAI_API = "false"
   $env:OPENAI_API_BASE_URL = ""
   $env:OPENAI_API_BASE_URLS = ""
   $env:OPENAI_API_KEYS = ""
-  $env:RAG_EMBEDDING_ENGINE = "ollama"
   $env:ENABLE_PERSISTENT_CONFIG = "false"
   $env:WEBUI_AUTH = "false"
 
+  # Restart services
   Get-Process -Name "open-webui" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
   Start-Sleep -Seconds 1
 
   if (-not (Get-Process "ollama" -ErrorAction SilentlyContinue)) {
     Start-Process -FilePath "ollama" -ArgumentList "serve" -WindowStyle Hidden
   }
-  if (-not (Wait-Ollama -MaxSeconds 25)) {
-    throw "Ollama health check failed at http://localhost:11434/api/tags"
+
+  if (-not (Wait-Url "http://localhost:11434/api/tags" 25)) {
+    throw "Ollama not reachable at http://localhost:11434/api/tags"
   }
-  Log-Diag "Ollama healthy."
 
   $WebUIExe = Join-Path $env:USERPROFILE "AppData\Local\miniforge3\envs\open-webui-gov\Scripts\open-webui.exe"
-  if (-not (Test-Path $WebUIExe)) { throw "Open WebUI executable not found: $WebUIExe" }
+  if (-not (Test-Path $WebUIExe)) {
+    throw "open-webui.exe not found: $WebUIExe"
+  }
 
   $p = Start-Process -FilePath $WebUIExe -ArgumentList "serve" `
     -RedirectStandardOutput $WebUILog `
@@ -192,29 +158,21 @@ try {
     -WindowStyle Hidden `
     -PassThru
 
-  Log-Diag "Open WebUI PID=$($p.Id)"
   Start-Sleep -Seconds 2
-
   if ($p.HasExited) {
-    $tail = ""
-    if (Test-Path $WebUILog) {
-      $tail = (Get-Content -Path $WebUILog -Tail 40 -ErrorAction SilentlyContinue) -join "`n"
-    }
-    throw "Open WebUI exited immediately (PID $($p.Id)). Log tail:`n$tail"
+    $tail = (Get-Content -Path $WebUILog -Tail 50 -ErrorAction SilentlyContinue) -join "`n"
+    throw "Open WebUI exited immediately. Log tail:`n$tail"
   }
 
-  if (-not (Wait-WebUI -MaxSeconds 40)) {
-    $tail = ""
-    if (Test-Path $WebUILog) {
-      $tail = (Get-Content -Path $WebUILog -Tail 60 -ErrorAction SilentlyContinue) -join "`n"
-    }
-    throw "Open WebUI did not become reachable on http://localhost:8080 within timeout. Log tail:`n$tail"
+  if (-not (Wait-Url "http://localhost:8080" 40)) {
+    $tail = (Get-Content -Path $WebUILog -Tail 80 -ErrorAction SilentlyContinue) -join "`n"
+    throw "Open WebUI not reachable on :8080. Log tail:`n$tail"
   }
 
-  Write-Host "[SUCCESS] Local workstation launched and WebUI is reachable." -ForegroundColor Green
+  Write-Host "[SUCCESS] Local workstation launched and healthy." -ForegroundColor Green
   Write-Host "Open WebUI: http://localhost:8080" -ForegroundColor Yellow
-  Write-Host "WebUI log: $WebUILog" -ForegroundColor Yellow
   Write-Host "Diag log: $DiagLog" -ForegroundColor Yellow
+  Write-Host "WebUI log: $WebUILog" -ForegroundColor Yellow
   Start-Process "http://localhost:8080"
 }
 catch {
