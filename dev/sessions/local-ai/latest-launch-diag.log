@@ -1,28 +1,12 @@
-[2026-07-19 18:55:32] Legacy timestamped logs pruned.
-[2026-07-19 18:55:32] Loaded MCP override: C:\workspace\MVR-GIS\reproducibleai\dev\config\open-webui-mcp-routing.json
-[2026-07-19 18:55:32] Resolved MCP config written: C:\workspace\MVR-GIS\reproducibleai\dev\sessions\local-ai\latest-mcp-config.resolved.json
-[2026-07-19 18:55:32] MCP local_filesystem ok=True check=Test-Path cmd=C:\Users\B5PMMMPD\AppData\Roaming\npm\mcp-server-filesystem.cmd
-[2026-07-19 18:55:32] MCP local_git ok=True check=Test-Path cmd=C:\Users\B5PMMMPD\AppData\Roaming\npm\mcp-server-git.cmd
-[2026-07-19 18:55:33] MCP smoke local_filesystem ok=True msg=exited code 1
-[2026-07-19 18:55:34] MCP smoke local_git ok=True msg=exited code 0
-[2026-07-19 18:55:34] Environment prepared for Open WebUI launch.
-[2026-07-19 18:55:38] Ollama health ok=False
-[2026-07-19 18:55:38] Python executable selected: C:\Users\B5PMMMPD\AppData\Local\miniforge3\python.exe
-[2026-07-19 18:55:38] Python version check ok=True msg=Python 3.13.12
-[2026-07-19 18:55:38] Python runtime sys.executable=C:\Users\B5PMMMPD\AppData\Local\miniforge3\python.exe
-[2026-07-19 18:55:38] open-webui package installed=False
-[2026-07-19 18:55:38] Install hint: "C:\Users\B5PMMMPD\AppData\Local\miniforge3\python.exe" -m pip install open-webui
-[2026-07-19 18:55:38] open_webui import ok=False msg=Traceback (most recent call last):
-[2026-07-19 18:55:38] WARNING: Skipping Open WebUI launch due to failed import gate.
-[2026-07-19 18:55:38] Deterministic fix command: "C:\Users\B5PMMMPD\AppData\Local\miniforge3\python.exe" -m pip install open-webui
-[2026-07-19 18:55:38] WARNING: Summary generation failed (non-blocking): At C:\workspace\MVR-GIS\reproducibleai\inst\local-workstation\write-summary.ps1:59 char:12
-+ $lines.Add("```")
-+            ~~~~~~
-The string is missing the terminator: ".
-
-At C:\workspace\MVR-GIS\reproducibleai\inst\local-workstation\write-summary.ps1:61 char:62
-+ $lines | Out-File -FilePath $RunSummary -Encoding utf8 -Force
-+                                                              ~
-Missing ')' in method call.
-[2026-07-19 18:55:38] INFO: WebUI not reachable or not launched; MCP POC can still be valid.
-[2026-07-19 18:55:38] FINAL STATUS: PASS
+[2026-07-21 14:18:49] Legacy timestamped/Open-WebUI logs pruned.
+[2026-07-21 14:18:49] Loaded MCP override: C:\workspace\MVR-GIS\reproducibleai\dev\config\continue-mcp-routing.json
+[2026-07-21 14:18:49] Resolved MCP config written: C:\workspace\MVR-GIS\reproducibleai\dev\sessions\local-ai\latest-continue-mcp.resolved.json
+[2026-07-21 14:18:49] Repo MCP handoff written: C:\workspace\MVR-GIS\reproducibleai\dev\config\continue-mcp.servers.resolved.json
+[2026-07-21 14:18:49] MCP local_filesystem ok=True check=Test-Path cmd=C:\Users\B5PMMMPD\AppData\Roaming\npm\mcp-server-filesystem.cmd
+[2026-07-21 14:18:49] MCP local_git ok=True check=Test-Path cmd=C:\Users\B5PMMMPD\AppData\Roaming\npm\mcp-server-git.cmd
+[2026-07-21 14:18:50] MCP smoke local_filesystem ok=True msg=exited code 1
+[2026-07-21 14:18:51] MCP smoke local_git ok=True msg=exited code 0
+[2026-07-21 14:18:51] Ollama health ok=True status=200 msg=OK
+[2026-07-21 14:18:51] Model present: qwen2.5-coder:32b-instruct
+[2026-07-21 14:18:51] Run summary written: C:\workspace\MVR-GIS\reproducibleai\dev\sessions\local-ai\latest-run-summary.md
+[2026-07-21 14:18:51] FINAL STATUS: PASS

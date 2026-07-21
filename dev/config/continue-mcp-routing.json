@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "local_filesystem": {
+      "command": "${APPDATA}/npm/mcp-server-filesystem.cmd",
+      "args": [
+        "${WORKSPACE_ROOT}"
+      ]
+    },
+    "local_git": {
+      "command": "${APPDATA}/npm/mcp-server-git.cmd",
+      "args": []
+    }
+  }
+}

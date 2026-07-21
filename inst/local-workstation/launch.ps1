@@ -1,15 +1,14 @@
 # ==============================================================================
-# launch.ps1 - Hardened Local Open WebUI + MCP launcher (non-blocking logging)
-# Goal: keep MCP proof moving even if WebUI/import/log-summary fail.
+# launch.ps1 - Bare-metal Continue + Ollama + MCP launcher/validator
+# Target stack: Positron + Continue + Ollama + MCP server array
 # ==============================================================================
 [CmdletBinding()]
 param(
-    [switch]$DebugForeground,
     [switch]$PruneLegacyLogs = $true,
     [switch]$AllowMissingMcpCommands,
-    [switch]$McpOnly,
-    [string]$OpenWebUiPython = $env:OPENWEBUI_PYTHON,
-    [switch]$AutoInstallOpenWebUi
+    [string]$TargetModel = "qwen2.5-coder:32b-instruct",
+    [switch]$SkipModelCheck,
+    [switch]$AutoPullModel
 )
 
 Set-StrictMode -Version Latest
@@ -20,16 +19,17 @@ $RepoRoot = (Resolve-Path (Join-Path $ScriptDir "..\..")).Path
 
 $LocalAiDir = Join-Path $RepoRoot "dev\sessions\local-ai"
 $ConfigDir = Join-Path $RepoRoot "dev\config"
-$RoutingPath = Join-Path $ConfigDir "open-webui-mcp-routing.json"
+
+$ContinueRoutingPath = Join-Path $ConfigDir "continue-mcp-routing.json"
+$LegacyRoutingPath = Join-Path $ConfigDir "open-webui-mcp-routing.json"
 
 if (-not (Test-Path $LocalAiDir)) { New-Item -ItemType Directory -Path $LocalAiDir -Force | Out-Null }
 if (-not (Test-Path $ConfigDir))  { New-Item -ItemType Directory -Path $ConfigDir -Force | Out-Null }
 
 $DiagLog = Join-Path $LocalAiDir "latest-launch-diag.log"
-$WebUiOutLog = Join-Path $LocalAiDir "latest-open-webui.out.log"
-$WebUiErrLog = Join-Path $LocalAiDir "latest-open-webui.err.log"
 $RunSummary = Join-Path $LocalAiDir "latest-run-summary.md"
-$ResolvedMcp = Join-Path $LocalAiDir "latest-mcp-config.resolved.json"
+$ResolvedMcp = Join-Path $LocalAiDir "latest-continue-mcp.resolved.json"
+$RepoResolvedMcp = Join-Path $ConfigDir "continue-mcp.servers.resolved.json"
 
 function Write-Diag {
     param([string]$Message)
@@ -78,100 +78,6 @@ function Test-HttpEndpoint {
     }
 }
 
-function Resolve-PythonExecutable {
-    param([string]$Preferred)
-
-    if (-not [string]::IsNullOrWhiteSpace($Preferred)) {
-        try {
-            if (Test-Path $Preferred) { return (Resolve-Path $Preferred).Path }
-            $prefCmd = Get-Command $Preferred -ErrorAction SilentlyContinue
-            if ($prefCmd) { return $prefCmd.Source }
-        } catch {}
-    }
-
-    $py = Get-Command python -ErrorAction SilentlyContinue
-    if ($py) { return $py.Source }
-
-    $pyLauncher = Get-Command py -ErrorAction SilentlyContinue
-    if ($pyLauncher) { return "py" }
-
-    return $null
-}
-
-function Assert-WebUiPythonConfigured {
-    param(
-        [switch]$IsMcpOnly,
-        [string]$ConfiguredPython
-    )
-    if ($IsMcpOnly.IsPresent) { return }
-    if ([string]::IsNullOrWhiteSpace($ConfiguredPython)) {
-        throw "Non-McpOnly mode requires -OpenWebUiPython (or OPENWEBUI_PYTHON) for deterministic launch."
-    }
-}
-
-function Invoke-Python {
-    param(
-        [Parameter(Mandatory=$true)][string]$PythonExe,
-        [Parameter(Mandatory=$true)][string[]]$Args
-    )
-    & $PythonExe @Args 2>&1
-}
-
-function Test-PythonVersion {
-    param([Parameter(Mandatory=$true)][string]$PythonExe)
-    try {
-        $v = Invoke-Python -PythonExe $PythonExe -Args @("--version")
-        return [pscustomobject]@{ ok = $true; message = ($v -join " ") }
-    } catch {
-        return [pscustomobject]@{ ok = $false; message = $_.Exception.Message }
-    }
-}
-
-function Get-PythonExecutableFromInterpreter {
-    param([Parameter(Mandatory=$true)][string]$PythonExe)
-    try {
-        $out = Invoke-Python -PythonExe $PythonExe -Args @("-c", "import sys; print(sys.executable)")
-        return ($out -join " ").Trim()
-    } catch {
-        return ""
-    }
-}
-
-function Test-OpenWebUiInstalled {
-    param([Parameter(Mandatory=$true)][string]$PythonExe)
-    try {
-        $out = Invoke-Python -PythonExe $PythonExe -Args @("-m","pip","show","open-webui")
-        return [pscustomobject]@{ ok = $true; message = ($out -join " ") }
-    } catch {
-        return [pscustomobject]@{ ok = $false; message = $_.Exception.Message }
-    }
-}
-
-function Install-OpenWebUi {
-    param([Parameter(Mandatory=$true)][string]$PythonExe)
-    try {
-        $upgradePip = Invoke-Python -PythonExe $PythonExe -Args @("-m","pip","install","--upgrade","pip")
-        $installPkg = Invoke-Python -PythonExe $PythonExe -Args @("-m","pip","install","open-webui")
-        return [pscustomobject]@{
-            ok = $true
-            message = "pip upgrade/install completed"
-            detail = (($upgradePip + $installPkg) -join " ")
-        }
-    } catch {
-        return [pscustomobject]@{ ok = $false; message = $_.Exception.Message; detail = "" }
-    }
-}
-
-function Test-OpenWebUiImport {
-    param([Parameter(Mandatory=$true)][string]$PythonExe)
-    try {
-        $output = Invoke-Python -PythonExe $PythonExe -Args @("-c", "import open_webui; print('open_webui import OK')")
-        return [pscustomobject]@{ ok = $true; message = ($output -join " ") }
-    } catch {
-        return [pscustomobject]@{ ok = $false; message = $_.Exception.Message }
-    }
-}
-
 function Test-McpCommandExecution {
     param(
         [Parameter(Mandatory=$true)][string]$Name,
@@ -198,32 +104,57 @@ function Test-McpCommandExecution {
     }
 }
 
-# reset latest-only files first (non-blocking)
-$latestFiles = @($DiagLog, $WebUiOutLog, $WebUiErrLog, $RunSummary, $ResolvedMcp)
+function Ensure-OllamaRunning {
+    $health = Test-HttpEndpoint -Url "http://localhost:11434/api/tags" -TimeoutSec 3
+    if ($health.ok) { return $health }
+
+    Write-Diag "Ollama endpoint not reachable. Attempting to start 'ollama serve'..."
+    try {
+        Start-Process -FilePath "ollama" -ArgumentList "serve" -WindowStyle Hidden -ErrorAction Stop | Out-Null
+        Start-Sleep -Seconds 3
+    } catch {
+        Write-Diag ("WARNING: Failed to launch ollama serve: " + $_.Exception.Message)
+    }
+
+    return (Test-HttpEndpoint -Url "http://localhost:11434/api/tags" -TimeoutSec 4)
+}
+
+function Test-ModelPresent {
+    param([Parameter(Mandatory=$true)][string]$ModelName)
+    try {
+        $list = & ollama list 2>&1
+        $joined = ($list -join "`n")
+        return ($joined -match [regex]::Escape($ModelName))
+    } catch {
+        return $false
+    }
+}
+
+# reset latest-only files
+$latestFiles = @($DiagLog, $RunSummary, $ResolvedMcp, $RepoResolvedMcp)
 foreach ($f in $latestFiles) {
     try {
         if (Test-Path $f) { Remove-Item -Path $f -Force -ErrorAction SilentlyContinue }
         New-Item -ItemType File -Path $f -Force | Out-Null
     } catch {
-        Write-Host ("[WARN] Failed to reset log artifact: " + $f)
+        Write-Host ("[WARN] Failed to reset artifact: " + $f)
     }
 }
 
-# prune legacy logs (non-blocking)
 if ($PruneLegacyLogs.IsPresent -or $PruneLegacyLogs) {
     try {
-        $legacyPatterns = @("open-webui-*.log","launch-diag-*.log","run-summary-*.md","terminal-run-*.log")
+        $legacyPatterns = @("open-webui-*.log","latest-open-webui*.log","launch-diag-*.log","run-summary-*.md","terminal-run-*.log")
         foreach ($pattern in $legacyPatterns) {
             Get-ChildItem -Path $LocalAiDir -Filter $pattern -ErrorAction SilentlyContinue |
                 Remove-Item -Force -ErrorAction SilentlyContinue
         }
-        Write-Diag "Legacy timestamped logs pruned."
+        Write-Diag "Legacy timestamped/Open-WebUI logs pruned."
     } catch {
         Write-Diag ("WARNING: Legacy log pruning failed (non-blocking): " + $_.Exception.Message)
     }
 }
 
-# defaults
+# default MCP
 $defaultMcp = [ordered]@{
     mcpServers = [ordered]@{
         local_filesystem = [ordered]@{
@@ -237,23 +168,41 @@ $defaultMcp = [ordered]@{
     }
 }
 
-# optional override
+# load override (continue first, legacy fallback)
 $overrideMcp = $null
-if (Test-Path $RoutingPath) {
+$overrideSource = ""
+
+if (Test-Path $ContinueRoutingPath) {
     try {
-        $overrideRaw = Get-Content -Raw -Path $RoutingPath
-        if (-not [string]::IsNullOrWhiteSpace($overrideRaw)) {
-            $overrideMcp = $overrideRaw | ConvertFrom-Json
-            Write-Diag ("Loaded MCP override: " + $RoutingPath)
+        $raw = Get-Content -Raw -Path $ContinueRoutingPath
+        if (-not [string]::IsNullOrWhiteSpace($raw)) {
+            $overrideMcp = $raw | ConvertFrom-Json
+            $overrideSource = $ContinueRoutingPath
         }
     } catch {
-        Write-Diag ("WARNING: MCP override parse failed. Using defaults. Error: " + $_.Exception.Message)
+        Write-Diag ("WARNING: Continue override parse failed; ignoring. Error: " + $_.Exception.Message)
     }
-} else {
-    Write-Diag ("No MCP override file found at " + $RoutingPath + ". Using defaults.")
 }
 
-# merge servers
+if (($null -eq $overrideMcp) -and (Test-Path $LegacyRoutingPath)) {
+    try {
+        $rawLegacy = Get-Content -Raw -Path $LegacyRoutingPath
+        if (-not [string]::IsNullOrWhiteSpace($rawLegacy)) {
+            $overrideMcp = $rawLegacy | ConvertFrom-Json
+            $overrideSource = $LegacyRoutingPath
+        }
+    } catch {
+        Write-Diag ("WARNING: Legacy override parse failed; ignoring. Error: " + $_.Exception.Message)
+    }
+}
+
+if ($overrideSource -ne "") {
+    Write-Diag ("Loaded MCP override: " + $overrideSource)
+} else {
+    Write-Diag "No MCP override found. Using defaults."
+}
+
+# merge
 $mergedServers = [ordered]@{}
 foreach ($p in $defaultMcp.mcpServers.PSObject.Properties) { $mergedServers[$p.Name] = $p.Value }
 if ($overrideMcp -and $overrideMcp.mcpServers) {
@@ -285,15 +234,13 @@ foreach ($serverName in $mergedServers.Keys) {
 
 $resolvedObject = [ordered]@{ mcpServers = $resolvedMcpServers }
 
-# write resolved MCP config (non-blocking)
-try {
-    ($resolvedObject | ConvertTo-Json -Depth 20) | Set-Content -Path $ResolvedMcp -Encoding UTF8
-    Write-Diag ("Resolved MCP config written: " + $ResolvedMcp)
-} catch {
-    Write-Diag ("WARNING: Failed writing resolved MCP config (non-blocking): " + $_.Exception.Message)
-}
+# write resolved outputs
+($resolvedObject | ConvertTo-Json -Depth 20) | Set-Content -Path $ResolvedMcp -Encoding UTF8
+($resolvedObject | ConvertTo-Json -Depth 20) | Set-Content -Path $RepoResolvedMcp -Encoding UTF8
+Write-Diag ("Resolved MCP config written: " + $ResolvedMcp)
+Write-Diag ("Repo MCP handoff written: " + $RepoResolvedMcp)
 
-# validate commands (gate)
+# MCP validation
 $mcpValidation = @()
 $unresolvedCount = 0
 foreach ($serverName in $resolvedMcpServers.Keys) {
@@ -310,7 +257,7 @@ foreach ($serverName in $resolvedMcpServers.Keys) {
         if ($gc) { $ok = $true; $check = "Get-Command" } else { $ok = $false; $check = "not found" }
     }
 
-    if (-not $ok) { $unresolvedCount = $unresolvedCount + 1 }
+    if (-not $ok) { $unresolvedCount++ }
 
     $mcpValidation += [pscustomobject]@{
         server = $serverName
@@ -326,7 +273,7 @@ if (($unresolvedCount -gt 0) -and (-not $AllowMissingMcpCommands.IsPresent)) {
     throw ("MCP validation failed; unresolved commands: " + $unresolvedCount)
 }
 
-# MCP smoke (non-blocking but tracked for status)
+# MCP smoke
 $mcpSmokeResults = @()
 foreach ($serverName in $resolvedMcpServers.Keys) {
     $smoke = Test-McpCommandExecution -Name $serverName -CommandPath ([string]$resolvedMcpServers[$serverName].command)
@@ -334,130 +281,77 @@ foreach ($serverName in $resolvedMcpServers.Keys) {
     Write-Diag ("MCP smoke " + $smoke.server + " ok=" + $smoke.ok + " msg=" + $smoke.message)
 }
 
-# runtime env
-$env:ENABLE_MCP = "true"
-$env:MCP_CONFIG_PATH = $ResolvedMcp
-$env:OLLAMA_BASE_URL = "http://localhost:11434"
-$env:ENABLE_PERSISTENT_CONFIG = "false"
-Write-Diag "Environment prepared for Open WebUI launch."
+# Ollama
+$ollamaCheck = Ensure-OllamaRunning
+Write-Diag ("Ollama health ok=" + $ollamaCheck.ok + " status=" + $ollamaCheck.status + " msg=" + $ollamaCheck.message)
 
-# Ollama health (non-blocking)
-$ollamaCheck = Test-HttpEndpoint -Url "http://localhost:11434/api/tags" -TimeoutSec 4
-Write-Diag ("Ollama health ok=" + $ollamaCheck.ok)
-
-# WebUI track (optional)
-$launchMode = "not-started"
-$webuiCheck = [pscustomobject]@{ ok = $false; status = ""; message = "launch not attempted" }
-$pythonExe = $null
-$openWebUiImport = [pscustomobject]@{ ok = $false; message = "not checked" }
-
-if ($McpOnly.IsPresent) {
-    Write-Diag "MCP-only mode enabled. Skipping Open WebUI launch."
-} else {
-    Assert-WebUiPythonConfigured -IsMcpOnly:$McpOnly.IsPresent -ConfiguredPython $OpenWebUiPython
-    $pythonExe = Resolve-PythonExecutable -Preferred $OpenWebUiPython
-
-    if ($null -eq $pythonExe) {
-        throw ("Configured Open WebUI python could not be resolved: " + $OpenWebUiPython)
+$modelCheckOk = $true
+if (-not $SkipModelCheck.IsPresent) {
+    $modelCheckOk = Test-ModelPresent -ModelName $TargetModel
+    if ($modelCheckOk) {
+        Write-Diag ("Model present: " + $TargetModel)
     } else {
-        Write-Diag ("Python executable selected: " + $pythonExe)
-
-        $pyVer = Test-PythonVersion -PythonExe $pythonExe
-        Write-Diag ("Python version check ok=" + $pyVer.ok + " msg=" + $pyVer.message)
-
-        $actualExe = Get-PythonExecutableFromInterpreter -PythonExe $pythonExe
-        if (-not [string]::IsNullOrWhiteSpace($actualExe)) {
-            Write-Diag ("Python runtime sys.executable=" + $actualExe)
-        }
-
-        $pkgCheck = Test-OpenWebUiInstalled -PythonExe $pythonExe
-        Write-Diag ("open-webui package installed=" + $pkgCheck.ok)
-
-        if ((-not $pkgCheck.ok) -and $AutoInstallOpenWebUi.IsPresent) {
-            Write-Diag "Auto-install enabled. Attempting to install open-webui..."
-            $installResult = Install-OpenWebUi -PythonExe $pythonExe
-            Write-Diag ("open-webui install ok=" + $installResult.ok + " msg=" + $installResult.message)
-        } elseif (-not $pkgCheck.ok) {
-            Write-Diag ("Install hint: `"" + $pythonExe + "`" -m pip install open-webui")
-        }
-
-        $openWebUiImport = Test-OpenWebUiImport -PythonExe $pythonExe
-        Write-Diag ("open_webui import ok=" + $openWebUiImport.ok + " msg=" + $openWebUiImport.message)
-    }
-
-    if ($openWebUiImport.ok) {
-        if ($DebugForeground.IsPresent) {
+        Write-Diag ("WARNING: Model not present: " + $TargetModel)
+        if ($AutoPullModel.IsPresent) {
+            Write-Diag ("AutoPullModel enabled. Pulling: " + $TargetModel)
             try {
-                $launchMode = $pythonExe + " -m open_webui serve (foreground)"
-                & $pythonExe -m open_webui serve
-                exit 0
+                & ollama pull $TargetModel 2>&1 | ForEach-Object { Write-Diag $_ }
+                $modelCheckOk = Test-ModelPresent -ModelName $TargetModel
             } catch {
-                $launchMode = "open-webui.exe serve (foreground fallback)"
-                & open-webui.exe serve
-                exit 0
+                Write-Diag ("WARNING: Model pull failed: " + $_.Exception.Message)
             }
         } else {
-            try {
-                $launchMode = $pythonExe + " -m open_webui serve"
-                Start-Process -FilePath $pythonExe -ArgumentList "-m open_webui serve" -RedirectStandardOutput $WebUiOutLog -RedirectStandardError $WebUiErrLog -WindowStyle Hidden | Out-Null
-            } catch {
-                $launchMode = "open-webui.exe serve (fallback)"
-                Start-Process -FilePath "open-webui.exe" -ArgumentList "serve" -RedirectStandardOutput $WebUiOutLog -RedirectStandardError $WebUiErrLog -WindowStyle Hidden | Out-Null
-            }
+            Write-Diag ("Pull suggestion: ollama pull " + $TargetModel)
         }
-
-        Start-Sleep -Seconds 6
-        $webuiCheck = Test-HttpEndpoint -Url "http://localhost:8080" -TimeoutSec 4
-        Write-Diag ("Open WebUI health ok=" + $webuiCheck.ok)
-    } else {
-        Write-Diag "WARNING: Skipping Open WebUI launch due to failed import gate."
-        Write-Diag ("Deterministic fix command: `"" + $pythonExe + "`" -m pip install open-webui")
     }
 }
 
-# Final status:
-# PASS if MCP validation passed and all MCP smokes ok.
+# final status
 $mcpSmokeAllOk = $true
 foreach ($sm in $mcpSmokeResults) {
     if (-not $sm.ok) { $mcpSmokeAllOk = $false }
 }
 
 $finalStatus = "FAIL"
-if (($unresolvedCount -eq 0) -and $mcpSmokeAllOk) {
+if (($unresolvedCount -eq 0) -and $mcpSmokeAllOk -and $ollamaCheck.ok -and $modelCheckOk) {
     $finalStatus = "PASS"
 }
 
-# summary/log artifacts are non-blocking
-$summaryWriter = Join-Path $ScriptDir "write-summary.ps1"
-try {
-    if (Test-Path $summaryWriter) {
-        & $summaryWriter `
-            -RunSummary $RunSummary `
-            -ResolvedMcp $ResolvedMcp `
-            -RepoRoot $RepoRoot `
-            -LaunchMode $launchMode `
-            -FinalStatus $finalStatus `
-            -DiagLog $DiagLog `
-            -WebUiOutLog $WebUiOutLog `
-            -WebUiErrLog $WebUiErrLog `
-            -UnresolvedCount $unresolvedCount `
-            -McpValidation $mcpValidation `
-            -OllamaCheck $ollamaCheck `
-            -WebUiCheck $webuiCheck
-        Write-Diag ("Run summary written: " + $RunSummary)
-    } else {
-        Write-Diag ("WARNING: Summary writer missing: " + $summaryWriter + " (non-blocking)")
-    }
-} catch {
-    Write-Diag ("WARNING: Summary generation failed (non-blocking): " + $_.Exception.Message)
+# summary
+$summaryLines = @()
+$summaryLines += "# Local AI Launch Summary"
+$summaryLines += ""
+$summaryLines += "- Timestamp: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")"
+$summaryLines += "- Repo root: $RepoRoot"
+$summaryLines += "- Final status: **$finalStatus**"
+$summaryLines += "- Target model: $TargetModel"
+$summaryLines += "- Ollama reachable: $($ollamaCheck.ok)"
+$summaryLines += "- Model check passed: $modelCheckOk"
+$summaryLines += "- Unresolved MCP commands: $unresolvedCount"
+$summaryLines += ""
+$summaryLines += "## MCP validation"
+foreach ($v in $mcpValidation) {
+    $summaryLines += "- $($v.server): ok=$($v.ok), check=$($v.check), cmd=`"$($v.command)`""
 }
-
-if ($webuiCheck.ok) {
-    Write-Diag "SUCCESS: Open WebUI reachable at http://localhost:8080"
-    Start-Process "http://localhost:8080" | Out-Null
-} else {
-    Write-Diag "INFO: WebUI not reachable or not launched; MCP POC can still be valid."
+$summaryLines += ""
+$summaryLines += "## MCP smoke"
+foreach ($s in $mcpSmokeResults) {
+    $summaryLines += "- $($s.server): ok=$($s.ok), msg=$($s.message)"
 }
+$summaryLines += ""
+$summaryLines += "## Artifacts"
+$summaryLines += "- Diag log: $DiagLog"
+$summaryLines += "- Resolved MCP (session): $ResolvedMcp"
+$summaryLines += "- Resolved MCP (repo handoff): $RepoResolvedMcp"
 
+$summaryLines | Set-Content -Path $RunSummary -Encoding UTF8
+Write-Diag ("Run summary written: " + $RunSummary)
 Write-Diag ("FINAL STATUS: " + $finalStatus)
+
+if ($finalStatus -eq "PASS") {
+    Write-Host "[LAUNCH] PASS - Continue/Ollama/MCP POC validation succeeded." -ForegroundColor Green
+} else {
+    Write-Host "[LAUNCH] FAIL - Review latest-launch-diag.log and latest-run-summary.md." -ForegroundColor Yellow
+}
+
 exit 0

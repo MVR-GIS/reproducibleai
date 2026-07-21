@@ -28,35 +28,24 @@ This session is based on MVR-GIS/reproducibleai on main.
 First read:
 1. @dev/instructions/CHAT_INSTRUCTIONS.md
 2. @dev/10_design.md for the stable current implemented architecture
-3. @dev/05_plan.md with attention to Milestone G
-4. @dev/15_local_ai_architecture.md for the active local/hybrid AI architecture proposal
-5. @dev/decisions/adr-0004-hybrid-ai-methodology-and-mcp-aware-integration.md for the proposed architectural decision
-
-After reading, briefly summarize:
-- the current stable package architecture,
-- the active local/hybrid architecture extension,
-- the current Milestone G priorities,
-- and the next smallest useful step to maintain momentum.
-
-Only then propose concrete edits or code changes.
-"
-
-"
-This session is based on MVR-GIS/reproducibleai on main.
-
-First read:
-1. @dev/instructions/CHAT_INSTRUCTIONS.md
-2. @dev/10_design.md for the stable current implemented architecture
 3. @dev/05_plan.md with the realization that this plan needs to be updated based local-ai-workstation POC findings
 4. @dev/15_local_ai_architecture.md for the active local/hybrid AI architecture proposal
 5. @dev/decisions/adr-0004-hybrid-ai-methodology-and-mcp-aware-integration.md for the proposed architectural decision
 
-After reading these base documents, analyze this new approach:
-- then read @dev/sessions/checkpoint-local-ai-workstation.md. This file captures recent testing of a local ai workstation architecture
-- then read @dev/sessions/checkpoint-launch-poc.md. This document captures the state of the last chat session
-- the objective of this chat is to complete the proof of concept for configuring an array of MCP servers for a local open-source vibe-coding ai workstation.
+After reading these base documents, then consider this conclusion:
+- I've discovered that I've made sereral architectural mistakes. 
+    1. For performance, bare metal architecture should be used instead of containers. Additionally, container networking is too complex on secure gov workstations. 
+    2. Open WebUI should be removed from design. To build a local-only, bare-metal, open source, vibe-coding, ai workstation, Open WebUI is not compatible/needed with this design: Positron + Continue + Ollama + MCP server array + large -instruct model
+- These docs describe how I went down the wrong direction with Open WebUI. Please read: 
+    - @dev/16_ai-workstation-spec.md 
+    - @dev/sessions/checkpoint-local-ai-workstation.md. 
+    - @dev/decisions/adr-0005-local-agentic-dev
+- The objective of this chat is to:
+    - rewind the previous Open WebUI implementation
+    - Implement the design: Positron + Continue + Ollama + MCP server array + large -instruct model
+    - complete the proof of concept for configuring an array of MCP servers for a local open-source vibe-coding ai workstation.
 
-Only then propose concrete edits or code changes.
+Only then propose a plan, followed by concrete edits or code changes.
 "
 
 

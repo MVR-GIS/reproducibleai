@@ -1,92 +1,71 @@
 # ==============================================================================
-# load.ps1 - Hardened repo-root orchestrator for local workstation scripts
+# load.ps1 - Simple entrypoint for local AI workstation POC
+# Stack: Positron + Continue + Ollama + MCP
 # ==============================================================================
 [CmdletBinding()]
 param(
-    [switch]$Deploy,
-    [switch]$DebugForeground,
+    [string]$TargetModel = "qwen2.5-coder:32b-instruct",
+    [switch]$InstallMcpServers,
+    [switch]$AutoPullModel,
+    [switch]$SkipDeploy,
     [switch]$AllowMissingMcpCommands
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$RepoRoot = (Resolve-Path $PSScriptRoot).Path
-$WorkstationDir = Join-Path $RepoRoot "inst\local-workstation"
-$LocalAiDir = Join-Path $RepoRoot "dev\sessions\local-ai"
+$RepoRoot = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
+$DeployScript = Join-Path $RepoRoot "inst\local-workstation\deploy.ps1"
+$LaunchScript = Join-Path $RepoRoot "inst\local-workstation\launch.ps1"
+$SummaryPath = Join-Path $RepoRoot "dev\sessions\local-ai\latest-run-summary.md"
+$DiagPath = Join-Path $RepoRoot "dev\sessions\local-ai\latest-launch-diag.log"
 
-if (-not (Test-Path $WorkstationDir)) {
-    throw ("Workstation directory not found: " + $WorkstationDir)
+if (-not (Test-Path $DeployScript)) { throw "Missing deploy script: $DeployScript" }
+if (-not (Test-Path $LaunchScript)) { throw "Missing launch script: $LaunchScript" }
+
+Write-Host ""
+Write-Host "=== Local AI Workstation POC Loader ===" -ForegroundColor Cyan
+Write-Host ("RepoRoot: " + $RepoRoot)
+Write-Host ("TargetModel: " + $TargetModel)
+Write-Host ""
+
+if (-not $SkipDeploy.IsPresent) {
+    Write-Host "[1/2] Running deploy preflight..." -ForegroundColor Cyan
+
+    $deploySplat = @{
+        TargetModel = $TargetModel
+    }
+    if ($InstallMcpServers.IsPresent) { $deploySplat.InstallMcpServers = $true }
+    if ($AutoPullModel.IsPresent)     { $deploySplat.AutoPullModel = $true }
+
+    & $DeployScript @deploySplat
+}
+else {
+    Write-Host "[1/2] Skipping deploy preflight by request." -ForegroundColor Yellow
 }
 
-if (-not (Test-Path $LocalAiDir)) {
-    New-Item -ItemType Directory -Path $LocalAiDir -Force | Out-Null
+Write-Host "[2/2] Running launch validator..." -ForegroundColor Cyan
+
+$launchSplat = @{
+    TargetModel = $TargetModel
 }
+if ($AutoPullModel.IsPresent)          { $launchSplat.AutoPullModel = $true }
+if ($AllowMissingMcpCommands.IsPresent){ $launchSplat.AllowMissingMcpCommands = $true }
 
-$timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-$terminalLog = Join-Path $LocalAiDir ("terminal-run-" + $timestamp + ".log")
+& $LaunchScript @launchSplat
 
-Start-Transcript -Path $terminalLog -Force | Out-Null
-
-$exitCode = 0
-
-try {
-    $deployPath = Join-Path $WorkstationDir "deploy.ps1"
-    $launchPath = Join-Path $WorkstationDir "launch.ps1"
-
-    if ($Deploy.IsPresent) {
-        Write-Host "[LOAD] Running deploy.ps1 ..." -ForegroundColor Cyan
-        if (-not (Test-Path $deployPath)) {
-            throw ("deploy.ps1 not found: " + $deployPath)
-        }
-        & $deployPath
-    } else {
-        Write-Host "[LOAD] Skipping deploy.ps1 (use -Deploy to include it)." -ForegroundColor Yellow
-    }
-
-    if (-not (Test-Path $launchPath)) {
-        throw ("launch.ps1 not found: " + $launchPath)
-    }
-
-    # Parser preflight check for launch.ps1
-    $tokens = $null
-    $parseErrors = @()
-    [System.Management.Automation.Language.Parser]::ParseFile($launchPath, [ref]$tokens, [ref]$parseErrors) | Out-Null
-
-    if ($parseErrors.Count -gt 0) {
-        Write-Host "[LOAD] launch.ps1 parse failed. Refusing to run." -ForegroundColor Red
-        foreach ($e in $parseErrors) {
-            $line = $e.Extent.StartLineNumber
-            $col = $e.Extent.StartColumnNumber
-            Write-Host ("[LOAD] ParseError L{0}:C{1} - {2}" -f $line, $col, $e.Message) -ForegroundColor Red
-        }
-        throw "launch.ps1 failed parser preflight."
-    }
-
-    Write-Host "[LOAD] Running launch.ps1 ..." -ForegroundColor Cyan
-
-    $launchArgs = @()
-    if ($DebugForeground.IsPresent) { $launchArgs += "-DebugForeground" }
-    if ($AllowMissingMcpCommands.IsPresent) { $launchArgs += "-AllowMissingMcpCommands" }
-
-    if ($launchArgs.Count -gt 0) {
-        & $launchPath @launchArgs
-    } else {
-        & $launchPath
-    }
-
-    Write-Host "[LOAD] launch.ps1 completed." -ForegroundColor Green
+Write-Host ""
+Write-Host "=== Run artifacts ===" -ForegroundColor Cyan
+if (Test-Path $SummaryPath) {
+    Write-Host ("Summary: " + $SummaryPath) -ForegroundColor Green
+} else {
+    Write-Host ("Summary not found yet: " + $SummaryPath) -ForegroundColor Yellow
 }
-catch {
-    $exitCode = 1
-    Write-Host ("[LOAD] ERROR: " + $_.Exception.Message) -ForegroundColor Red
-    throw
+if (Test-Path $DiagPath) {
+    Write-Host ("Diag log: " + $DiagPath) -ForegroundColor Green
 }
-finally {
-    Stop-Transcript | Out-Null
-    if ($exitCode -ne 0) {
-        Write-Host ("[LOAD] FAILED. Transcript: " + $terminalLog) -ForegroundColor Red
-    } else {
-        Write-Host ("[LOAD] DONE. Transcript: " + $terminalLog) -ForegroundColor Green
-    }
+Write-Host ""
+
+if (Test-Path $SummaryPath) {
+    try { Start-Process $SummaryPath | Out-Null } catch {}
 }

@@ -1,11 +1,14 @@
 # ==============================================================================
-# deploy.ps1 - Hardened local workstation dependency/bootstrap script
+# deploy.ps1 - Bare-metal local AI workstation preflight/bootstrap
+# Target stack: Positron + Continue + Ollama + MCP server array
 # ==============================================================================
 [CmdletBinding()]
 param(
     [switch]$SkipNodeChecks,
-    [switch]$SkipPythonChecks,
-    [switch]$SkipOllamaChecks
+    [switch]$SkipOllamaChecks,
+    [switch]$InstallMcpServers,
+    [string]$TargetModel = "qwen2.5-coder:32b-instruct",
+    [switch]$AutoPullModel
 )
 
 Set-StrictMode -Version Latest
@@ -14,9 +17,13 @@ $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot = (Resolve-Path (Join-Path $ScriptDir "..\..")).Path
 $LocalAiDir = Join-Path $RepoRoot "dev\sessions\local-ai"
+$ConfigDir = Join-Path $RepoRoot "dev\config"
 
 if (-not (Test-Path $LocalAiDir)) {
     New-Item -ItemType Directory -Path $LocalAiDir -Force | Out-Null
+}
+if (-not (Test-Path $ConfigDir)) {
+    New-Item -ItemType Directory -Path $ConfigDir -Force | Out-Null
 }
 
 $DeployLog = Join-Path $LocalAiDir "latest-deploy-diag.log"
@@ -71,38 +78,56 @@ function Test-HttpEndpoint {
     }
 }
 
-Write-DeployLog "Starting hardened deploy preflight checks."
-Write-DeployLog ("RepoRoot: " + $RepoRoot)
-Write-DeployLog ("LocalAiDir: " + $LocalAiDir)
-
-# ------------------------------------------------------------------------------
-# Core command checks
-# ------------------------------------------------------------------------------
-if (-not $SkipPythonChecks.IsPresent) {
-    Assert-CommandAvailable -Name "python" -InstallHint "Install Python 3.10+ and ensure python.exe is on PATH."
+function Test-ModelPresent {
+    param([Parameter(Mandatory=$true)][string]$ModelName)
     try {
-        $pyVersion = & python --version 2>&1
-        Write-DeployLog ("python --version => " + $pyVersion)
+        $list = & ollama list 2>&1
+        $joined = ($list -join "`n")
+        return ($joined -match [regex]::Escape($ModelName))
     }
     catch {
-        throw ("Python is present but failed to execute: " + $_.Exception.Message)
+        return $false
     }
 }
-else {
-    Write-DeployLog "Skipping Python checks by request."
-}
 
+Write-DeployLog "Starting bare-metal deploy preflight checks."
+Write-DeployLog ("RepoRoot: " + $RepoRoot)
+Write-DeployLog ("LocalAiDir: " + $LocalAiDir)
+Write-DeployLog ("TargetModel: " + $TargetModel)
+
+# ------------------------------------------------------------------------------
+# Node/npm + MCP wrappers
+# ------------------------------------------------------------------------------
 if (-not $SkipNodeChecks.IsPresent) {
     Assert-CommandAvailable -Name "node" -InstallHint "Install Node.js LTS and ensure node.exe is on PATH."
     Assert-CommandAvailable -Name "npm" -InstallHint "Install npm with Node.js and ensure npm.cmd is on PATH."
-    try {
-        $nodeVersion = & node --version 2>&1
-        $npmVersion = & npm --version 2>&1
-        Write-DeployLog ("node --version => " + $nodeVersion)
-        Write-DeployLog ("npm --version => " + $npmVersion)
+
+    $nodeVersion = & node --version 2>&1
+    $npmVersion = & npm --version 2>&1
+    Write-DeployLog ("node --version => " + $nodeVersion)
+    Write-DeployLog ("npm --version => " + $npmVersion)
+
+    if ($InstallMcpServers.IsPresent) {
+        Write-DeployLog "Installing MCP servers globally via npm..."
+        & npm i -g @modelcontextprotocol/server-filesystem @modelcontextprotocol/server-git 2>&1 | ForEach-Object { Write-DeployLog $_ }
     }
-    catch {
-        throw ("Node/npm failed version checks: " + $_.Exception.Message)
+
+    $appDataNpm = Join-Path $env:APPDATA "npm"
+    $filesystemMcp = Join-Path $appDataNpm "mcp-server-filesystem.cmd"
+    $gitMcp = Join-Path $appDataNpm "mcp-server-git.cmd"
+
+    if (Test-Path $filesystemMcp) {
+        Write-DeployLog ("Verified MCP wrapper: " + $filesystemMcp)
+    } else {
+        Write-DeployLog ("WARNING: Missing MCP wrapper: " + $filesystemMcp)
+        Write-DeployLog "Install suggestion: npm i -g @modelcontextprotocol/server-filesystem"
+    }
+
+    if (Test-Path $gitMcp) {
+        Write-DeployLog ("Verified MCP wrapper: " + $gitMcp)
+    } else {
+        Write-DeployLog ("WARNING: Missing MCP wrapper: " + $gitMcp)
+        Write-DeployLog "Install suggestion: npm i -g @modelcontextprotocol/server-git"
     }
 }
 else {
@@ -110,51 +135,12 @@ else {
 }
 
 # ------------------------------------------------------------------------------
-# MCP command wrappers (expected for launch defaults)
-# ------------------------------------------------------------------------------
-$appDataNpm = Join-Path $env:APPDATA "npm"
-$filesystemMcp = Join-Path $appDataNpm "mcp-server-filesystem.cmd"
-$gitMcp = Join-Path $appDataNpm "mcp-server-git.cmd"
-
-if (-not $SkipNodeChecks.IsPresent) {
-    if (Test-Path $filesystemMcp) {
-        Write-DeployLog ("Verified MCP wrapper: " + $filesystemMcp)
-    }
-    else {
-        Write-DeployLog ("WARNING: Missing MCP wrapper: " + $filesystemMcp)
-        Write-DeployLog "Install suggestion: npm i -g @modelcontextprotocol/server-filesystem"
-    }
-
-    if (Test-Path $gitMcp) {
-        Write-DeployLog ("Verified MCP wrapper: " + $gitMcp)
-    }
-    else {
-        Write-DeployLog ("WARNING: Missing MCP wrapper: " + $gitMcp)
-        Write-DeployLog "Install suggestion: npm i -g @modelcontextprotocol/server-git"
-    }
-}
-
-# ------------------------------------------------------------------------------
-# Open WebUI module availability check
-# ------------------------------------------------------------------------------
-if (-not $SkipPythonChecks.IsPresent) {
-    try {
-        & python -c "import open_webui; print('open_webui import OK')" 2>&1 | ForEach-Object { Write-DeployLog $_ }
-    }
-    catch {
-        Write-DeployLog "WARNING: open_webui import failed in current python environment."
-        Write-DeployLog "Install suggestion: pip install open-webui"
-    }
-}
-
-# ------------------------------------------------------------------------------
-# Ollama checks (runtime + endpoint)
+# Ollama runtime + model checks
 # ------------------------------------------------------------------------------
 if (-not $SkipOllamaChecks.IsPresent) {
     if (Test-CommandAvailable -Name "ollama") {
         Write-DeployLog "Verified command: ollama"
-    }
-    else {
+    } else {
         Write-DeployLog "WARNING: ollama command not found on PATH."
         Write-DeployLog "Install suggestion: install Ollama and ensure ollama.exe is on PATH."
     }
@@ -162,10 +148,26 @@ if (-not $SkipOllamaChecks.IsPresent) {
     $ollamaHealth = Test-HttpEndpoint -Url "http://localhost:11434/api/tags" -TimeoutSec 4
     if ($ollamaHealth.ok) {
         Write-DeployLog ("Ollama endpoint reachable: status=" + $ollamaHealth.status)
-    }
-    else {
+    } else {
         Write-DeployLog ("WARNING: Ollama endpoint not reachable: " + $ollamaHealth.message)
         Write-DeployLog "If expected, start Ollama service before launch."
+    }
+
+    $modelPresent = $false
+    if (Test-CommandAvailable -Name "ollama") {
+        $modelPresent = Test-ModelPresent -ModelName $TargetModel
+    }
+
+    if ($modelPresent) {
+        Write-DeployLog ("Verified model present: " + $TargetModel)
+    } else {
+        Write-DeployLog ("WARNING: Model not found locally: " + $TargetModel)
+        if ($AutoPullModel.IsPresent -and (Test-CommandAvailable -Name "ollama")) {
+            Write-DeployLog ("AutoPullModel enabled. Pulling: " + $TargetModel)
+            & ollama pull $TargetModel 2>&1 | ForEach-Object { Write-DeployLog $_ }
+        } else {
+            Write-DeployLog ("Pull suggestion: ollama pull " + $TargetModel)
+        }
     }
 }
 else {
@@ -173,27 +175,32 @@ else {
 }
 
 # ------------------------------------------------------------------------------
-# Optional repo config checks
+# Repo config checks (Continue-first, legacy fallback noted)
 # ------------------------------------------------------------------------------
-$routingPath = Join-Path $RepoRoot "dev\config\open-webui-mcp-routing.json"
-if (Test-Path $routingPath) {
+$continueRouting = Join-Path $ConfigDir "continue-mcp-routing.json"
+$legacyRouting = Join-Path $ConfigDir "open-webui-mcp-routing.json"
+
+if (Test-Path $continueRouting) {
     try {
-        $raw = Get-Content -Raw -Path $routingPath
+        $raw = Get-Content -Raw -Path $continueRouting
         if ([string]::IsNullOrWhiteSpace($raw)) {
-            Write-DeployLog ("WARNING: MCP routing file exists but is empty: " + $routingPath)
-        }
-        else {
+            Write-DeployLog ("WARNING: continue-mcp-routing.json exists but is empty: " + $continueRouting)
+        } else {
             $null = $raw | ConvertFrom-Json
-            Write-DeployLog ("Verified MCP routing JSON parse: " + $routingPath)
+            Write-DeployLog ("Verified Continue MCP routing JSON parse: " + $continueRouting)
         }
+    } catch {
+        Write-DeployLog ("WARNING: Continue MCP routing JSON parse failed: " + $_.Exception.Message)
     }
-    catch {
-        Write-DeployLog ("WARNING: MCP routing JSON parse failed: " + $_.Exception.Message)
-    }
-}
-else {
-    Write-DeployLog ("MCP routing file not found (optional): " + $routingPath)
+} else {
+    Write-DeployLog ("Continue MCP routing file not found (optional): " + $continueRouting)
 }
 
-Write-DeployLog "Deploy preflight checks complete."
+if (Test-Path $legacyRouting) {
+    Write-DeployLog ("Legacy routing file detected (fallback-compatible): " + $legacyRouting)
+}
+
+Write-DeployLog "POC readiness summary:"
+Write-DeployLog "- Bare-metal runtime target: Positron + Continue + Ollama + MCP"
+Write-DeployLog "- Deploy script completed; use launch.ps1 to generate resolved MCP config and runtime validation artifacts."
 Write-Host ("[DEPLOY] Completed. Log: " + $DeployLog) -ForegroundColor Green
