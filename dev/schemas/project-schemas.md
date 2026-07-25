@@ -77,7 +77,7 @@ raises an R error only after constructing the findings.
 
 The JSON fixture has:
 
-- `schema_version`: integer, currently `1`
+- `schema_version`: integer, currently `2` (`1` remains readable)
 - `questions`: non-empty array of question objects
 
 Every question contains:
@@ -89,9 +89,23 @@ Every question contains:
 - `expected_terms`: array of case-insensitive literal answer terms
 - `forbidden_terms`: array of case-insensitive literal superseded/incorrect terms
 - `weight`: positive numeric aggregate weight
+- optional `canonical_answer`, review status, artifact type, source heading,
+  source hash, and derivation-template identifier
 
 A required or allowed path ending in `/` matches descendants. Other paths match
 exactly after slash normalization.
+
+## Generated routing benchmark
+
+The frozen benchmark schema is version `1` and records generator version,
+repository label, target Git SHA, derivation-rules hash, question objects, and
+derivation exclusions. It contains no generation timestamp, so identical
+source files and rules serialize deterministically.
+
+Generated questions begin with review status `pending`. Evaluation is
+prohibited while any candidate remains pending; rejected items are retained in
+the benchmark but omitted from execution. Frozen benchmarks and their canonical
+answers must remain outside the repository being evaluated.
 
 ## Agentic-routing prerequisite diagnostic
 
@@ -132,12 +146,14 @@ The combined score is:
 ```text
 (0.40 * route recall +
  0.20 * route precision +
- 0.30 * expected-term recall +
+ 0.30 * answer score +
  0.10 * completion)
 * (1 - forbidden-term rate)
 ```
 
 An incomplete run receives a score of zero.
+Answer score is canonical-answer multiset token F1 for generated questions and
+expected-term recall for manually authored questions.
 
 ## Routing health report
 

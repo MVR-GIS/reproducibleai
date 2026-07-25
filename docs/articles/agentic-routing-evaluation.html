@@ -109,7 +109,35 @@ approved environment.</p>
 <div class="section level2">
 <h2 id="define-private-competency-questions">Define private competency questions<a class="anchor" aria-label="anchor" href="#define-private-competency-questions"></a>
 </h2>
+<p>The preferred first pass derives candidates deterministically from
+maintained <code>dev/</code> sections. The generator does not inspect
+<code>AGENTS.md</code>, and no model is used to create either the
+question or its canonical answer:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">benchmark</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/derive_agentic_routing_questions.html">derive_agentic_routing_questions</a></span><span class="op">(</span></span>
+<span>  <span class="st">"C:/workspace/FluvialGeomorph/fluvgeo"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">benchmark</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Read the prompt, source path, heading, and canonical answer for every item.</span></span>
+<span><span class="va">ids</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="va">benchmark</span><span class="op">$</span><span class="va">questions</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">x</span><span class="op">$</span><span class="va">id</span>, <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">benchmark</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/review_agentic_routing_benchmark.html">review_agentic_routing_benchmark</a></span><span class="op">(</span></span>
+<span>  <span class="va">benchmark</span>,</span>
+<span>  approve <span class="op">=</span> <span class="va">ids</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">4</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  reject <span class="op">=</span> <span class="va">ids</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">5</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">fixture</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"fluvgeo-routing-benchmark.json"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/write_agentic_routing_benchmark.html">write_agentic_routing_benchmark</a></span><span class="op">(</span><span class="va">benchmark</span>, <span class="va">fixture</span><span class="op">)</span></span>
+<span><span class="va">benchmark</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_agentic_routing_benchmark.html">read_agentic_routing_benchmark</a></span><span class="op">(</span><span class="va">fixture</span><span class="op">)</span></span></code></pre></div>
+<p>All generated candidates begin as pending. Evaluation refuses a
+benchmark until every item has been explicitly approved or rejected.
+Freeze the reviewed benchmark outside the target repository before
+comparing routing specifications. Source and rules hashes make changes
+auditable.</p>
+<p>Questions that require synthesis, judgment, or facts not expressed in
+a supported maintained section should still be authored manually:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mvr-gis.github.io/reproducibleai/">reproducibleai</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">questions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
@@ -142,10 +170,10 @@ Codex can inspect the private rubric.</p>
 <div class="section level2">
 <h2 id="run-repeated-isolated-sessions">Run repeated isolated sessions<a class="anchor" aria-label="anchor" href="#run-repeated-isolated-sessions"></a>
 </h2>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">evaluation</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_agentic_routing_evaluation.html">run_agentic_routing_evaluation</a></span><span class="op">(</span></span>
 <span>  path <span class="op">=</span> <span class="st">"C:/workspace/FluvialGeomorph/fluvgeo"</span>,</span>
-<span>  questions <span class="op">=</span> <span class="va">questions</span>,</span>
+<span>  questions <span class="op">=</span> <span class="va">benchmark</span>,</span>
 <span>  repetitions <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  approved <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  model <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -178,7 +206,7 @@ reference</a>.</p>
 <div class="section level2">
 <h2 id="summarize-and-report">Summarize and report<a class="anchor" aria-label="anchor" href="#summarize-and-report"></a>
 </h2>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">health</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/summarize_agentic_routing.html">summarize_agentic_routing</a></span><span class="op">(</span><span class="va">evaluation</span><span class="op">)</span></span>
 <span><span class="va">health</span><span class="op">$</span><span class="va">health_score</span></span>
 <span><span class="va">health</span><span class="op">$</span><span class="va">by_question</span></span>
@@ -192,10 +220,12 @@ reference</a>.</p>
 <span>    <span class="st">"agentic-routing-health.md"</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>The durable report contains only aggregate metrics and
-recommendations. Inspect external raw runs before changing instructions,
-and validate proposed improvements on held-out questions or
-repositories.</p>
+<p>Generated questions score answer grounding with deterministic
+multiset token precision, recall, and F1 against the frozen canonical
+answer. Manually authored questions retain expected-term recall. The
+durable report contains only aggregate metrics and recommendations.
+Inspect external raw runs before changing instructions, and validate
+proposed improvements on held-out questions or repositories.</p>
 <p>Run this workflow deliberately during local development when agentic
 context changes. Do not place live evaluation in package builds or CI.
 Commit the aggregate report as a transparent quality and troubleshooting

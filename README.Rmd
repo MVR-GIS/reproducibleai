@@ -121,17 +121,18 @@ answer content, and writes aggregate health reports.
 ```{r eval=FALSE}
 check_agentic_routing_prerequisites(path = ".")
 
-question <- new_agentic_routing_question(
-  id = "current-priority",
-  prompt = "What is the current development priority?",
-  required_paths = "dev/goals/project-plan.md",
-  allowed_paths = "AGENTS.md",
-  expected_terms = "current objective"
+benchmark <- derive_agentic_routing_questions(".")
+print(benchmark) # every generated question begins as pending
+
+ids <- vapply(benchmark$questions, function(x) x$id, character(1))
+benchmark <- review_agentic_routing_benchmark(
+  benchmark,
+  approve = ids # approve only after reading every candidate
 )
 
 evaluation <- run_agentic_routing_evaluation(
   path = ".",
-  questions = question,
+  questions = benchmark,
   repetitions = 5,
   approved = TRUE
 )
@@ -143,12 +144,14 @@ write_agentic_routing_report(
 )
 ```
 
-Keep private fixtures and raw runs outside the evaluated repository. Model
-responses remain stochastic; health reports summarize repeated observations
-rather than claiming deterministic model behavior. Live evaluation is intended
-as an explicitly initiated local development diagnostic, not as an automatic
-package-build or CI step. A committed aggregate report can communicate the
-observed health of repository context to maintainers and end-users.
+Keep private fixtures and raw runs outside the evaluated repository. Freeze
+reviewed generated benchmarks outside the repository with
+`write_agentic_routing_benchmark()` so specification variants use the same
+criterion. Model responses remain stochastic; health reports summarize repeated
+observations rather than claiming deterministic model behavior. Live evaluation
+is intended as an explicitly initiated local development diagnostic, not as an
+automatic package-build or CI step. A committed aggregate report can communicate
+the observed health of repository context to maintainers and end-users.
 
 ## Bug reports
 

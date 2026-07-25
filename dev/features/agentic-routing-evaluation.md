@@ -2,24 +2,27 @@
 
 ## User outcome
 
-A repository owner can define competency questions, run repeated isolated Codex
-sessions against a repository, quantify whether the expected context routes were
-used, and write a durable aggregate health report.
+A repository owner can deterministically derive and human-review competency
+questions from maintained development context, run repeated isolated Codex
+sessions, quantify whether the expected context routes were used, and write a
+durable aggregate health report.
 
 ## Supported journey
 
-1. Define questions with `new_agentic_routing_question()`.
-2. Save private fixtures outside the target with
-   `write_agentic_routing_questions()`.
-3. Review the questions, repetitions, model, target commit, and expected usage.
-4. Run `check_agentic_routing_prerequisites()` in the local development
+1. Derive candidates with `derive_agentic_routing_questions()` or author
+   questions with `new_agentic_routing_question()`.
+2. Human-review every generated candidate and explicitly approve or reject it.
+3. Freeze the reviewed benchmark outside the target with
+   `write_agentic_routing_benchmark()`.
+4. Review repetitions, model, target commit, and expected usage.
+5. Run `check_agentic_routing_prerequisites()` in the local development
    environment.
-5. Call `run_agentic_routing_evaluation(..., approved = TRUE)`.
-6. Inspect raw external runs when a score needs explanation.
-7. Call `summarize_agentic_routing()`.
-8. Write and commit an aggregate report with
+6. Call `run_agentic_routing_evaluation(..., approved = TRUE)`.
+7. Inspect raw external runs when a score needs explanation.
+8. Call `summarize_agentic_routing()`.
+9. Write and commit an aggregate report with
    `write_agentic_routing_report()`.
-9. Compare instruction formulations only after establishing a stable baseline.
+10. Compare instruction formulations only with the same frozen benchmark.
 
 ## Capability tiers
 
@@ -51,7 +54,8 @@ Each run records:
 - execution and structured-response completion;
 - required evidence recall;
 - relevant evidence precision;
-- expected answer-term recall;
+- canonical-answer token F1 for derived questions, or expected-term recall for
+  manually authored questions;
 - forbidden-term rate;
 - self-reported confidence;
 - input, cached-input, and output tokens when emitted by Codex;
@@ -65,6 +69,8 @@ variation by question.
 ## Experimental controls
 
 - Do not store gold fixtures in the evaluated repository.
+- Never derive gold answers from `AGENTS.md` or model output.
+- Human-review all generated questions before execution.
 - Do not store raw results in the evaluated repository.
 - Use fresh ephemeral sessions for every repetition.
 - Use read-only sandboxing and no interactive approvals.

@@ -26,6 +26,97 @@ test_that("routing questions round-trip through the versioned JSON fixture", {
   )
 })
 
+test_that("competency derivation is deterministic and independent of AGENTS", {
+  target <- withr::local_tempdir()
+  use_agentic_context(target, profiles = "base", quiet = TRUE)
+  writeLines(c(
+    "# Project plan", "", "## Current objective", "",
+    "Build deterministic routing evidence from maintained development context."
+  ), file.path(target, "dev", "goals", "project-plan.md"))
+  decision <- file.path(target, "dev", "decisions", "adr-0001-test.md")
+  dir.create(dirname(decision), recursive = TRUE, showWarnings = FALSE)
+  writeLines(c(
+    "# ADR-0001: Test", "", "## Decision", "",
+    "Use repository files as the independent criterion for routing evaluation."
+  ), decision)
+  agents <- file.path(target, "AGENTS.md")
+  write(
+    "SECRET ROUTING ANSWER THAT MUST NOT BE DERIVED",
+    file = agents, append = TRUE
+  )
+
+  first <- derive_agentic_routing_questions(target, max_per_type = 5)
+  second <- derive_agentic_routing_questions(target, max_per_type = 5)
+  answers <- vapply(first$questions, function(x) x$canonical_answer, character(1))
+
+  expect_identical(first$questions, second$questions)
+  expect_true(all(vapply(
+    first$questions, function(x) identical(x$review_status, "pending"), logical(1)
+  )))
+  expect_false(any(grepl("SECRET ROUTING", answers, fixed = TRUE)))
+  expect_true(any(grepl("independent criterion", answers, fixed = TRUE)))
+})
+
+test_that("generated benchmarks require review and round-trip outside target", {
+  target <- withr::local_tempdir()
+  use_agentic_context(target, profiles = "base", quiet = TRUE)
+  writeLines(c(
+    "# Project plan", "", "## Current objective", "",
+    "Measure whether maintained context reaches a fresh agentic session."
+  ), file.path(target, "dev", "goals", "project-plan.md"))
+  benchmark <- derive_agentic_routing_questions(target, max_per_type = 1)
+  ids <- vapply(benchmark$questions, function(x) x$id, character(1))
+
+  expect_error(
+    reproducibleai:::normalize_routing_questions(benchmark),
+    "explicit human review"
+  )
+  expect_error(
+    write_agentic_routing_benchmark(benchmark, tempfile(fileext = ".json")),
+    "Resolve every pending"
+  )
+  reviewed <- review_agentic_routing_benchmark(
+    benchmark, approve = ids[[1]], reject = ids[-1]
+  )
+  expect_length(reproducibleai:::normalize_routing_questions(reviewed), 1)
+  expect_error(
+    review_agentic_routing_benchmark(benchmark, approve = "unknown"),
+    "Unknown"
+  )
+  expect_error(
+    write_agentic_routing_benchmark(
+      reviewed, file.path(target, "private-benchmark.json")
+    ),
+    "outside"
+  )
+
+  frozen <- tempfile(fileext = ".json")
+  write_agentic_routing_benchmark(reviewed, frozen)
+  restored <- read_agentic_routing_benchmark(frozen)
+  expect_s3_class(restored, "agentic_routing_benchmark")
+  expect_identical(restored$questions, reviewed$questions)
+  expect_identical(restored$rules_hash, reviewed$rules_hash)
+})
+
+test_that("derivation rejects complex sections conservatively", {
+  target <- withr::local_tempdir()
+  use_agentic_context(target, profiles = "base", quiet = TRUE)
+  writeLines(c(
+    "# Project plan", "", "## Current objective", "",
+    "| Field | Value |", "|---|---|", "| objective | hidden |"
+  ), file.path(target, "dev", "goals", "project-plan.md"))
+
+  benchmark <- derive_agentic_routing_questions(target)
+  paths <- vapply(
+    benchmark$questions, function(x) x$required_paths[[1]], character(1)
+  )
+  expect_false("dev/goals/project-plan.md" %in% paths)
+  expect_true(any(
+    benchmark$exclusions$path == "dev/goals/project-plan.md" &
+      benchmark$exclusions$reason == "section contains Markdown table"
+  ))
+})
+
 test_that("routing question validation rejects ambiguous fixtures", {
   expect_error(
     new_agentic_routing_question(
@@ -81,6 +172,27 @@ test_that("offline routing scoring is transparent and path-aware", {
   expect_equal(score$term_recall, 1)
   expect_equal(score$forbidden_rate, 0)
   expect_equal(score$score, 0.4 + 0.2 * (2 / 3) + 0.3 + 0.1)
+})
+
+test_that("generated questions use canonical-answer token F1", {
+  question <- new_agentic_routing_question(
+    id = "grounding",
+    prompt = "State the objective.",
+    required_paths = "dev/goals/project-plan.md",
+    canonical_answer = "alpha beta beta gamma"
+  )
+  score <- score_agentic_routing_run(question, list(
+    answer = "alpha beta extra",
+    evidence_paths = list("dev/goals/project-plan.md"),
+    route_summary = "Used the maintained goal.",
+    confidence = 1
+  ))
+
+  expect_equal(score$answer_precision, 2 / 3)
+  expect_equal(score$answer_recall, 2 / 4)
+  expect_equal(score$answer_f1, 4 / 7)
+  expect_equal(score$answer_score, score$answer_f1)
+  expect_equal(score$score, 0.4 + 0.2 + 0.3 * (4 / 7) + 0.1)
 })
 
 test_that("repeated evaluation uses isolated structured Codex runs", {

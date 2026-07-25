@@ -11,7 +11,13 @@ new_agentic_routing_question(
   allowed_paths = character(),
   expected_terms = character(),
   forbidden_terms = character(),
-  weight = 1
+  weight = 1,
+  canonical_answer = NULL,
+  review_status = "approved",
+  artifact_type = NULL,
+  source_heading = NULL,
+  source_hash = NULL,
+  derivation_template = NULL
 )
 }
 \arguments{
@@ -31,6 +37,21 @@ without reducing routing precision.}
 incorrect or superseded answer.}
 
 \item{weight}{Positive weight used in the aggregate health score.}
+
+\item{canonical_answer}{Optional maintained answer text used for
+deterministic token-level grounding scores.}
+
+\item{review_status}{Whether the question is \code{"approved"}, \code{"pending"}, or
+\code{"rejected"} by human review.}
+
+\item{artifact_type}{Optional generated artifact classification.}
+
+\item{source_heading}{Optional generated source-section heading.}
+
+\item{source_hash}{Optional hash of the source file used for derivation.}
+
+\item{derivation_template}{Optional identifier of the deterministic template
+that generated the question.}
 }
 \value{
 An object of class \code{agentic_routing_question}.

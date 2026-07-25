@@ -6,9 +6,13 @@
 2. Validate the target repository's agentic context.
 3. Use a clean, fixed Git commit or a dedicated worktree for each specification
    variant.
-4. Define competency questions and private rubrics outside the target.
-5. Separate baseline questions from held-out validation questions.
-6. Decide repetitions, model override, timeout, and raw external output path.
+4. Derive deterministic candidates from maintained `dev/` context or author
+   questions manually.
+5. Human-review every derived prompt, source, and canonical answer; explicitly
+   approve or reject each candidate.
+6. Freeze the reviewed benchmark outside the target repository.
+7. Separate baseline questions from held-out validation questions.
+8. Decide repetitions, model override, timeout, and raw external output path.
 
 Do not proceed if the target can inspect its rubrics or previous raw runs.
 

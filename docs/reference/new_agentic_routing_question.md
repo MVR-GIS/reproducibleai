@@ -13,7 +13,13 @@ new_agentic_routing_question(
   allowed_paths = character(),
   expected_terms = character(),
   forbidden_terms = character(),
-  weight = 1
+  weight = 1,
+  canonical_answer = NULL,
+  review_status = "approved",
+  artifact_type = NULL,
+  source_heading = NULL,
+  source_hash = NULL,
+  derivation_template = NULL
 )
 ```
 
@@ -49,6 +55,33 @@ new_agentic_routing_question(
 - weight:
 
   Positive weight used in the aggregate health score.
+
+- canonical_answer:
+
+  Optional maintained answer text used for deterministic token-level
+  grounding scores.
+
+- review_status:
+
+  Whether the question is `"approved"`, `"pending"`, or `"rejected"` by
+  human review.
+
+- artifact_type:
+
+  Optional generated artifact classification.
+
+- source_heading:
+
+  Optional generated source-section heading.
+
+- source_hash:
+
+  Optional hash of the source file used for derivation.
+
+- derivation_template:
+
+  Optional identifier of the deterministic template that generated the
+  question.
 
 ## Value
 

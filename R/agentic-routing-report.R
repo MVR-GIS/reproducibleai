@@ -25,6 +25,7 @@ summarize_agentic_routing <- function(evaluation) {
       route_recall = mean(x$route_recall),
       route_precision = mean(x$route_precision),
       term_recall = mean(x$term_recall),
+      answer_score = mean(x$answer_score),
       forbidden_rate = mean(x$forbidden_rate),
       mean_input_tokens = routing_mean_na(x$input_tokens),
       mean_cached_input_tokens = routing_mean_na(x$cached_input_tokens),
@@ -93,7 +94,7 @@ routing_report_text <- function(health) {
     health$git_sha
   }
   table_lines <- c(
-    "| Question | Runs | Complete | Score | SD | Recall | Precision | Terms | Forbidden | Input tokens | Seconds |",
+    "| Question | Runs | Complete | Score | SD | Recall | Precision | Answer | Forbidden | Input tokens | Seconds |",
     "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"
   )
   for (i in seq_len(nrow(health$by_question))) {
@@ -106,7 +107,7 @@ routing_report_text <- function(health) {
       routing_decimal(x$score_sd), " | ",
       routing_percent(x$route_recall), " | ",
       routing_percent(x$route_precision), " | ",
-      routing_percent(x$term_recall), " | ",
+      routing_percent(x$answer_score), " | ",
       routing_percent(x$forbidden_rate), " | ",
       routing_decimal(x$mean_input_tokens, digits = 0), " | ",
       routing_decimal(x$mean_elapsed_seconds), " |"
@@ -145,7 +146,7 @@ routing_report_text <- function(health) {
     "",
     "- 40% required evidence recall",
     "- 20% relevant evidence precision",
-    "- 30% expected answer-term recall",
+    "- 30% canonical-answer token F1 for generated questions, or expected-term recall for authored questions",
     "- 10% successful execution and structured response",
     "- The combined score is multiplied by one minus the forbidden-term rate.",
     "",
@@ -173,7 +174,7 @@ routing_recommendations <- function(by_question) {
         prefix, "narrow the route or remove distracting context."
       ))
     }
-    if (x$term_recall < 0.8) {
+    if (x$answer_score < 0.8) {
       out <- c(out, paste0(
         prefix, "review whether durable evidence states the required capability clearly."
       ))

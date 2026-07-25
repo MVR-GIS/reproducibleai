@@ -10,8 +10,8 @@
 #' and worktree remain unchanged across the run.
 #'
 #' @param path Git repository to evaluate.
-#' @param questions One question or a list of questions created by
-#'   `new_agentic_routing_question()`.
+#' @param questions One question, a list of questions, or a fully reviewed
+#'   benchmark created by `derive_agentic_routing_questions()`.
 #' @param repetitions Positive number of independent runs per question.
 #' @param approved Must be `TRUE`. Repeated model execution can consume paid
 #'   usage and is never started implicitly.
@@ -231,6 +231,10 @@ run_agentic_routing_once <- function(root, question, repetition, output_dir,
     route_recall = score$route_recall,
     route_precision = score$route_precision,
     term_recall = score$term_recall,
+    answer_precision = score$answer_precision,
+    answer_recall = score$answer_recall,
+    answer_f1 = score$answer_f1,
+    answer_score = score$answer_score,
     forbidden_rate = score$forbidden_rate,
     confidence = score$confidence,
     input_tokens = metrics$input_tokens,

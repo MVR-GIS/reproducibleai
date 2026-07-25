@@ -54,7 +54,13 @@ rubric is not included in the prompt sent to Codex.</p>
 <span>  allowed_paths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  expected_terms <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  forbidden_terms <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  weight <span class="op">=</span> <span class="fl">1</span></span>
+<span>  weight <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  canonical_answer <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  review_status <span class="op">=</span> <span class="st">"approved"</span>,</span>
+<span>  artifact_type <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  source_heading <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  source_hash <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  derivation_template <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -91,6 +97,33 @@ incorrect or superseded answer.</p></dd>
 
 <dt id="arg-weight">weight<a class="anchor" aria-label="anchor" href="#arg-weight"></a></dt>
 <dd><p>Positive weight used in the aggregate health score.</p></dd>
+
+
+<dt id="arg-canonical-answer">canonical_answer<a class="anchor" aria-label="anchor" href="#arg-canonical-answer"></a></dt>
+<dd><p>Optional maintained answer text used for
+deterministic token-level grounding scores.</p></dd>
+
+
+<dt id="arg-review-status">review_status<a class="anchor" aria-label="anchor" href="#arg-review-status"></a></dt>
+<dd><p>Whether the question is <code>"approved"</code>, <code>"pending"</code>, or
+<code>"rejected"</code> by human review.</p></dd>
+
+
+<dt id="arg-artifact-type">artifact_type<a class="anchor" aria-label="anchor" href="#arg-artifact-type"></a></dt>
+<dd><p>Optional generated artifact classification.</p></dd>
+
+
+<dt id="arg-source-heading">source_heading<a class="anchor" aria-label="anchor" href="#arg-source-heading"></a></dt>
+<dd><p>Optional generated source-section heading.</p></dd>
+
+
+<dt id="arg-source-hash">source_hash<a class="anchor" aria-label="anchor" href="#arg-source-hash"></a></dt>
+<dd><p>Optional hash of the source file used for derivation.</p></dd>
+
+
+<dt id="arg-derivation-template">derivation_template<a class="anchor" aria-label="anchor" href="#arg-derivation-template"></a></dt>
+<dd><p>Optional identifier of the deterministic template
+that generated the question.</p></dd>
 
 </dl></div>
     <div class="section level2">

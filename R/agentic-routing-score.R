@@ -53,12 +53,18 @@ score_agentic_routing_run <- function(question, response, completed = TRUE) {
   forbidden_hits <- routing_term_hits(answer, question$forbidden_terms)
   term_recall <- if (length(expected_hits)) mean(expected_hits) else 1
   forbidden_rate <- if (length(forbidden_hits)) mean(forbidden_hits) else 0
+  grounding <- routing_answer_overlap(answer, question$canonical_answer)
+  answer_score <- if (is.null(question$canonical_answer)) {
+    term_recall
+  } else {
+    grounding$f1
+  }
 
   completion_score <- as.numeric(completed)
   score <- (
     0.40 * route_recall +
       0.20 * route_precision +
-      0.30 * term_recall +
+      0.30 * answer_score +
       0.10 * completion_score
   ) * (1 - forbidden_rate)
   if (!completed) score <- 0
@@ -68,6 +74,10 @@ score_agentic_routing_run <- function(question, response, completed = TRUE) {
     route_recall = route_recall,
     route_precision = route_precision,
     term_recall = term_recall,
+    answer_precision = grounding$precision,
+    answer_recall = grounding$recall,
+    answer_f1 = grounding$f1,
+    answer_score = answer_score,
     forbidden_rate = forbidden_rate,
     completed = completed,
     confidence = confidence,
@@ -75,6 +85,36 @@ score_agentic_routing_run <- function(question, response, completed = TRUE) {
     route_summary = route_summary,
     evidence_paths = evidence
   )
+}
+
+routing_answer_overlap <- function(answer, canonical_answer) {
+  if (is.null(canonical_answer)) {
+    return(list(precision = NA_real_, recall = NA_real_, f1 = NA_real_))
+  }
+  actual <- routing_answer_tokens(answer)
+  expected <- routing_answer_tokens(canonical_answer)
+  if (!length(actual) || !length(expected)) {
+    precision <- if (!length(actual)) 0 else NA_real_
+    recall <- if (!length(expected)) NA_real_ else 0
+    return(list(precision = precision, recall = recall, f1 = 0))
+  }
+  actual_counts <- table(actual)
+  expected_counts <- table(expected)
+  common <- intersect(names(actual_counts), names(expected_counts))
+  overlap <- sum(pmin(actual_counts[common], expected_counts[common]))
+  precision <- overlap / length(actual)
+  recall <- overlap / length(expected)
+  f1 <- if (precision + recall == 0) 0 else {
+    2 * precision * recall / (precision + recall)
+  }
+  list(precision = precision, recall = recall, f1 = f1)
+}
+
+routing_answer_tokens <- function(x) {
+  x <- tolower(enc2utf8(as.character(x)[1]))
+  x <- gsub("[^[:alnum:]]+", " ", x)
+  tokens <- strsplit(trimws(x), "\\s+")[[1]]
+  tokens[nzchar(tokens)]
 }
 
 routing_path_present <- function(expected, evidence) {

@@ -52,6 +52,40 @@ approved environment.
 
 ## Define private competency questions
 
+The preferred first pass derives candidates deterministically from
+maintained `dev/` sections. The generator does not inspect `AGENTS.md`,
+and no model is used to create either the question or its canonical
+answer:
+
+``` r
+
+benchmark <- derive_agentic_routing_questions(
+  "C:/workspace/FluvialGeomorph/fluvgeo"
+)
+print(benchmark)
+
+# Read the prompt, source path, heading, and canonical answer for every item.
+ids <- vapply(benchmark$questions, function(x) x$id, character(1))
+benchmark <- review_agentic_routing_benchmark(
+  benchmark,
+  approve = ids[c(1, 2, 4)],
+  reject = ids[c(3, 5)]
+)
+
+fixture <- file.path(tempdir(), "fluvgeo-routing-benchmark.json")
+write_agentic_routing_benchmark(benchmark, fixture)
+benchmark <- read_agentic_routing_benchmark(fixture)
+```
+
+All generated candidates begin as pending. Evaluation refuses a
+benchmark until every item has been explicitly approved or rejected.
+Freeze the reviewed benchmark outside the target repository before
+comparing routing specifications. Source and rules hashes make changes
+auditable.
+
+Questions that require synthesis, judgment, or facts not expressed in a
+supported maintained section should still be authored manually:
+
 ``` r
 
 library(reproducibleai)
@@ -91,7 +125,7 @@ Codex can inspect the private rubric.
 
 evaluation <- run_agentic_routing_evaluation(
   path = "C:/workspace/FluvialGeomorph/fluvgeo",
-  questions = questions,
+  questions = benchmark,
   repetitions = 5,
   approved = TRUE,
   model = NULL
@@ -135,9 +169,12 @@ write_agentic_routing_report(
 )
 ```
 
-The durable report contains only aggregate metrics and recommendations.
-Inspect external raw runs before changing instructions, and validate
-proposed improvements on held-out questions or repositories.
+Generated questions score answer grounding with deterministic multiset
+token precision, recall, and F1 against the frozen canonical answer.
+Manually authored questions retain expected-term recall. The durable
+report contains only aggregate metrics and recommendations. Inspect
+external raw runs before changing instructions, and validate proposed
+improvements on held-out questions or repositories.
 
 Run this workflow deliberately during local development when agentic
 context changes. Do not place live evaluation in package builds or CI.

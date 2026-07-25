@@ -20,8 +20,8 @@ run_agentic_routing_evaluation(
 \arguments{
 \item{path}{Git repository to evaluate.}
 
-\item{questions}{One question or a list of questions created by
-\code{new_agentic_routing_question()}.}
+\item{questions}{One question, a list of questions, or a fully reviewed
+benchmark created by \code{derive_agentic_routing_questions()}.}
 
 \item{repetitions}{Positive number of independent runs per question.}
 

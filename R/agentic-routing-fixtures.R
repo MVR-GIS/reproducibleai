@@ -13,6 +13,15 @@
 #' @param forbidden_terms Case-insensitive literal terms that indicate an
 #'   incorrect or superseded answer.
 #' @param weight Positive weight used in the aggregate health score.
+#' @param canonical_answer Optional maintained answer text used for
+#'   deterministic token-level grounding scores.
+#' @param review_status Whether the question is `"approved"`, `"pending"`, or
+#'   `"rejected"` by human review.
+#' @param artifact_type Optional generated artifact classification.
+#' @param source_heading Optional generated source-section heading.
+#' @param source_hash Optional hash of the source file used for derivation.
+#' @param derivation_template Optional identifier of the deterministic template
+#'   that generated the question.
 #'
 #' @return An object of class `agentic_routing_question`.
 #' @export
@@ -22,7 +31,13 @@ new_agentic_routing_question <- function(id,
                                           allowed_paths = character(),
                                           expected_terms = character(),
                                           forbidden_terms = character(),
-                                          weight = 1) {
+                                          weight = 1,
+                                          canonical_answer = NULL,
+                                          review_status = "approved",
+                                          artifact_type = NULL,
+                                          source_heading = NULL,
+                                          source_hash = NULL,
+                                          derivation_template = NULL) {
   id <- routing_scalar_character(id, "id")
   if (!grepl("^[A-Za-z0-9][A-Za-z0-9._-]*$", id)) {
     stop(
@@ -48,6 +63,18 @@ new_agentic_routing_question <- function(id,
       is.na(weight) || !is.finite(weight) || weight <= 0) {
     stop("`weight` must be one positive finite number.", call. = FALSE)
   }
+  canonical_answer <- routing_optional_scalar(
+    canonical_answer, "canonical_answer"
+  )
+  review_status <- match.arg(
+    review_status, c("approved", "pending", "rejected")
+  )
+  artifact_type <- routing_optional_scalar(artifact_type, "artifact_type")
+  source_heading <- routing_optional_scalar(source_heading, "source_heading")
+  source_hash <- routing_optional_scalar(source_hash, "source_hash")
+  derivation_template <- routing_optional_scalar(
+    derivation_template, "derivation_template"
+  )
 
   structure(
     list(
@@ -57,7 +84,13 @@ new_agentic_routing_question <- function(id,
       allowed_paths = normalize_routing_paths(allowed_paths),
       expected_terms = unique(expected_terms),
       forbidden_terms = unique(forbidden_terms),
-      weight = as.numeric(weight)
+      weight = as.numeric(weight),
+      canonical_answer = canonical_answer,
+      review_status = review_status,
+      artifact_type = artifact_type,
+      source_heading = source_heading,
+      source_hash = source_hash,
+      derivation_template = derivation_template
     ),
     class = "agentic_routing_question"
   )
@@ -88,7 +121,7 @@ write_agentic_routing_questions <- function(questions,
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
 
   payload <- list(
-    schema_version = jsonlite::unbox(1L),
+    schema_version = jsonlite::unbox(2L),
     questions = lapply(questions, routing_question_json)
   )
   jsonlite::write_json(
@@ -116,31 +149,13 @@ read_agentic_routing_questions <- function(path) {
     }
   )
   version <- suppressWarnings(as.integer(payload$schema_version))
-  if (length(version) != 1L || is.na(version) || version != 1L) {
+  if (length(version) != 1L || is.na(version) || !version %in% c(1L, 2L)) {
     stop("Unsupported question fixture schema version.", call. = FALSE)
   }
   if (!is.list(payload$questions) || !length(payload$questions)) {
     stop("Question fixture must contain at least one question.", call. = FALSE)
   }
-  questions <- lapply(payload$questions, function(x) {
-    new_agentic_routing_question(
-      id = x$id,
-      prompt = x$prompt,
-      required_paths = as.character(unlist(
-        x$required_paths, use.names = FALSE
-      )),
-      allowed_paths = as.character(unlist(
-        x$allowed_paths, use.names = FALSE
-      )),
-      expected_terms = as.character(unlist(
-        x$expected_terms, use.names = FALSE
-      )),
-      forbidden_terms = as.character(unlist(
-        x$forbidden_terms, use.names = FALSE
-      )),
-      weight = x$weight
-    )
-  })
+  questions <- lapply(payload$questions, routing_question_from_json)
   attr(questions, "fixture_path") <- normalizePath(
     path, winslash = "/", mustWork = TRUE
   )
@@ -155,11 +170,60 @@ routing_question_json <- function(question) {
     allowed_paths = as.list(question$allowed_paths),
     expected_terms = as.list(question$expected_terms),
     forbidden_terms = as.list(question$forbidden_terms),
-    weight = jsonlite::unbox(question$weight)
+    weight = jsonlite::unbox(question$weight),
+    canonical_answer = routing_json_scalar(question$canonical_answer),
+    review_status = jsonlite::unbox(question$review_status),
+    artifact_type = routing_json_scalar(question$artifact_type),
+    source_heading = routing_json_scalar(question$source_heading),
+    source_hash = routing_json_scalar(question$source_hash),
+    derivation_template = routing_json_scalar(question$derivation_template)
+  )
+}
+
+routing_question_from_json <- function(x) {
+  new_agentic_routing_question(
+    id = x$id,
+    prompt = x$prompt,
+    required_paths = as.character(unlist(
+      x$required_paths, use.names = FALSE
+    )),
+    allowed_paths = as.character(unlist(
+      x$allowed_paths, use.names = FALSE
+    )),
+    expected_terms = as.character(unlist(
+      x$expected_terms, use.names = FALSE
+    )),
+    forbidden_terms = as.character(unlist(
+      x$forbidden_terms, use.names = FALSE
+    )),
+    weight = x$weight,
+    canonical_answer = x$canonical_answer %||% NULL,
+    review_status = x$review_status %||% "approved",
+    artifact_type = x$artifact_type %||% NULL,
+    source_heading = x$source_heading %||% NULL,
+    source_hash = x$source_hash %||% NULL,
+    derivation_template = x$derivation_template %||% NULL
   )
 }
 
 normalize_routing_questions <- function(questions) {
+  if (inherits(questions, "agentic_routing_benchmark")) {
+    fixture_path <- attr(questions, "fixture_path", exact = TRUE)
+    statuses <- vapply(
+      questions$questions, `[[`, character(1), "review_status"
+    )
+    if (any(statuses == "pending")) {
+      stop(
+        "Generated competency questions require explicit human review before evaluation.",
+        call. = FALSE
+      )
+    }
+    questions <- questions$questions[statuses == "approved"]
+    if (!length(questions)) {
+      stop("The benchmark has no approved competency questions.", call. = FALSE)
+    }
+    if (!is.null(fixture_path)) attr(questions, "fixture_path") <- fixture_path
+  }
   fixture_path <- attr(questions, "fixture_path", exact = TRUE)
   if (inherits(questions, "agentic_routing_question")) {
     questions <- list(questions)
@@ -187,6 +251,15 @@ routing_scalar_character <- function(x, arg) {
     stop("`", arg, "` must be one non-empty string.", call. = FALSE)
   }
   trimws(x)
+}
+
+routing_optional_scalar <- function(x, arg) {
+  if (is.null(x)) return(NULL)
+  routing_scalar_character(x, arg)
+}
+
+routing_json_scalar <- function(x) {
+  if (is.null(x)) NULL else jsonlite::unbox(x)
 }
 
 routing_character_vector <- function(x, arg, allow_empty) {

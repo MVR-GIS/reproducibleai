@@ -7,27 +7,27 @@ context and quantitative evaluation of how effectively agents use that context.
 
 ## Current objective
 
-Implement the first usable agentic-routing evaluation slice:
+Add an independent, deterministic competency derivation lane:
 
-- versioned competency-question fixtures;
-- isolated repeated Codex execution;
-- structured event and response capture;
-- transparent deterministic scoring;
-- quantitative health summaries and durable reports; and
-- tests that do not require credentials or live model calls;
-- robust discovery and no-usage diagnosis of the optional standalone Codex
-  CLI; and
-- explicit support boundaries for offline, approved connected, and managed
-  computing environments.
+- extract conservative questions and canonical answers from maintained `dev/`
+  sections without reading `AGENTS.md`;
+- require explicit human approval or rejection;
+- freeze versioned benchmarks outside the evaluated repository;
+- score generated answers with transparent token-overlap metrics; and
+- retain manual competency questions for synthesis and judgment tasks.
 
-Status: implemented on `feat/agentic-routing-evaluation`; awaiting review.
+Status: implemented and verified on `feat/agentic-routing-evaluation`;
+awaiting maintainer review.
 
 ## Verification record
 
-- 114 package expectations pass with no failures, warnings, or skips.
+- 133 package expectations pass with no failures, warnings, or skips.
 - A clean source package build includes all three vignettes.
 - `R CMD check --no-manual --no-build-vignettes` completes with status OK.
 - The pkgdown site builds with the new article and API reference pages.
+- Self-derivation produces 11 pending candidates across goals, decisions,
+  features, workflows, and architecture; five unsupported sections are
+  retained as explicit exclusions for human inspection.
 - No authenticated model calls or paid usage occurred during implementation.
 - The no-usage preflight discovers Codex CLI 0.145.0 from its stable user-local
   Windows installation and confirms saved ChatGPT authentication despite a

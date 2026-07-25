@@ -29,8 +29,9 @@ run_agentic_routing_evaluation(
 
 - questions:
 
-  One question or a list of questions created by
-  [`new_agentic_routing_question()`](https://mvr-gis.github.io/reproducibleai/reference/new_agentic_routing_question.md).
+  One question, a list of questions, or a fully reviewed benchmark
+  created by
+  [`derive_agentic_routing_questions()`](https://mvr-gis.github.io/reproducibleai/reference/derive_agentic_routing_questions.md).
 
 - repetitions:
 

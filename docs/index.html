@@ -129,17 +129,18 @@
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/check_agentic_routing_prerequisites.html">check_agentic_routing_prerequisites</a></span><span class="op">(</span>path <span class="op">=</span> <span class="st">"."</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">question</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/new_agentic_routing_question.html">new_agentic_routing_question</a></span><span class="op">(</span></span>
-<span>  id <span class="op">=</span> <span class="st">"current-priority"</span>,</span>
-<span>  prompt <span class="op">=</span> <span class="st">"What is the current development priority?"</span>,</span>
-<span>  required_paths <span class="op">=</span> <span class="st">"dev/goals/project-plan.md"</span>,</span>
-<span>  allowed_paths <span class="op">=</span> <span class="st">"AGENTS.md"</span>,</span>
-<span>  expected_terms <span class="op">=</span> <span class="st">"current objective"</span></span>
+<span><span class="va">benchmark</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/derive_agentic_routing_questions.html">derive_agentic_routing_questions</a></span><span class="op">(</span><span class="st">"."</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">benchmark</span><span class="op">)</span> <span class="co"># every generated question begins as pending</span></span>
+<span></span>
+<span><span class="va">ids</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="va">benchmark</span><span class="op">$</span><span class="va">questions</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">x</span><span class="op">$</span><span class="va">id</span>, <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">benchmark</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/review_agentic_routing_benchmark.html">review_agentic_routing_benchmark</a></span><span class="op">(</span></span>
+<span>  <span class="va">benchmark</span>,</span>
+<span>  approve <span class="op">=</span> <span class="va">ids</span> <span class="co"># approve only after reading every candidate</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">evaluation</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/run_agentic_routing_evaluation.html">run_agentic_routing_evaluation</a></span><span class="op">(</span></span>
 <span>  path <span class="op">=</span> <span class="st">"."</span>,</span>
-<span>  questions <span class="op">=</span> <span class="va">question</span>,</span>
+<span>  questions <span class="op">=</span> <span class="va">benchmark</span>,</span>
 <span>  repetitions <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  approved <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
@@ -149,7 +150,7 @@
 <span>  <span class="va">health</span>,</span>
 <span>  <span class="st">"dev/governance/agentic-routing-health.md"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>Keep private fixtures and raw runs outside the evaluated repository. Model responses remain stochastic; health reports summarize repeated observations rather than claiming deterministic model behavior. Live evaluation is intended as an explicitly initiated local development diagnostic, not as an automatic package-build or CI step. A committed aggregate report can communicate the observed health of repository context to maintainers and end-users.</p>
+<p>Keep private fixtures and raw runs outside the evaluated repository. Freeze reviewed generated benchmarks outside the repository with <code><a href="reference/write_agentic_routing_benchmark.html">write_agentic_routing_benchmark()</a></code> so specification variants use the same criterion. Model responses remain stochastic; health reports summarize repeated observations rather than claiming deterministic model behavior. Live evaluation is intended as an explicitly initiated local development diagnostic, not as an automatic package-build or CI step. A committed aggregate report can communicate the observed health of repository context to maintainers and end-users.</p>
 </div>
 <div class="section level2">
 <h2 id="bug-reports">Bug reports<a class="anchor" aria-label="anchor" href="#bug-reports"></a>
