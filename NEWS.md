@@ -6,6 +6,9 @@
   rubrics.
 * Added deterministic competency derivation from maintained `dev/` sections,
   mandatory human review, provenance hashes, and externally frozen benchmarks.
+* Added an external review bundle with an editable question CSV, explicit
+  generator exclusions, generated QA instructions, and provenance-checked
+  import.
 * Added canonical-answer token precision, recall, and F1 for generated
   retrieval and grounding questions.
 * Added explicitly approved, repeated, ephemeral, read-only `codex exec`

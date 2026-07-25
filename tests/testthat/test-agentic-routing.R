@@ -98,6 +98,85 @@ test_that("generated benchmarks require review and round-trip outside target", {
   expect_identical(restored$rules_hash, reviewed$rules_hash)
 })
 
+test_that("flat review sheets support editable QA and protect provenance", {
+  target <- withr::local_tempdir()
+  use_agentic_context(target, profiles = "base", quiet = TRUE)
+  writeLines(c(
+    "# Project plan", "", "## Current objective", "",
+    "Measure whether maintained context reaches a fresh agentic session."
+  ), file.path(target, "dev", "goals", "project-plan.md"))
+  benchmark <- derive_agentic_routing_questions(target, max_per_type = 1)
+  review_path <- tempfile("routing-review-")
+
+  write_agentic_routing_review(benchmark, review_path)
+  questions_path <- file.path(review_path, "questions.csv")
+  expect_true(file.exists(file.path(review_path, "REVIEW.md")))
+  expect_true(file.exists(file.path(review_path, "exclusions.csv")))
+  review <- utils::read.csv(
+    questions_path, stringsAsFactors = FALSE, check.names = FALSE
+  )
+  expect_s3_class(as_agentic_routing_review(benchmark), "data.frame")
+  expect_true(all(c(
+    "review_status", "review_note", "prompt", "canonical_answer",
+    "source_path", "source_hash", "rules_hash"
+  ) %in% names(review)))
+
+  review$review_status <- "rejected"
+  review$review_status[[1]] <- "approved"
+  review$review_note[[1]] <- "Source and answer verified."
+  review$prompt[[1]] <- paste(review$prompt[[1]], "Be concise.")
+  review$canonical_answer[[1]] <- paste(
+    review$canonical_answer[[1]], "This sentence was verified by the reviewer."
+  )
+  utils::write.csv(
+    review, questions_path, row.names = FALSE, fileEncoding = "UTF-8"
+  )
+  applied <- apply_agentic_routing_review(benchmark, review_path)
+
+  expect_identical(applied$questions[[1]]$review_status, "approved")
+  expect_identical(
+    applied$questions[[1]]$review_note, "Source and answer verified."
+  )
+  expect_match(applied$questions[[1]]$prompt, "Be concise", fixed = TRUE)
+  expect_match(
+    applied$questions[[1]]$canonical_answer,
+    "verified by the reviewer",
+    fixed = TRUE
+  )
+
+  incomplete <- review
+  incomplete$review_status[[1]] <- "pending"
+  utils::write.csv(
+    incomplete, questions_path, row.names = FALSE, fileEncoding = "UTF-8"
+  )
+  expect_error(
+    apply_agentic_routing_review(benchmark, review_path),
+    "Review is incomplete"
+  )
+  expect_s3_class(
+    apply_agentic_routing_review(
+      benchmark, review_path, require_complete = FALSE
+    ),
+    "agentic_routing_benchmark"
+  )
+
+  tampered <- review
+  tampered$source_path[[1]] <- "dev/goals/not-the-source.md"
+  utils::write.csv(
+    tampered, questions_path, row.names = FALSE, fileEncoding = "UTF-8"
+  )
+  expect_error(
+    apply_agentic_routing_review(benchmark, review_path),
+    "Locked review provenance"
+  )
+  expect_error(
+    write_agentic_routing_review(
+      benchmark, file.path(target, "gold-review.csv")
+    ),
+    "outside"
+  )
+})
+
 test_that("derivation rejects complex sections conservatively", {
   target <- withr::local_tempdir()
   use_agentic_context(target, profiles = "base", quiet = TRUE)

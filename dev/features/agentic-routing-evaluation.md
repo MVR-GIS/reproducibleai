@@ -11,18 +11,22 @@ durable aggregate health report.
 
 1. Derive candidates with `derive_agentic_routing_questions()` or author
    questions with `new_agentic_routing_question()`.
-2. Human-review every generated candidate and explicitly approve or reject it.
-3. Freeze the reviewed benchmark outside the target with
+2. Write an external review bundle containing instructions, an editable
+   question sheet, and generator exclusions.
+3. Human-review every generated candidate, inspect coverage gaps, and explicitly
+   approve or reject it.
+4. Import the review sheet with provenance validation.
+5. Freeze the reviewed benchmark outside the target with
    `write_agentic_routing_benchmark()`.
-4. Review repetitions, model, target commit, and expected usage.
-5. Run `check_agentic_routing_prerequisites()` in the local development
+6. Review repetitions, model, target commit, and expected usage.
+7. Run `check_agentic_routing_prerequisites()` in the local development
    environment.
-6. Call `run_agentic_routing_evaluation(..., approved = TRUE)`.
-7. Inspect raw external runs when a score needs explanation.
-8. Call `summarize_agentic_routing()`.
-9. Write and commit an aggregate report with
+8. Call `run_agentic_routing_evaluation(..., approved = TRUE)`.
+9. Inspect raw external runs when a score needs explanation.
+10. Call `summarize_agentic_routing()`.
+11. Write and commit an aggregate report with
    `write_agentic_routing_report()`.
-10. Compare instruction formulations only with the same frozen benchmark.
+12. Compare instruction formulations only with the same frozen benchmark.
 
 ## Capability tiers
 

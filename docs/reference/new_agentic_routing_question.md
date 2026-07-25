@@ -19,7 +19,8 @@ new_agentic_routing_question(
   artifact_type = NULL,
   source_heading = NULL,
   source_hash = NULL,
-  derivation_template = NULL
+  derivation_template = NULL,
+  review_note = NULL
 )
 ```
 
@@ -82,6 +83,10 @@ new_agentic_routing_question(
 
   Optional identifier of the deterministic template that generated the
   question.
+
+- review_note:
+
+  Optional human-review rationale or editing note.
 
 ## Value
 

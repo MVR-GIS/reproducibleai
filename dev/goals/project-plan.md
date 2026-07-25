@@ -12,6 +12,7 @@ Add an independent, deterministic competency derivation lane:
 - extract conservative questions and canonical answers from maintained `dev/`
   sections without reading `AGENTS.md`;
 - require explicit human approval or rejection;
+- provide an accessible external review bundle and documented QA workflow;
 - freeze versioned benchmarks outside the evaluated repository;
 - score generated answers with transparent token-overlap metrics; and
 - retain manual competency questions for synthesis and judgment tasks.
@@ -21,8 +22,8 @@ awaiting maintainer review.
 
 ## Verification record
 
-- 133 package expectations pass with no failures, warnings, or skips.
-- A clean source package build includes all three vignettes.
+- 145 package expectations pass with no failures, warnings, or skips.
+- A clean source package build includes all four vignettes.
 - `R CMD check --no-manual --no-build-vignettes` completes with status OK.
 - The pkgdown site builds with the new article and API reference pages.
 - Self-derivation produces 11 pending candidates across goals, decisions,

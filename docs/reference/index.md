@@ -4,6 +4,10 @@
 
 - [`apply_agentic_context_migration()`](https://mvr-gis.github.io/reproducibleai/reference/apply_agentic_context_migration.md)
   : Apply an approved agentic-context migration
+- [`apply_agentic_routing_review()`](https://mvr-gis.github.io/reproducibleai/reference/apply_agentic_routing_review.md)
+  : Apply a completed competency-review sheet
+- [`as_agentic_routing_review()`](https://mvr-gis.github.io/reproducibleai/reference/as_agentic_routing_review.md)
+  : Create a flat competency-review table
 - [`check_agentic_routing_prerequisites()`](https://mvr-gis.github.io/reproducibleai/reference/check_agentic_routing_prerequisites.md)
   : Check local prerequisites for live agentic-routing evaluation
 - [`derive_agentic_routing_questions()`](https://mvr-gis.github.io/reproducibleai/reference/derive_agentic_routing_questions.md)
@@ -38,5 +42,7 @@
   : Write agentic-routing competency questions
 - [`write_agentic_routing_report()`](https://mvr-gis.github.io/reproducibleai/reference/write_agentic_routing_report.md)
   : Write an agentic-routing health report
+- [`write_agentic_routing_review()`](https://mvr-gis.github.io/reproducibleai/reference/write_agentic_routing_review.md)
+  : Write a competency-review sheet
 - [`write_sbom_env()`](https://mvr-gis.github.io/reproducibleai/reference/write_sbom_env.md)
   : Write SBOM environment bundle metadata for an R package repo

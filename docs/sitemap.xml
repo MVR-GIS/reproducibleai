@@ -4,12 +4,15 @@
 <url><loc>https://mvr-gis.github.io/reproducibleai/articles/agentic-context.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/articles/agentic-routing-evaluation.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/articles/index.html</loc></url>
+<url><loc>https://mvr-gis.github.io/reproducibleai/articles/review-agentic-routing-benchmarks.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/articles/sbom.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/authors.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/index.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/LICENSE.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/news/index.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/reference/apply_agentic_context_migration.html</loc></url>
+<url><loc>https://mvr-gis.github.io/reproducibleai/reference/apply_agentic_routing_review.html</loc></url>
+<url><loc>https://mvr-gis.github.io/reproducibleai/reference/as_agentic_routing_review.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/reference/check_agentic_routing_prerequisites.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/reference/derive_agentic_routing_questions.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/reference/detect_agentic_context_profiles.html</loc></url>
@@ -34,6 +37,7 @@
 <url><loc>https://mvr-gis.github.io/reproducibleai/reference/write_agentic_routing_benchmark.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/reference/write_agentic_routing_questions.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/reference/write_agentic_routing_report.html</loc></url>
+<url><loc>https://mvr-gis.github.io/reproducibleai/reference/write_agentic_routing_review.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/reference/write_sbom_env.html</loc></url>
 </urlset>
 

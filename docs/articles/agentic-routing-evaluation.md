@@ -62,14 +62,14 @@ answer:
 benchmark <- derive_agentic_routing_questions(
   "C:/workspace/FluvialGeomorph/fluvgeo"
 )
-print(benchmark)
 
-# Read the prompt, source path, heading, and canonical answer for every item.
-ids <- vapply(benchmark$questions, function(x) x$id, character(1))
-benchmark <- review_agentic_routing_benchmark(
+review_dir <- "C:/workspace/agentic-reviews/fluvgeo-baseline"
+write_agentic_routing_review(benchmark, review_dir)
+
+# Edit questions.csv, inspect exclusions.csv, then import the decisions.
+benchmark <- apply_agentic_routing_review(
   benchmark,
-  approve = ids[c(1, 2, 4)],
-  reject = ids[c(3, 5)]
+  review_dir
 )
 
 fixture <- file.path(tempdir(), "fluvgeo-routing-benchmark.json")
@@ -78,10 +78,13 @@ benchmark <- read_agentic_routing_benchmark(fixture)
 ```
 
 All generated candidates begin as pending. Evaluation refuses a
-benchmark until every item has been explicitly approved or rejected.
-Freeze the reviewed benchmark outside the target repository before
-comparing routing specifications. Source and rules hashes make changes
-auditable.
+benchmark until every item has been explicitly approved or rejected. The
+[benchmark-review
+article](https://mvr-gis.github.io/reproducibleai/articles/review-agentic-routing-benchmarks.md)
+describes the CSV columns, QA checklist, exclusions review, staged
+review, and artifact lifecycle. Freeze the reviewed benchmark outside
+the target repository before comparing routing specifications. Source
+and rules hashes make changes auditable.
 
 Questions that require synthesis, judgment, or facts not expressed in a
 supported maintained section should still be authored manually:

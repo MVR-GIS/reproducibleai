@@ -124,11 +124,11 @@ check_agentic_routing_prerequisites(path = ".")
 benchmark <- derive_agentic_routing_questions(".")
 print(benchmark) # every generated question begins as pending
 
-ids <- vapply(benchmark$questions, function(x) x$id, character(1))
-benchmark <- review_agentic_routing_benchmark(
-  benchmark,
-  approve = ids # approve only after reading every candidate
-)
+review_dir <- file.path(tempdir(), "reproducibleai-routing-review")
+write_agentic_routing_review(benchmark, review_dir)
+
+# Edit questions.csv, inspect exclusions.csv, and then:
+benchmark <- apply_agentic_routing_review(benchmark, review_dir)
 
 evaluation <- run_agentic_routing_evaluation(
   path = ".",

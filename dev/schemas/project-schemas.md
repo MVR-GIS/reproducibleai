@@ -107,6 +107,24 @@ prohibited while any candidate remains pending; rejected items are retained in
 the benchmark but omitted from execution. Frozen benchmarks and their canonical
 answers must remain outside the repository being evaluated.
 
+## Agentic-routing review bundle
+
+The external review directory contains:
+
+- `REVIEW.md`: generated benchmark identity, QA checklist, editable-column
+  contract, and completion instructions
+- `questions.csv`: one row per candidate
+- `exclusions.csv`: source path, derivation rule, and exclusion reason
+
+Editable question columns are `review_status`, `review_note`, `prompt`, and
+`canonical_answer`. All remaining columns are locked provenance and must match
+the original in-memory benchmark during import. The question fixture also
+retains the optional human `review_note`.
+
+Complete review requires every status to be `approved` or `rejected`. Partial
+import is permitted only when explicitly requested. Review bundles contain gold
+answers and must remain outside the evaluated repository.
+
 ## Agentic-routing prerequisite diagnostic
 
 The local diagnostic contains:

@@ -22,6 +22,7 @@
 #' @param source_hash Optional hash of the source file used for derivation.
 #' @param derivation_template Optional identifier of the deterministic template
 #'   that generated the question.
+#' @param review_note Optional human-review rationale or editing note.
 #'
 #' @return An object of class `agentic_routing_question`.
 #' @export
@@ -37,7 +38,8 @@ new_agentic_routing_question <- function(id,
                                           artifact_type = NULL,
                                           source_heading = NULL,
                                           source_hash = NULL,
-                                          derivation_template = NULL) {
+                                          derivation_template = NULL,
+                                          review_note = NULL) {
   id <- routing_scalar_character(id, "id")
   if (!grepl("^[A-Za-z0-9][A-Za-z0-9._-]*$", id)) {
     stop(
@@ -75,6 +77,7 @@ new_agentic_routing_question <- function(id,
   derivation_template <- routing_optional_scalar(
     derivation_template, "derivation_template"
   )
+  review_note <- routing_optional_scalar(review_note, "review_note")
 
   structure(
     list(
@@ -90,7 +93,8 @@ new_agentic_routing_question <- function(id,
       artifact_type = artifact_type,
       source_heading = source_heading,
       source_hash = source_hash,
-      derivation_template = derivation_template
+      derivation_template = derivation_template,
+      review_note = review_note
     ),
     class = "agentic_routing_question"
   )
@@ -176,7 +180,8 @@ routing_question_json <- function(question) {
     artifact_type = routing_json_scalar(question$artifact_type),
     source_heading = routing_json_scalar(question$source_heading),
     source_hash = routing_json_scalar(question$source_hash),
-    derivation_template = routing_json_scalar(question$derivation_template)
+    derivation_template = routing_json_scalar(question$derivation_template),
+    review_note = routing_json_scalar(question$review_note)
   )
 }
 
@@ -202,7 +207,8 @@ routing_question_from_json <- function(x) {
     artifact_type = x$artifact_type %||% NULL,
     source_heading = x$source_heading %||% NULL,
     source_hash = x$source_hash %||% NULL,
-    derivation_template = x$derivation_template %||% NULL
+    derivation_template = x$derivation_template %||% NULL,
+    review_note = x$review_note %||% NULL
   )
 }
 

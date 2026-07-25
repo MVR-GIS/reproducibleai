@@ -119,11 +119,11 @@ check_agentic_routing_prerequisites(path = ".")
 benchmark <- derive_agentic_routing_questions(".")
 print(benchmark) # every generated question begins as pending
 
-ids <- vapply(benchmark$questions, function(x) x$id, character(1))
-benchmark <- review_agentic_routing_benchmark(
-  benchmark,
-  approve = ids # approve only after reading every candidate
-)
+review_dir <- file.path(tempdir(), "reproducibleai-routing-review")
+write_agentic_routing_review(benchmark, review_dir)
+
+# Edit questions.csv, inspect exclusions.csv, and then:
+benchmark <- apply_agentic_routing_review(benchmark, review_dir)
 
 evaluation <- run_agentic_routing_evaluation(
   path = ".",
@@ -160,6 +160,10 @@ Please open an issue at
 
 - [`apply_agentic_context_migration()`](https://mvr-gis.github.io/reproducibleai/reference/apply_agentic_context_migration.md)
   : Apply an approved agentic-context migration
+- [`apply_agentic_routing_review()`](https://mvr-gis.github.io/reproducibleai/reference/apply_agentic_routing_review.md)
+  : Apply a completed competency-review sheet
+- [`as_agentic_routing_review()`](https://mvr-gis.github.io/reproducibleai/reference/as_agentic_routing_review.md)
+  : Create a flat competency-review table
 - [`check_agentic_routing_prerequisites()`](https://mvr-gis.github.io/reproducibleai/reference/check_agentic_routing_prerequisites.md)
   : Check local prerequisites for live agentic-routing evaluation
 - [`derive_agentic_routing_questions()`](https://mvr-gis.github.io/reproducibleai/reference/derive_agentic_routing_questions.md)
@@ -194,6 +198,8 @@ Please open an issue at
   : Write agentic-routing competency questions
 - [`write_agentic_routing_report()`](https://mvr-gis.github.io/reproducibleai/reference/write_agentic_routing_report.md)
   : Write an agentic-routing health report
+- [`write_agentic_routing_review()`](https://mvr-gis.github.io/reproducibleai/reference/write_agentic_routing_review.md)
+  : Write a competency-review sheet
 - [`write_sbom_env()`](https://mvr-gis.github.io/reproducibleai/reference/write_sbom_env.md)
   : Write SBOM environment bundle metadata for an R package repo
 
@@ -205,5 +211,7 @@ Please open an issue at
   repository](https://mvr-gis.github.io/reproducibleai/articles/agentic-context.md):
 - [Evaluate agentic
   routing](https://mvr-gis.github.io/reproducibleai/articles/agentic-routing-evaluation.md):
+- [Review agentic-routing competency
+  benchmarks](https://mvr-gis.github.io/reproducibleai/articles/review-agentic-routing-benchmarks.md):
 - [SBOM for R Package Repositories (renv + GitHub
   Actions)](https://mvr-gis.github.io/reproducibleai/articles/sbom.md):

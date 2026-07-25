@@ -8,13 +8,23 @@
    variant.
 4. Derive deterministic candidates from maintained `dev/` context or author
    questions manually.
-5. Human-review every derived prompt, source, and canonical answer; explicitly
-   approve or reject each candidate.
-6. Freeze the reviewed benchmark outside the target repository.
-7. Separate baseline questions from held-out validation questions.
-8. Decide repetitions, model override, timeout, and raw external output path.
+5. Write an external review bundle with
+   `write_agentic_routing_review()`.
+6. Follow its `REVIEW.md`: edit only the permitted columns in `questions.csv`
+   and inspect `exclusions.csv` for missing coverage.
+7. Import decisions with `apply_agentic_routing_review()`. Resolve every pending
+   candidate and any provenance errors.
+8. Freeze the reviewed benchmark outside the target repository.
+9. Separate baseline questions from held-out validation questions.
+10. Decide repetitions, model override, timeout, and raw external output path.
 
 Do not proceed if the target can inspect its rubrics or previous raw runs.
+
+The review directory is the human QA artifact. Its question sheet records
+approved/rejected status, reviewer notes, and any human corrections to prompts
+or canonical answers. Locked identifiers, source fields, and hashes prevent a
+spreadsheet edit from silently changing benchmark provenance. The frozen JSON
+is written only after review is complete.
 
 The preflight discovers the standalone CLI from `PATH` and supported user-local
 locations, checks saved authentication, and checks the target context and Git

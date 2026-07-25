@@ -17,7 +17,8 @@ new_agentic_routing_question(
   artifact_type = NULL,
   source_heading = NULL,
   source_hash = NULL,
-  derivation_template = NULL
+  derivation_template = NULL,
+  review_note = NULL
 )
 }
 \arguments{
@@ -52,6 +53,8 @@ deterministic token-level grounding scores.}
 
 \item{derivation_template}{Optional identifier of the deterministic template
 that generated the question.}
+
+\item{review_note}{Optional human-review rationale or editing note.}
 }
 \value{
 An object of class \code{agentic_routing_question}.
