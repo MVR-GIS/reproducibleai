@@ -1,18 +1,40 @@
-# reproducibleai: Reproducible AI
+# reproducibleai: Reproducible AI-assisted development workflows
 
-An R package of tools to help teams adopt a reproducible workflow for
-AI-assisted projects. This package contains a set of tools to assist
-data science professionals adopt efficient workflows during the early
-stages of AI adoption. We hold the opinionated view that the ethical use
-of AI requires data scientists to make well-informed, conscious
-decisions throughout the analysis process. These tools are a work in
-progress and designed to help our team experiment with developing new
-methodologies for AI-assisted workflows. These tools help to define a
-repeatable framework of chat instructions between sessions and across
-teams. Tools are provided to create a transparent audit trail to
-evaluate the use of AI.
+`{reproducibleai}` provides tools for building reproducible, reviewable
+AI-assisted workflows around durable repository context.
+
+## Details
+
+The agentic-context standard:
+
+- keeps standing rules concise in `AGENTS.md`
+
+- routes durable detail into purpose-specific artifacts under `dev/`
+
+- records the installed standard, profiles, and seed hashes
+
+- separates read-only migration planning from explicitly approved
+  changes
+
+- validates structure without claiming to judge semantic or scientific
+  quality
+
+Legacy instruction copies and session transcripts are removed during
+approved migration only after their replacement structure has been
+created and validated. Git remains the historical record.
+
+## See also
+
+Useful links:
+
+- <https://mvr-gis.github.io/reproducibleai/>
 
 ## Author
 
 **Maintainer**: Michael Dougherty <Michael.P.Dougherty@usace.army.mil>
 ([ORCID](https://orcid.org/0000-0002-1465-5927))
+
+Authors:
+
+- Michael Dougherty <Michael.P.Dougherty@usace.army.mil>
+  ([ORCID](https://orcid.org/0000-0002-1465-5927))

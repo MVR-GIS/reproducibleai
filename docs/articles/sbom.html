@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">reproducibleai</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2026.05.30</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2026.07.24.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,10 +33,7 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/chat-boostrap-governance.html">Starting a new AI chat session with a governed bootstrap prompt</a></li>
-    <li><a class="dropdown-item" href="../articles/chat-session-history.html">Saving Copilot chat session history (audit trail)</a></li>
-    <li><a class="dropdown-item" href="../articles/chat_instructions.html">Reproducible chat instructions</a></li>
-    <li><a class="dropdown-item" href="../articles/governed-r-package-workflow.html">Governed workflow for an R package</a></li>
+<li><a class="dropdown-item" href="../articles/agentic-context.html">Durable agentic context for a repository</a></li>
     <li><a class="dropdown-item" href="../articles/sbom.html">SBOM for R Package Repositories (renv + GitHub Actions)</a></li>
   </ul>
 </li>
@@ -136,7 +133,7 @@ days</strong>, subject to GitHub org/repo policy.</p>
 <p>If your repo does not yet use <code>renv</code>, initialize it from
 the package root:</p>
 <pre><code><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"renv"</span><span class="op">)</span></span>
-<span><span class="fu">renv</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/renv/man/init.html" class="external-link">init</a></span><span class="op">(</span><span class="op">)</span></span></code></pre>
+<span><span class="fu">renv</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/renv/reference/init.html" class="external-link">init</a></span><span class="op">(</span><span class="op">)</span></span></code></pre>
 <p>Commit the resulting files:</p>
 <ul>
 <li><code>renv.lock</code></li>
@@ -155,9 +152,9 @@ the package root:</p>
 </h3>
 <p>Install <code>reproducibleai</code> using your standard method (for
 your environment):</p>
-<pre><code><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/pak/man/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"MVR-GIS/reproducibleai"</span><span class="op">)</span></span></code></pre>
+<pre><code><span><span class="fu">pak</span><span class="fu">::</span><span class="fu">pak</span><span class="op">(</span><span class="st">"MVR-GIS/reproducibleai"</span><span class="op">)</span></span></code></pre>
 <p>then:</p>
-<pre><code><span><span class="fu">renv</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/renv/man/snapshot.html" class="external-link">snapshot</a></span><span class="op">(</span><span class="op">)</span></span></code></pre>
+<pre><code><span><span class="fu">renv</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/renv/reference/snapshot.html" class="external-link">snapshot</a></span><span class="op">(</span><span class="op">)</span></span></code></pre>
 <p>This ensures <code>reproducibleai</code> is recorded in
 <code>renv.lock</code> so CI can restore it.</p>
 </div>
@@ -258,7 +255,7 @@ exact locked dependency specification used by the repository.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

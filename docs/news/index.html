@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">reproducibleai</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2026.05.30</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2026.07.24.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,10 +18,7 @@
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/chat-boostrap-governance.html">Starting a new AI chat session with a governed bootstrap prompt</a></li>
-    <li><a class="dropdown-item" href="../articles/chat-session-history.html">Saving Copilot chat session history (audit trail)</a></li>
-    <li><a class="dropdown-item" href="../articles/chat_instructions.html">Reproducible chat instructions</a></li>
-    <li><a class="dropdown-item" href="../articles/governed-r-package-workflow.html">Governed workflow for an R package</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/agentic-context.html">Durable agentic context for a repository</a></li>
     <li><a class="dropdown-item" href="../articles/sbom.html">SBOM for R Package Repositories (renv + GitHub Actions)</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -39,7 +36,21 @@
 
     </div>
 
-  </main></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="2026.07.24.9000" id="reproducibleai-202607249000">reproducibleai 2026.07.24.9000<a class="anchor" aria-label="anchor" href="#reproducibleai-202607249000"></a></h2>
+<div class="section level4">
+<h4 id="agentic-context-standard-2026-07-24-9000">Agentic-context standard 0.1<a class="anchor" aria-label="anchor" href="#agentic-context-standard-2026-07-24-9000"></a></h4>
+<ul><li>Replaced instruction modules, recipes, <code>CHAT_INSTRUCTIONS.md</code>, and session transcript tooling with a durable <code>AGENTS.md</code>-routed repository standard.</li>
+<li>Added deterministic base and R-package scaffolds with a version manifest and seed hashes.</li>
+<li>Added read-only profile detection and migration planning.</li>
+<li>Added explicitly approved migration application that validates replacements before removing tracked, unchanged legacy files.</li>
+<li>Added structured validation suitable for interactive use, tests, and CI.</li>
+<li>Allowed <code><a href="../reference/use_sbom.html">use_sbom()</a></code> to run non-interactively so its deterministic scaffold can be exercised in tests and automation.</li>
+<li>Removed the superseded <code>use_instructions()</code>, <code>instructions_available()</code>, <code>instructions_recipes()</code>, <code>extract_copilot_chat()</code>, and <code>cleanup_session_backups()</code> interfaces without compatibility wrappers.</li>
+</ul></div>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
@@ -47,7 +58,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

@@ -1,21 +1,20 @@
 #' reproducibleai: Reproducible AI-assisted development workflows
 #'
 #' `{reproducibleai}` provides tools for building reproducible, reviewable
-#' AI-assisted workflows around reusable instruction modules.
+#' AI-assisted workflows around durable repository context.
 #'
-#' The package is instruction-first:
+#' The agentic-context standard:
 #' \itemize{
-#'   \item canonical instruction content is stored as static markdown in `inst/instructions/`
-#'   \item public workflows compose modules by name or via lightweight recipes
-#'   \item `use_instructions()` installs selected modules into `dev/instructions/`
-#'   \item internal handlers support installation and, for selected modules,
-#'         supporting repository scaffolding
+#'   \item keeps standing rules concise in `AGENTS.md`
+#'   \item routes durable detail into purpose-specific artifacts under `dev/`
+#'   \item records the installed standard, profiles, and seed hashes
+#'   \item separates read-only migration planning from explicitly approved changes
+#'   \item validates structure without claiming to judge semantic or scientific quality
 #' }
 #'
-#' This design keeps instruction content easy to review and diff while allowing
-#' selected modules such as `development-governance` to scaffold the repository
-#' structure they depend on.
+#' Legacy instruction copies and session transcripts are removed during approved
+#' migration only after their replacement structure has been created and
+#' validated. Git remains the historical record.
 #'
-#' @docType _PACKAGE
-#' @name reproducibleai
-NULL
+#' @keywords internal
+"_PACKAGE"

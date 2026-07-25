@@ -4,8 +4,7 @@
 #' an SBOM using Anchore's SBOM Action (Syft-based), and writes additional
 #' environment metadata (and a copy of `renv.lock`) into `artifacts/sbom/`.
 #'
-#' This function is intended to be run once during initial repository setup in
-#' an interactive session (similar to the `usethis` pattern).
+#' This function is intended to be run during initial repository setup.
 #'
 #' What this function does:
 #' - Validates that `dest_dir` is an R package root (has `DESCRIPTION`).
@@ -30,11 +29,6 @@
 use_sbom <- function(dest_dir = ".",
                      overwrite = FALSE,
                      quiet = FALSE) {
-  # Interactive-only (usethis pattern) ----
-  if (!interactive()) {
-    stop("`use_sbom()` must be run in an interactive R session.", call. = FALSE)
-  }
-
   # Validate inputs ----
   if (!is.character(dest_dir) || length(dest_dir) != 1 || !nzchar(dest_dir)) {
     stop("`dest_dir` must be a non-empty character scalar.", call. = FALSE)

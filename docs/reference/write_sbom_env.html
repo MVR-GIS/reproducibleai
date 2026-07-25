@@ -9,7 +9,7 @@ into an SBOM artifact bundle directory (default: artifacts/sbom)."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">reproducibleai</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2026.05.30</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2026.07.24.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,10 +20,7 @@ into an SBOM artifact bundle directory (default: artifacts/sbom)."></head><body>
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/chat-boostrap-governance.html">Starting a new AI chat session with a governed bootstrap prompt</a></li>
-    <li><a class="dropdown-item" href="../articles/chat-session-history.html">Saving Copilot chat session history (audit trail)</a></li>
-    <li><a class="dropdown-item" href="../articles/chat_instructions.html">Reproducible chat instructions</a></li>
-    <li><a class="dropdown-item" href="../articles/governed-r-package-workflow.html">Governed workflow for an R package</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/agentic-context.html">Durable agentic context for a repository</a></li>
     <li><a class="dropdown-item" href="../articles/sbom.html">SBOM for R Package Repositories (renv + GitHub Actions)</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -84,7 +81,7 @@ Default <code>file.path("artifacts", "sbom")</code>.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>This function is intended to be called from CI after <code><a href="https://rdrr.io/pkg/renv/man/restore.html" class="external-link">renv::restore()</a></code> and SBOM
+    <p>This function is intended to be called from CI after <code><a href="https://rstudio.github.io/renv/reference/restore.html" class="external-link">renv::restore()</a></code> and SBOM
 generation steps (e.g., Anchore SBOM Action). It does not generate the SBOM
 itself; it creates additional evidence that documents the environment associated
 with the SBOM artifact.</p>
@@ -102,7 +99,7 @@ R version/platform, timestamp, lockfile hash)</p></li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

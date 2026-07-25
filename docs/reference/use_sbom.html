@@ -11,7 +11,7 @@ environment metadata (and a copy of renv.lock) into artifacts/sbom/."></head><bo
 
     <a class="navbar-brand me-2" href="../index.html">reproducibleai</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2026.05.30</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2026.07.24.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -22,10 +22,7 @@ environment metadata (and a copy of renv.lock) into artifacts/sbom/."></head><bo
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/chat-boostrap-governance.html">Starting a new AI chat session with a governed bootstrap prompt</a></li>
-    <li><a class="dropdown-item" href="../articles/chat-session-history.html">Saving Copilot chat session history (audit trail)</a></li>
-    <li><a class="dropdown-item" href="../articles/chat_instructions.html">Reproducible chat instructions</a></li>
-    <li><a class="dropdown-item" href="../articles/governed-r-package-workflow.html">Governed workflow for an R package</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/agentic-context.html">Durable agentic context for a repository</a></li>
     <li><a class="dropdown-item" href="../articles/sbom.html">SBOM for R Package Repositories (renv + GitHub Actions)</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -77,8 +74,7 @@ environment metadata (and a copy of <code>renv.lock</code>) into <code>artifacts
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>This function is intended to be run once during initial repository setup in
-an interactive session (similar to the <code>usethis</code> pattern).</p>
+    <p>This function is intended to be run during initial repository setup.</p>
 <p>What this function does:</p><ul><li><p>Validates that <code>dest_dir</code> is an R package root (has <code>DESCRIPTION</code>).</p></li>
 <li><p>Creates <code>.github/workflows/</code> if missing.</p></li>
 <li><p>Writes <code>.github/workflows/sbom-r.yml</code> (fails if it exists and <code>overwrite = FALSE</code>).</p></li>
@@ -86,7 +82,7 @@ an interactive session (similar to the <code>usethis</code> pattern).</p>
 <li><p>Adds <code>^artifacts$</code> to <code>.Rbuildignore</code></p></li>
 </ul></li>
 </ul><p>Next steps after running:</p><ul><li><p>Ensure <code>reproducibleai</code> is included in the project's <code>renv.lock</code>
-(install it and run <code><a href="https://rdrr.io/pkg/renv/man/snapshot.html" class="external-link">renv::snapshot()</a></code> if needed).</p></li>
+(install it and run <code><a href="https://rstudio.github.io/renv/reference/snapshot.html" class="external-link">renv::snapshot()</a></code> if needed).</p></li>
 <li><p>Commit changes and open a PR to verify the workflow produces an SBOM bundle.</p></li>
 </ul></div>
 
@@ -99,7 +95,7 @@ an interactive session (similar to the <code>usethis</code> pattern).</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

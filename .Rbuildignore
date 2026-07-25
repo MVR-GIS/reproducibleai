@@ -6,3 +6,11 @@
 ^docs$
 ^pkgdown$
 ^artifacts$
+^\.github$
+^\.vscode$
+^\.Rprofile$
+^AGENTS\.md$
+^dev$
+^load\.ps1$
+^reproducibleai\.Rproj$
+^vignettes/\.gitignore$

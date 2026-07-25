@@ -1,0 +1,64 @@
+# Durable agentic context for a repository
+
+## Why durable context?
+
+An AI-assisted development session is most useful when the agent can
+quickly find current goals, architecture, decisions, contracts, and
+workflows. Full transcripts and copied instruction manuals consume
+context while allowing important facts to drift.
+
+The [reproducibleai](https://mvr-gis.github.io/reproducibleai/) standard
+uses:
+
+- a concise root `AGENTS.md` for standing rules and routes,
+- purpose-specific maintained artifacts under `dev/`,
+- checkpoints only for useful resumable state, and
+- Git for superseded history.
+
+## New repositories
+
+``` r
+
+use_agentic_context(
+  path = ".",
+  profiles = c("base", "r-package")
+)
+```
+
+The function preflights every target. It creates missing files, skips
+identical files, and refuses to overwrite differing repository-owned
+content.
+
+## Existing repositories
+
+Migration is intentionally two-phase:
+
+``` r
+
+plan <- plan_agentic_context_migration(".")
+plan$operations
+
+result <- apply_agentic_context_migration(plan, approved = TRUE)
+```
+
+The plan is a durable, inspectable crosswalk. Application is blocked by
+any manual-review operation. When approved, it creates replacements,
+copies mapped legacy artifacts into their new routes, validates the
+structure, and removes superseded tracked sources last.
+
+## Validation
+
+``` r
+
+report <- validate_agentic_context(".")
+report$valid
+report$findings
+
+# Suitable for CI:
+validate_agentic_context(".", strict = TRUE)
+```
+
+Validation checks structure, required routes, the installed standard
+version, and changes relative to seeded file hashes. Local edits are
+warnings rather than errors because scaffolded files become
+repository-owned after creation.
