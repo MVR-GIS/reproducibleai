@@ -11,8 +11,8 @@
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Reproducible AI">
-<meta name="description" content="Tools for creating, migrating, and validating durable repository context for reproducible AI-assisted development. A versioned scaffold routes standing agent instructions through AGENTS.md into maintained goals, architecture, decisions, governance, workflows, schemas, features, and concise checkpoints. Structured migration plans preserve legacy content until an explicitly approved application has created and validated its replacement.">
-<meta property="og:description" content="Tools for creating, migrating, and validating durable repository context for reproducible AI-assisted development. A versioned scaffold routes standing agent instructions through AGENTS.md into maintained goals, architecture, decisions, governance, workflows, schemas, features, and concise checkpoints. Structured migration plans preserve legacy content until an explicitly approved application has created and validated its replacement.">
+<meta name="description" content="Tools for creating, migrating, and validating durable repository context for reproducible AI-assisted development. A versioned scaffold routes standing agent instructions through AGENTS.md into maintained goals, architecture, decisions, governance, workflows, schemas, features, and concise checkpoints. Structured migration plans preserve legacy content until an explicitly approved application has created and validated its replacement. Competency-question evaluations measure routing effectiveness across repeated non-interactive Codex runs and produce durable aggregate health reports.">
+<meta property="og:description" content="Tools for creating, migrating, and validating durable repository context for reproducible AI-assisted development. A versioned scaffold routes standing agent instructions through AGENTS.md into maintained goals, architecture, decisions, governance, workflows, schemas, features, and concise checkpoints. Structured migration plans preserve legacy content until an explicitly approved application has created and validated its replacement. Competency-question evaluations measure routing effectiveness across repeated non-interactive Codex runs and produce durable aggregate health reports.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">reproducibleai</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2026.07.24.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2026.07.25.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="articles/agentic-context.html">Durable agentic context for a repository</a></li>
+    <li><a class="dropdown-item" href="articles/agentic-routing-evaluation.html">Evaluate agentic routing</a></li>
     <li><a class="dropdown-item" href="articles/sbom.html">SBOM for R Package Repositories (renv + GitHub Actions)</a></li>
   </ul>
 </li>
@@ -58,13 +59,13 @@
 <!-- badges: start -->
 
 <p><a href="https://mvr-gis.github.io/reproducibleai/">reproducibleai</a> creates, migrates, and validates durable repository context for reproducible AI-assisted development. Instead of copying chat instructions and preserving transcripts as working context, it creates a concise root <code>AGENTS.md</code> that routes work into maintained artifacts under <code>dev/</code>.</p>
-<p>The standard separates standing instructions from goals, architecture, decisions, governance, workflows, schemas, feature specifications, and concise checkpoints. Git preserves superseded history.</p>
+<p>The standard separates standing instructions from goals, architecture, decisions, governance, workflows, schemas, feature specifications, and concise checkpoints. Git preserves superseded history. The package can also measure how effectively Codex follows those routes across repeated isolated runs.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
-<span><span class="fu">pak</span><span class="fu">::</span><span class="fu">pak</span><span class="op">(</span><span class="st">"MVR-GIS/reproducibleai"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"MVR-GIS/reproducibleai"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="scaffold-a-new-r-package">Scaffold a new R package<a class="anchor" aria-label="anchor" href="#scaffold-a-new-r-package"></a>
@@ -110,7 +111,29 @@
 <div class="section level2">
 <h2 id="scope">Scope<a class="anchor" aria-label="anchor" href="#scope"></a>
 </h2>
-<p>This release establishes deterministic context scaffolding and migration. Model execution, competency-question scoring, routing sensitivity analysis, health reports, and prompt tuning are intentionally reserved for a later evaluation feature.</p>
+<p>The agentic-routing evaluation API defines private competency questions, runs fresh read-only <code>codex exec</code> sessions, scores evidence routing and expected answer content, and writes aggregate health reports.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">question</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/new_agentic_routing_question.html">new_agentic_routing_question</a></span><span class="op">(</span></span>
+<span>  id <span class="op">=</span> <span class="st">"current-priority"</span>,</span>
+<span>  prompt <span class="op">=</span> <span class="st">"What is the current development priority?"</span>,</span>
+<span>  required_paths <span class="op">=</span> <span class="st">"dev/goals/project-plan.md"</span>,</span>
+<span>  allowed_paths <span class="op">=</span> <span class="st">"AGENTS.md"</span>,</span>
+<span>  expected_terms <span class="op">=</span> <span class="st">"current objective"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">evaluation</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/run_agentic_routing_evaluation.html">run_agentic_routing_evaluation</a></span><span class="op">(</span></span>
+<span>  path <span class="op">=</span> <span class="st">"."</span>,</span>
+<span>  questions <span class="op">=</span> <span class="va">question</span>,</span>
+<span>  repetitions <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  approved <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">health</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/summarize_agentic_routing.html">summarize_agentic_routing</a></span><span class="op">(</span><span class="va">evaluation</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/write_agentic_routing_report.html">write_agentic_routing_report</a></span><span class="op">(</span></span>
+<span>  <span class="va">health</span>,</span>
+<span>  <span class="st">"dev/governance/agentic-routing-health.md"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Keep private fixtures and raw runs outside the evaluated repository. Model responses remain stochastic; health reports summarize repeated observations rather than claiming deterministic model behavior.</p>
 </div>
 <div class="section level2">
 <h2 id="bug-reports">Bug reports<a class="anchor" aria-label="anchor" href="#bug-reports"></a>

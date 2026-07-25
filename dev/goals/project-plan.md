@@ -3,61 +3,73 @@
 ## Purpose
 
 Develop `{reproducibleai}` as the reusable implementation of durable agentic
-context for repositories, then build quantitative routing evaluation only after
-target repositories adopt that standard.
+context and quantitative evaluation of how effectively agents use that context.
 
 ## Current objective
 
-Complete agentic-context standard 0.1:
+Implement the first usable agentic-routing evaluation slice:
 
-- deterministic scaffolding for new repositories;
-- advisory profile detection;
-- read-only migration planning;
-- explicitly approved create–validate–remove migration;
-- structured validation for interactive use and CI;
-- clean removal of instruction modules and transcript tooling; and
-- self-adoption by `{reproducibleai}`.
+- versioned competency-question fixtures;
+- isolated repeated Codex execution;
+- structured event and response capture;
+- transparent deterministic scoring;
+- quantitative health summaries and durable reports; and
+- tests that do not require credentials or live model calls.
 
-Status: implemented on `feat/agentic-context-standard-v0.1`.
-
-## Acceptance criteria
-
-- `base` and `r-package` profiles produce deterministic, idempotent output.
-- Existing differing files are never overwritten.
-- Migration planning writes nothing.
-- Untracked, modified, or unresolved legacy sources block removal.
-- Migration copies mapped content, validates replacements, and removes sources last.
-- Every removal is recorded in a durable migration report.
-- Structural validation distinguishes errors from repository-owned drift warnings.
-- Public documentation and tests describe only the new model.
-- R package checks pass in a compatible restored environment.
+Status: implemented on `feat/agentic-routing-evaluation`; awaiting review.
 
 ## Verification record
 
-- 60 `testthat` expectations passed with no failures, warnings, or skips.
-- A source tarball was built with both vignettes.
-- `R CMD check --no-manual` on the source tarball completed with `Status: OK`.
-- The pkgdown site rebuilt with the new API and agentic-context article.
-- Installed-package self-adoption is idempotent and validation reports zero findings.
+- 96 package tests pass with no failures, warnings, or skips.
+- A clean source package build includes all three vignettes.
+- `R CMD check --no-manual --no-build-vignettes` completes with status OK.
+- The pkgdown site builds with the new article and API reference pages.
+- No authenticated model calls or paid usage occurred during implementation.
+- A live pilot remains the next step because the locally packaged Codex
+  executable was not accessible as a standalone CLI from this environment.
 
-## Rollout after this branch
+## Acceptance criteria
 
-1. Review the generic output against `FG-architecture` without copying its
-   organization-specific content into the package.
-2. Plan and apply migrations for `fluvgeo` and `ohwm2`, which contain known
-   calls to the removed instruction API.
-3. Inventory the remaining FluvialGeomorph repositories and add only profiles
-   justified by observed repository types.
-4. Establish comparable routing fixtures across adopted repositories.
-5. Begin a separate routing-evaluation feature branch.
+- Gold fixtures and raw runs remain outside the evaluated repository.
+- Every repetition starts a fresh ephemeral read-only Codex session.
+- Repeated model execution requires explicit approval.
+- Final responses conform to a versioned JSON Schema.
+- Routing and answer scoring is literal, transparent, and independently
+  testable.
+- JSONL usage and tool metrics are retained when Codex emits them.
+- Failed runs remain observable and receive a zero combined score.
+- Health reports summarize repeated runs and omit private or sensitive detail.
+- Tests exercise the execution boundary through an injected fake runner.
+- Public documentation distinguishes deterministic harness behavior from
+  stochastic model behavior.
+
+## Standard 0.1 rollout status
+
+- `{reproducibleai}` self-adoption: complete.
+- `{ohwm2}` migration: complete and merged.
+- `{fluvgeo}` migration: complete and merged.
+- `FG-architecture`: available as the design reference.
+
+These repositories form the initial evaluation cohort. Remaining repositories
+are a later adoption and external-validation cohort.
+
+## Next evaluation phases
+
+1. Establish baseline competency questions for the initial cohort.
+2. Run a small authenticated pilot and inspect raw scoring evidence.
+3. Refine rubrics before increasing repetitions.
+4. Compare one routing-specification factor at a time in fixed worktrees.
+5. Validate recommendations on held-out questions or repositories.
 
 ## Deferred work
 
-- Codex CLI or SDK execution
-- repeated-run competency questions
-- routing sensitivity analysis
-- quantitative health reports
+- comparative experiment orchestration across worktrees
+- automated sensitivity grids
 - prompt or specification tuning
+- semantic or model-judge scoring
+- multi-turn SDK execution
+- monetary cost estimation
+- automatic application of recommendations
 - automatic semantic migration
 - nested `AGENTS.md` generation
 - automatic three-way standard upgrades

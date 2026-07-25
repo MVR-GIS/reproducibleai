@@ -1,5 +1,20 @@
 # Changelog
 
+## reproducibleai 2026.07.25.9000
+
+#### Agentic-routing evaluation
+
+- Added versioned competency-question fixtures with private routing and
+  answer rubrics.
+- Added explicitly approved, repeated, ephemeral, read-only `codex exec`
+  evaluation with JSONL event capture and schema-constrained responses.
+- Added transparent routing, answer, completion, usage, and variability
+  metrics.
+- Added aggregate Markdown health reports that omit raw prompts,
+  rubrics, and traces from the evaluated repository.
+- Added contamination controls that keep gold fixtures and raw runs
+  outside the repository under evaluation.
+
 ## reproducibleai 2026.07.24.9000
 
 #### Agentic-context standard 0.1

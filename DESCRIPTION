@@ -1,6 +1,6 @@
 Package: reproducibleai
 Title: Reproducible AI
-Version: 2026.07.24.9000
+Version: 2026.07.25.9000
 Authors@R: c(
     person("Michael", "Dougherty", , 
            "Michael.P.Dougherty@usace.army.mil", role = c("aut", "cre"),
@@ -14,10 +14,15 @@ Description: Tools for creating, migrating, and validating durable repository
   architecture, decisions, governance, workflows, schemas, features, and concise
   checkpoints. Structured migration plans preserve legacy content until an
   explicitly approved application has created and validated its replacement.
+  Competency-question evaluations measure routing effectiveness across repeated
+  non-interactive Codex runs and produce durable aggregate health reports.
 License: CC0
 Encoding: UTF-8
 URL: https://mvr-gis.github.io/reproducibleai/
 Roxygen: list(markdown = TRUE)
+Imports:
+    jsonlite,
+    processx
 Suggests: 
     knitr,
     openssl,

@@ -1,0 +1,200 @@
+#' Summarize an agentic-routing evaluation
+#'
+#' @param evaluation Result from `run_agentic_routing_evaluation()`.
+#'
+#' @return An object of class `agentic_routing_health`.
+#' @export
+summarize_agentic_routing <- function(evaluation) {
+  if (!inherits(evaluation, "agentic_routing_evaluation")) {
+    stop(
+      "`evaluation` must come from `run_agentic_routing_evaluation()`.",
+      call. = FALSE
+    )
+  }
+  runs <- evaluation$runs
+  ids <- unique(runs$question_id)
+  rows <- lapply(ids, function(id) {
+    x <- runs[runs$question_id == id, , drop = FALSE]
+    data.frame(
+      question_id = id,
+      runs = nrow(x),
+      completion_rate = mean(x$completed),
+      mean_score = mean(x$score),
+      score_sd = if (nrow(x) > 1L) stats::sd(x$score) else NA_real_,
+      minimum_score = min(x$score),
+      route_recall = mean(x$route_recall),
+      route_precision = mean(x$route_precision),
+      term_recall = mean(x$term_recall),
+      forbidden_rate = mean(x$forbidden_rate),
+      mean_input_tokens = routing_mean_na(x$input_tokens),
+      mean_cached_input_tokens = routing_mean_na(x$cached_input_tokens),
+      mean_output_tokens = routing_mean_na(x$output_tokens),
+      mean_elapsed_seconds = routing_mean_na(x$elapsed_seconds),
+      stringsAsFactors = FALSE
+    )
+  })
+  by_question <- do.call(rbind, rows)
+  rownames(by_question) <- NULL
+  weighted_score <- stats::weighted.mean(runs$score, runs$weight)
+  recommendations <- routing_recommendations(by_question)
+
+  structure(
+    list(
+      schema_version = 1L,
+      repository = evaluation$path,
+      git_sha = evaluation$git_sha,
+      model = evaluation$model,
+      codex_version = evaluation$codex_version,
+      created_at = evaluation$created_at,
+      health_score = 100 * weighted_score,
+      runs = nrow(runs),
+      questions = nrow(by_question),
+      completion_rate = mean(runs$completed),
+      by_question = by_question,
+      recommendations = recommendations
+    ),
+    class = "agentic_routing_health"
+  )
+}
+
+#' Write an agentic-routing health report
+#'
+#' Writes an aggregate Markdown report suitable for a durable `dev/` artifact.
+#' Raw prompts, private rubrics, answers, and event traces are intentionally
+#' omitted.
+#'
+#' @param health Result from `summarize_agentic_routing()`.
+#' @param path Destination Markdown path.
+#' @param overwrite Replace an existing report.
+#'
+#' @return The normalized report path, invisibly.
+#' @export
+write_agentic_routing_report <- function(health, path, overwrite = FALSE) {
+  if (!inherits(health, "agentic_routing_health")) {
+    stop("`health` must come from `summarize_agentic_routing()`.", call. = FALSE)
+  }
+  path <- routing_scalar_character(path, "path")
+  overwrite <- validate_flag(overwrite, "overwrite")
+  if (file.exists(path) && !overwrite) {
+    stop("Routing report already exists: ", path, call. = FALSE)
+  }
+  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+  writeLines(routing_report_text(health), path, useBytes = TRUE)
+  invisible(normalizePath(path, winslash = "/", mustWork = TRUE))
+}
+
+routing_report_text <- function(health) {
+  git_sha <- if (
+    is.null(health$git_sha) || !length(health$git_sha) ||
+      is.na(health$git_sha) || !nzchar(health$git_sha)
+  ) {
+    "unknown"
+  } else {
+    health$git_sha
+  }
+  table_lines <- c(
+    "| Question | Runs | Complete | Score | SD | Recall | Precision | Terms | Forbidden | Input tokens | Seconds |",
+    "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"
+  )
+  for (i in seq_len(nrow(health$by_question))) {
+    x <- health$by_question[i, ]
+    table_lines <- c(table_lines, paste0(
+      "| `", x$question_id, "` | ",
+      x$runs, " | ",
+      routing_percent(x$completion_rate), " | ",
+      routing_percent(x$mean_score), " | ",
+      routing_decimal(x$score_sd), " | ",
+      routing_percent(x$route_recall), " | ",
+      routing_percent(x$route_precision), " | ",
+      routing_percent(x$term_recall), " | ",
+      routing_percent(x$forbidden_rate), " | ",
+      routing_decimal(x$mean_input_tokens, digits = 0), " | ",
+      routing_decimal(x$mean_elapsed_seconds), " |"
+    ))
+  }
+  recommendations <- if (length(health$recommendations)) {
+    paste0("- ", health$recommendations)
+  } else {
+    "- No threshold-based routing recommendations were generated."
+  }
+  c(
+    "# Agentic routing health",
+    "",
+    paste0("- Repository: `", basename(health$repository), "`"),
+    paste0("- Git SHA: `", git_sha, "`"),
+    paste0("- Model: `", health$model, "`"),
+    paste0("- Codex CLI: `", health$codex_version, "`"),
+    paste0("- Evaluated: ", health$created_at),
+    paste0("- Questions: ", health$questions),
+    paste0("- Runs: ", health$runs),
+    paste0("- Completion rate: ", routing_percent(health$completion_rate)),
+    paste0("- Weighted health score: ", sprintf("%.1f/100", health$health_score)),
+    "",
+    "The score summarizes repeated stochastic runs; it is not a deterministic proof of correctness.",
+    "Private rubrics and raw traces are intentionally stored outside the evaluated repository.",
+    "",
+    "## Question results",
+    "",
+    table_lines,
+    "",
+    "## Recommendations",
+    "",
+    recommendations,
+    "",
+    "## Scoring contract",
+    "",
+    "- 40% required evidence recall",
+    "- 20% relevant evidence precision",
+    "- 30% expected answer-term recall",
+    "- 10% successful execution and structured response",
+    "- The combined score is multiplied by one minus the forbidden-term rate.",
+    "",
+    "Review recommendations against the underlying runs before changing repository instructions."
+  )
+}
+
+routing_recommendations <- function(by_question) {
+  out <- character()
+  for (i in seq_len(nrow(by_question))) {
+    x <- by_question[i, ]
+    prefix <- paste0("`", x$question_id, "`: ")
+    if (x$completion_rate < 1) {
+      out <- c(out, paste0(
+        prefix, "investigate execution or structured-response failures before interpreting routing."
+      ))
+    }
+    if (x$route_recall < 0.8) {
+      out <- c(out, paste0(
+        prefix, "clarify the AGENTS.md route or make required evidence more discoverable."
+      ))
+    }
+    if (x$route_precision < 0.8) {
+      out <- c(out, paste0(
+        prefix, "narrow the route or remove distracting context."
+      ))
+    }
+    if (x$term_recall < 0.8) {
+      out <- c(out, paste0(
+        prefix, "review whether durable evidence states the required capability clearly."
+      ))
+    }
+    if (!is.na(x$score_sd) && x$score_sd > 0.10) {
+      out <- c(out, paste0(
+        prefix, "run additional repetitions and inspect formulation sensitivity."
+      ))
+    }
+  }
+  unique(out)
+}
+
+routing_mean_na <- function(x) {
+  if (all(is.na(x))) NA_real_ else mean(x, na.rm = TRUE)
+}
+
+routing_percent <- function(x) {
+  if (is.na(x)) "NA" else sprintf("%.1f%%", 100 * x)
+}
+
+routing_decimal <- function(x, digits = 2) {
+  if (is.na(x)) "NA" else format(round(x, digits), nsmall = digits, trim = TRUE)
+}

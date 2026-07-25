@@ -83,6 +83,29 @@ remaining legacy context.
 
 Validation evaluates structure, not scientific correctness or semantic quality.
 
+## Routing-evaluation layer
+
+Routing evaluation is a separate layer built on top of standard 0.1. It treats
+an adopted repository as the system under evaluation and uses private
+competency-question fixtures plus repeated non-interactive Codex runs.
+
+```text
+private question + rubric
+  -> fresh read-only Codex run at a fixed repository commit
+  -> structured answer + claimed evidence paths + JSONL events
+  -> literal transparent scoring
+  -> repeated-run summary
+  -> aggregate durable health report
+```
+
+Private fixtures and raw runs remain outside the evaluated repository to prevent
+context contamination. The target repository receives only an aggregate report
+after execution. Execution uses an injectable runner so package tests never
+depend on credentials or live model access.
+
+This layer measures observable rubric satisfaction and efficiency. It does not
+change the structural validation semantics of agentic-context standard 0.1.
+
 ## Public API
 
 - `use_agentic_context()`
@@ -90,5 +113,15 @@ Validation evaluates structure, not scientific correctness or semantic quality.
 - `plan_agentic_context_migration()`
 - `apply_agentic_context_migration()`
 - `validate_agentic_context()`
+
+Routing-evaluation API:
+
+- `new_agentic_routing_question()`
+- `write_agentic_routing_questions()`
+- `read_agentic_routing_questions()`
+- `run_agentic_routing_evaluation()`
+- `score_agentic_routing_run()`
+- `summarize_agentic_routing()`
+- `write_agentic_routing_report()`
 
 SBOM functions remain separate package capabilities.

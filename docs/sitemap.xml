@@ -2,6 +2,7 @@
 <url><loc>https://mvr-gis.github.io/reproducibleai/404.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/AGENTS.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/articles/agentic-context.html</loc></url>
+<url><loc>https://mvr-gis.github.io/reproducibleai/articles/agentic-routing-evaluation.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/articles/index.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/articles/sbom.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/authors.html</loc></url>
@@ -13,14 +14,21 @@
 <url><loc>https://mvr-gis.github.io/reproducibleai/reference/ensure_ignore_line.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/reference/index.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/reference/lockfile_sha256.html</loc></url>
+<url><loc>https://mvr-gis.github.io/reproducibleai/reference/new_agentic_routing_question.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/reference/plan_agentic_context_migration.html</loc></url>
+<url><loc>https://mvr-gis.github.io/reproducibleai/reference/read_agentic_routing_questions.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/reference/read_dcf_field.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/reference/reproducibleai-package.html</loc></url>
+<url><loc>https://mvr-gis.github.io/reproducibleai/reference/run_agentic_routing_evaluation.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/reference/sbom_workflow_template_r.html</loc></url>
+<url><loc>https://mvr-gis.github.io/reproducibleai/reference/score_agentic_routing_run.html</loc></url>
+<url><loc>https://mvr-gis.github.io/reproducibleai/reference/summarize_agentic_routing.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/reference/try_git_sha.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/reference/use_agentic_context.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/reference/use_sbom.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/reference/validate_agentic_context.html</loc></url>
+<url><loc>https://mvr-gis.github.io/reproducibleai/reference/write_agentic_routing_questions.html</loc></url>
+<url><loc>https://mvr-gis.github.io/reproducibleai/reference/write_agentic_routing_report.html</loc></url>
 <url><loc>https://mvr-gis.github.io/reproducibleai/reference/write_sbom_env.html</loc></url>
 </urlset>
 

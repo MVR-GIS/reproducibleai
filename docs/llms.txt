@@ -8,7 +8,9 @@ preserving transcripts as working context, it creates a concise root
 
 The standard separates standing instructions from goals, architecture,
 decisions, governance, workflows, schemas, feature specifications, and
-concise checkpoints. Git preserves superseded history.
+concise checkpoints. Git preserves superseded history. The package can
+also measure how effectively Codex follows those routes across repeated
+isolated runs.
 
 ## Installation
 
@@ -69,10 +71,37 @@ apply them.
 
 ## Scope
 
-This release establishes deterministic context scaffolding and
-migration. Model execution, competency-question scoring, routing
-sensitivity analysis, health reports, and prompt tuning are
-intentionally reserved for a later evaluation feature.
+The agentic-routing evaluation API defines private competency questions,
+runs fresh read-only `codex exec` sessions, scores evidence routing and
+expected answer content, and writes aggregate health reports.
+
+``` r
+
+question <- new_agentic_routing_question(
+  id = "current-priority",
+  prompt = "What is the current development priority?",
+  required_paths = "dev/goals/project-plan.md",
+  allowed_paths = "AGENTS.md",
+  expected_terms = "current objective"
+)
+
+evaluation <- run_agentic_routing_evaluation(
+  path = ".",
+  questions = question,
+  repetitions = 5,
+  approved = TRUE
+)
+
+health <- summarize_agentic_routing(evaluation)
+write_agentic_routing_report(
+  health,
+  "dev/governance/agentic-routing-health.md"
+)
+```
+
+Keep private fixtures and raw runs outside the evaluated repository.
+Model responses remain stochastic; health reports summarize repeated
+observations rather than claiming deterministic model behavior.
 
 ## Bug reports
 
@@ -87,14 +116,28 @@ Please open an issue at
   : Apply an approved agentic-context migration
 - [`detect_agentic_context_profiles()`](https://mvr-gis.github.io/reproducibleai/reference/detect_agentic_context_profiles.md)
   : Detect applicable agentic-context profiles
+- [`new_agentic_routing_question()`](https://mvr-gis.github.io/reproducibleai/reference/new_agentic_routing_question.md)
+  : Define an agentic-routing competency question
 - [`plan_agentic_context_migration()`](https://mvr-gis.github.io/reproducibleai/reference/plan_agentic_context_migration.md)
   : Plan migration to durable agentic context
+- [`read_agentic_routing_questions()`](https://mvr-gis.github.io/reproducibleai/reference/read_agentic_routing_questions.md)
+  : Read agentic-routing competency questions
+- [`run_agentic_routing_evaluation()`](https://mvr-gis.github.io/reproducibleai/reference/run_agentic_routing_evaluation.md)
+  : Run repeated agentic-routing evaluations
+- [`score_agentic_routing_run()`](https://mvr-gis.github.io/reproducibleai/reference/score_agentic_routing_run.md)
+  : Score one agentic-routing response
+- [`summarize_agentic_routing()`](https://mvr-gis.github.io/reproducibleai/reference/summarize_agentic_routing.md)
+  : Summarize an agentic-routing evaluation
 - [`use_agentic_context()`](https://mvr-gis.github.io/reproducibleai/reference/use_agentic_context.md)
   : Scaffold durable agentic context
 - [`use_sbom()`](https://mvr-gis.github.io/reproducibleai/reference/use_sbom.md)
   : Configure an R package repository to generate SBOM artifacts in CI
 - [`validate_agentic_context()`](https://mvr-gis.github.io/reproducibleai/reference/validate_agentic_context.md)
   : Validate durable agentic context
+- [`write_agentic_routing_questions()`](https://mvr-gis.github.io/reproducibleai/reference/write_agentic_routing_questions.md)
+  : Write agentic-routing competency questions
+- [`write_agentic_routing_report()`](https://mvr-gis.github.io/reproducibleai/reference/write_agentic_routing_report.md)
+  : Write an agentic-routing health report
 - [`write_sbom_env()`](https://mvr-gis.github.io/reproducibleai/reference/write_sbom_env.md)
   : Write SBOM environment bundle metadata for an R package repo
 
@@ -104,5 +147,7 @@ Please open an issue at
 
 - [Durable agentic context for a
   repository](https://mvr-gis.github.io/reproducibleai/articles/agentic-context.md):
+- [Evaluate agentic
+  routing](https://mvr-gis.github.io/reproducibleai/articles/agentic-routing-evaluation.md):
 - [SBOM for R Package Repositories (renv + GitHub
   Actions)](https://mvr-gis.github.io/reproducibleai/articles/sbom.md):

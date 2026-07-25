@@ -23,7 +23,8 @@ and preserving transcripts as working context, it creates a concise root
 
 The standard separates standing instructions from goals, architecture,
 decisions, governance, workflows, schemas, feature specifications, and concise
-checkpoints. Git preserves superseded history.
+checkpoints. Git preserves superseded history. The package can also measure how
+effectively Codex follows those routes across repeated isolated runs.
 
 ## Installation
 
@@ -79,10 +80,36 @@ does not silently select or apply them.
 
 ## Scope
 
-This release establishes deterministic context scaffolding and migration. Model
-execution, competency-question scoring, routing sensitivity analysis, health
-reports, and prompt tuning are intentionally reserved for a later evaluation
-feature.
+The agentic-routing evaluation API defines private competency questions, runs
+fresh read-only `codex exec` sessions, scores evidence routing and expected
+answer content, and writes aggregate health reports.
+
+```{r eval=FALSE}
+question <- new_agentic_routing_question(
+  id = "current-priority",
+  prompt = "What is the current development priority?",
+  required_paths = "dev/goals/project-plan.md",
+  allowed_paths = "AGENTS.md",
+  expected_terms = "current objective"
+)
+
+evaluation <- run_agentic_routing_evaluation(
+  path = ".",
+  questions = question,
+  repetitions = 5,
+  approved = TRUE
+)
+
+health <- summarize_agentic_routing(evaluation)
+write_agentic_routing_report(
+  health,
+  "dev/governance/agentic-routing-health.md"
+)
+```
+
+Keep private fixtures and raw runs outside the evaluated repository. Model
+responses remain stochastic; health reports summarize repeated observations
+rather than claiming deterministic model behavior.
 
 ## Bug reports
 
