@@ -74,9 +74,42 @@ produce the expected answer efficiently?</p>
 Interpret results as repeated-run distributions rather than
 byte-identical tests.</p>
 <div class="section level2">
+<h2 id="capability-and-environment-preflight">Capability and environment preflight<a class="anchor" aria-label="anchor" href="#capability-and-environment-preflight"></a>
+</h2>
+<p>Most <a href="https://mvr-gis.github.io/reproducibleai/">reproducibleai</a> functionality is available without
+Codex, a cloud account, or administrator rights. Live routing evaluation
+is different: it starts authenticated model runs and therefore requires
+a separately installed Codex CLI, connectivity, account entitlement, and
+organizational permission.</p>
+<p>On Windows, the standalone installer uses a user-local installation
+and does not require npm:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>powershell <span class="op">-</span>ExecutionPolicy ByPass <span class="op">-</span>c <span class="st">"irm https://chatgpt.com/codex/install.ps1 | iex"</span></span></code></pre></div>
+<p>Restart the R IDE after installing. Then perform a no-usage
+preflight:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mvr-gis.github.io/reproducibleai/">reproducibleai</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/check_agentic_routing_prerequisites.html">check_agentic_routing_prerequisites</a></span><span class="op">(</span></span>
+<span>  path <span class="op">=</span> <span class="st">"C:/workspace/FluvialGeomorph/fluvgeo"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Automatic discovery checks <code>PATH</code> and the standard
+user-local Windows installation. Supply
+<code>codex = "C:/path/to/codex.exe"</code> only for a nonstandard
+installation. The diagnostic checks the executable, saved
+authentication, agentic context, and Git state without contacting a
+model. Network and enterprise execution policy remain untested until a
+live run begins.</p>
+<p>On managed government-furnished, disconnected, or no-admin equipment,
+package installation and offline capabilities remain useful even if
+application allow-listing, identity policy, or network controls prohibit
+live Codex evaluation. Do not bypass those controls. Prepare or inspect
+fixtures and reports offline, and perform live evaluation only in an
+approved environment.</p>
+</div>
+<div class="section level2">
 <h2 id="define-private-competency-questions">Define private competency questions<a class="anchor" aria-label="anchor" href="#define-private-competency-questions"></a>
 </h2>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mvr-gis.github.io/reproducibleai/">reproducibleai</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">questions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
@@ -109,7 +142,7 @@ Codex can inspect the private rubric.</p>
 <div class="section level2">
 <h2 id="run-repeated-isolated-sessions">Run repeated isolated sessions<a class="anchor" aria-label="anchor" href="#run-repeated-isolated-sessions"></a>
 </h2>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">evaluation</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_agentic_routing_evaluation.html">run_agentic_routing_evaluation</a></span><span class="op">(</span></span>
 <span>  path <span class="op">=</span> <span class="st">"C:/workspace/FluvialGeomorph/fluvgeo"</span>,</span>
 <span>  questions <span class="op">=</span> <span class="va">questions</span>,</span>
@@ -145,7 +178,7 @@ reference</a>.</p>
 <div class="section level2">
 <h2 id="summarize-and-report">Summarize and report<a class="anchor" aria-label="anchor" href="#summarize-and-report"></a>
 </h2>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">health</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/summarize_agentic_routing.html">summarize_agentic_routing</a></span><span class="op">(</span><span class="va">evaluation</span><span class="op">)</span></span>
 <span><span class="va">health</span><span class="op">$</span><span class="va">health_score</span></span>
 <span><span class="va">health</span><span class="op">$</span><span class="va">by_question</span></span>
@@ -163,6 +196,10 @@ reference</a>.</p>
 recommendations. Inspect external raw runs before changing instructions,
 and validate proposed improvements on held-out questions or
 repositories.</p>
+<p>Run this workflow deliberately during local development when agentic
+context changes. Do not place live evaluation in package builds or CI.
+Commit the aggregate report as a transparent quality and troubleshooting
+artifact; never commit the private fixtures or raw traces.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

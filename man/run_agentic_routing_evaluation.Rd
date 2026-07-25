@@ -10,7 +10,7 @@ run_agentic_routing_evaluation(
   repetitions = 3L,
   approved = FALSE,
   output_dir = NULL,
-  codex = "codex",
+  codex = NULL,
   model = NULL,
   timeout = 900,
   runner = NULL,
@@ -31,7 +31,10 @@ usage and is never started implicitly.}
 \item{output_dir}{Directory for raw event and response files. It must be
 outside \code{path}.}
 
-\item{codex}{Codex CLI executable or absolute executable path.}
+\item{codex}{\code{NULL} to discover a standalone Codex CLI automatically, or a
+CLI command or absolute executable path. Live evaluation requires this
+optional external program and existing CLI authentication. Use
+\code{check_agentic_routing_prerequisites()} before the first run.}
 
 \item{model}{Optional model override. \code{NULL} uses the configured default.}
 

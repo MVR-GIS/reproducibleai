@@ -17,7 +17,10 @@
 #'   usage and is never started implicitly.
 #' @param output_dir Directory for raw event and response files. It must be
 #'   outside `path`.
-#' @param codex Codex CLI executable or absolute executable path.
+#' @param codex `NULL` to discover a standalone Codex CLI automatically, or a
+#'   CLI command or absolute executable path. Live evaluation requires this
+#'   optional external program and existing CLI authentication. Use
+#'   `check_agentic_routing_prerequisites()` before the first run.
 #' @param model Optional model override. `NULL` uses the configured default.
 #' @param timeout Maximum seconds for each run.
 #' @param runner Optional process runner for testing or custom execution. It
@@ -32,7 +35,7 @@ run_agentic_routing_evaluation <- function(
     repetitions = 3L,
     approved = FALSE,
     output_dir = NULL,
-    codex = "codex",
+    codex = NULL,
     model = NULL,
     timeout = 900,
     runner = NULL,
@@ -48,7 +51,7 @@ run_agentic_routing_evaluation <- function(
       call. = FALSE
     )
   }
-  codex <- routing_scalar_character(codex, "codex")
+  if (!is.null(codex)) codex <- routing_scalar_character(codex, "codex")
   if (!is.null(model)) model <- routing_scalar_character(model, "model")
   if (!is.numeric(timeout) || length(timeout) != 1L || is.na(timeout) ||
       !is.finite(timeout) || timeout <= 0) {
@@ -59,8 +62,23 @@ run_agentic_routing_evaluation <- function(
     stop("`runner` must be NULL or a function.", call. = FALSE)
   }
   default_runner <- is.null(runner)
-  if (default_runner) runner <- routing_process_runner
-  codex_version <- if (default_runner) routing_codex_version(codex) else "injected-runner"
+  if (default_runner) {
+    runner <- routing_process_runner
+    cli <- routing_resolve_codex(codex)
+    codex <- cli$path
+    codex_version <- cli$version
+    authentication <- routing_codex_authentication(codex)
+    if (!authentication$authenticated) {
+      stop(
+        "The standalone Codex CLI is not authenticated.",
+        "\nRun `codex login` where local policy permits, then retry.",
+        call. = FALSE
+      )
+    }
+  } else {
+    if (is.null(codex)) codex <- "codex"
+    codex_version <- "injected-runner"
+  }
   git_sha <- routing_git_sha(root)
   if (default_runner && is.na(git_sha)) {
     stop(
@@ -236,45 +254,16 @@ run_agentic_routing_once <- function(root, question, repetition, output_dir,
 }
 
 routing_process_runner <- function(command, args, wd, stdout, stderr, timeout) {
-  result <- processx::run(
+  previous <- setwd(wd)
+  on.exit(setwd(previous), add = TRUE)
+  status <- suppressWarnings(system2(
     command = command,
-    args = args,
-    wd = wd,
+    args = vapply(args, shQuote, character(1)),
     stdout = stdout,
     stderr = stderr,
-    timeout = timeout * 1000,
-    echo = FALSE,
-    error_on_status = FALSE
-  )
-  list(status = as.integer(result$status))
-}
-
-routing_codex_version <- function(command) {
-  result <- tryCatch(
-    processx::run(
-      command = command,
-      args = "--version",
-      timeout = 10000,
-      echo = FALSE,
-      error_on_status = FALSE
-    ),
-    error = function(e) e
-  )
-  if (inherits(result, "error") || !identical(as.integer(result$status), 0L)) {
-    detail <- if (inherits(result, "error")) {
-      conditionMessage(result)
-    } else {
-      trimws(paste(result$stderr, collapse = "\n"))
-    }
-    stop(
-      "Codex CLI preflight failed for `", command, "`",
-      if (nzchar(detail)) paste0(": ", detail) else ".",
-      "\nInstall an executable Codex CLI or supply its path with `codex`.",
-      call. = FALSE
-    )
-  }
-  version <- trimws(paste(result$stdout, collapse = "\n"))
-  if (nzchar(version)) version else "unknown"
+    timeout = ceiling(timeout)
+  ))
+  list(status = as.integer(status))
 }
 
 routing_codex_args <- function(root, prompt, response_path, schema, model) {

@@ -2,14 +2,26 @@
 
 ## Prepare
 
-1. Validate the target repository's agentic context.
-2. Use a clean, fixed Git commit or a dedicated worktree for each specification
+1. Run `check_agentic_routing_prerequisites(path = target)`.
+2. Validate the target repository's agentic context.
+3. Use a clean, fixed Git commit or a dedicated worktree for each specification
    variant.
-3. Define competency questions and private rubrics outside the target.
-4. Separate baseline questions from held-out validation questions.
-5. Decide repetitions, model override, timeout, and raw external output path.
+4. Define competency questions and private rubrics outside the target.
+5. Separate baseline questions from held-out validation questions.
+6. Decide repetitions, model override, timeout, and raw external output path.
 
 Do not proceed if the target can inspect its rubrics or previous raw runs.
+
+The preflight discovers the standalone CLI from `PATH` and supported user-local
+locations, checks saved authentication, and checks the target context and Git
+state. It makes no model request. A ready result does not test outbound network,
+service entitlement, or enterprise execution policy.
+
+On managed, disconnected, or no-admin equipment, stop at offline preparation
+when policy prohibits the CLI or Codex service. Do not request elevated rights
+or bypass application and network controls. The package's deterministic
+scaffolding, validation, fixture, scoring, and reporting capabilities remain
+available.
 
 ## Execute
 
@@ -27,6 +39,9 @@ adapter uses:
 
 Authentication is supplied by the local Codex installation. Never record keys,
 access tokens, or credential files in fixtures, events, or reports.
+
+Live execution is a maintainer-initiated local development diagnostic. Do not
+run it automatically during package installation, package builds, tests, or CI.
 
 ## Review
 
@@ -46,6 +61,11 @@ Distinguish:
 Summarize repeated runs and write only the aggregate health report into the
 target repository. The durable report omits private prompts, rubrics, answers,
 raw events, stderr, absolute user paths, and credentials.
+
+Commit the aggregate report so maintainers can troubleshoot context changes and
+end-users can inspect current process-quality evidence. The report identifies
+the evaluated Git SHA and therefore normally lags the commit that adds or
+updates the report.
 
 ## Compare and tune
 

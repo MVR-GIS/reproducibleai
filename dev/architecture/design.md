@@ -106,6 +106,25 @@ depend on credentials or live model access.
 This layer measures observable rubric satisfaction and efficiency. It does not
 change the structural validation semantics of agentic-context standard 0.1.
 
+The package has an explicit capability boundary:
+
+```text
+deterministic local package functions
+  -> always available after package installation
+
+optional live routing evaluation
+  -> standalone user-local Codex CLI
+  -> saved authentication
+  -> permitted application execution and outbound network
+  -> explicitly approved model runs
+```
+
+CLI discovery checks both the process `PATH` and supported user-local locations
+so an IDE restart is not required merely to discover a new Windows
+installation. The package does not install the CLI, request elevation,
+authenticate, test connectivity with a paid run, or bypass managed-device
+policy.
+
 ## Public API
 
 - `use_agentic_context()`
@@ -116,6 +135,7 @@ change the structural validation semantics of agentic-context standard 0.1.
 
 Routing-evaluation API:
 
+- `check_agentic_routing_prerequisites()`
 - `new_agentic_routing_question()`
 - `write_agentic_routing_questions()`
 - `read_agentic_routing_questions()`

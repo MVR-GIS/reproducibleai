@@ -30,11 +30,18 @@ repository context being measured.
 - fixed transparent scoring for required evidence recall, relevant evidence
   precision, expected terms, forbidden terms, and completion;
 - repeated-run summaries rather than single-run pass/fail claims; and
-- aggregate durable health reports that exclude prompts, rubrics, responses, and
-  raw traces.
+- aggregate durable health reports that exclude prompts, rubrics, responses,
+  and raw traces;
+- optional user-local CLI discovery and a no-usage prerequisite diagnostic; and
+- a strict separation between deterministic offline package capabilities and
+  connected agentic execution.
 
 Gold fixtures and raw results must remain outside the evaluated repository.
 Reports may be written into the target repository only after the runs complete.
+Live evaluation is a maintainer-initiated local development diagnostic, not an
+automatic package installation, build, test, or CI action. The package will not
+install Codex, request administrative elevation, authenticate an account, or
+bypass endpoint or network restrictions.
 
 ## Consequences
 
@@ -52,3 +59,9 @@ comparing formulations.
 Automatic instruction rewriting is out of scope for the first version.
 Recommendations remain advisory and must be validated on held-out questions or
 repositories before adoption.
+
+Computers without administrator rights can still use all deterministic package
+capabilities. OpenAI's standalone Windows installer can install the optional
+CLI under the user profile, but managed-device application, identity, or
+network policy may still prohibit execution. Preflight reports this boundary
+without claiming to prove connectivity or entitlement.

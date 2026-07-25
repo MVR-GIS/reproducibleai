@@ -22,6 +22,15 @@ The agentic-context standard:
 Legacy instruction copies and session transcripts are removed during approved
 migration only after their replacement structure has been created and
 validated. Git remains the historical record.
+
+Most package capabilities are local and deterministic. They do not require a
+cloud account, Codex CLI, or administrator rights. Live agentic-routing
+evaluation is an optional capability that requires a separately installed
+and authenticated Codex CLI plus network and organizational permission.
+Managed or disconnected computers can still scaffold, migrate, validate,
+define fixtures, score saved results, summarize evaluations, and render
+health reports. The package never installs Codex, authenticates an account,
+or attempts to bypass endpoint or network policy.
 }
 \seealso{
 Useful links:

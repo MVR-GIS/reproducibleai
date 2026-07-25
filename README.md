@@ -32,6 +32,41 @@ isolated runs.
 pak::pak("MVR-GIS/reproducibleai")
 ```
 
+The core package is local-first. Scaffolding, migration planning and
+application, structural validation, competency-question authoring,
+offline scoring, summaries, and report rendering do not require a Codex
+installation, cloud SaaS account, or administrator rights.
+
+Live agentic-routing evaluation is an optional connected capability. It
+requires:
+
+- a separately installed Codex CLI;
+- an authenticated Codex CLI session;
+- outbound connectivity to the Codex service; and
+- permission under the computer’s application, endpoint, identity, and
+  network policies.
+
+On Windows, OpenAI’s standalone installer installs into the user profile
+and does not require npm:
+
+``` powershell
+powershell -ExecutionPolicy ByPass -c "irm https://chatgpt.com/codex/install.ps1 | iex"
+```
+
+Restart the R IDE after installation, then run:
+
+``` r
+check_agentic_routing_prerequisites(path = ".")
+```
+
+The diagnostic also discovers the standard user-local Windows
+installation when an IDE has a stale `PATH`. It does not install
+software, authenticate, contact a model, or consume model usage. On
+managed or disconnected equipment, live execution may remain prohibited
+even when package installation succeeds. `{reproducibleai}` reports that
+limitation and retains its offline functionality; it never attempts to
+bypass organizational controls.
+
 ## Scaffold a new R package
 
 ``` r
@@ -85,6 +120,8 @@ runs fresh read-only `codex exec` sessions, scores evidence routing and
 expected answer content, and writes aggregate health reports.
 
 ``` r
+check_agentic_routing_prerequisites(path = ".")
+
 question <- new_agentic_routing_question(
   id = "current-priority",
   prompt = "What is the current development priority?",
@@ -109,7 +146,11 @@ write_agentic_routing_report(
 
 Keep private fixtures and raw runs outside the evaluated repository.
 Model responses remain stochastic; health reports summarize repeated
-observations rather than claiming deterministic model behavior.
+observations rather than claiming deterministic model behavior. Live
+evaluation is intended as an explicitly initiated local development
+diagnostic, not as an automatic package-build or CI step. A committed
+aggregate report can communicate the observed health of repository
+context to maintainers and end-users.
 
 ## Bug reports
 

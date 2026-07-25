@@ -56,7 +56,7 @@ Gold rubrics are never included in model prompts.</p>
 <span>  repetitions <span class="op">=</span> <span class="fl">3L</span>,</span>
 <span>  approved <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  output_dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  codex <span class="op">=</span> <span class="st">"codex"</span>,</span>
+<span>  codex <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  model <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  timeout <span class="op">=</span> <span class="fl">900</span>,</span>
 <span>  runner <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -92,7 +92,10 @@ outside <code>path</code>.</p></dd>
 
 
 <dt id="arg-codex">codex<a class="anchor" aria-label="anchor" href="#arg-codex"></a></dt>
-<dd><p>Codex CLI executable or absolute executable path.</p></dd>
+<dd><p><code>NULL</code> to discover a standalone Codex CLI automatically, or a
+CLI command or absolute executable path. Live evaluation requires this
+optional external program and existing CLI authentication. Use
+<code><a href="check_agentic_routing_prerequisites.html">check_agentic_routing_prerequisites()</a></code> before the first run.</p></dd>
 
 
 <dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>

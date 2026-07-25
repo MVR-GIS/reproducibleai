@@ -21,8 +21,7 @@ Encoding: UTF-8
 URL: https://mvr-gis.github.io/reproducibleai/
 Roxygen: list(markdown = TRUE)
 Imports:
-    jsonlite,
-    processx
+    jsonlite
 Suggests: 
     knitr,
     openssl,
@@ -33,4 +32,6 @@ Suggests:
     withr
 Config/testthat/edition: 3
 VignetteBuilder: knitr
+SystemRequirements: Codex CLI (optional; required only for live
+    agentic-routing evaluation)
 Config/roxygen2/version: 8.0.0

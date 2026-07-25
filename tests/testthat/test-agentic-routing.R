@@ -264,3 +264,101 @@ test_that("fixtures and raw output inside the evaluated repo are rejected", {
     "must be outside"
   )
 })
+
+test_that("routing prerequisite checks are diagnostic and do not run a model", {
+  calls <- list()
+  fake_run <- function(command, args, timeout) {
+    calls[[length(calls) + 1L]] <<- list(
+      command = command, args = args, timeout = timeout
+    )
+    if (identical(args, "--version")) {
+      return(list(
+        status = 0L, stdout = "codex-cli test-version", stderr = character()
+      ))
+    }
+    if (identical(args, c("login", "status"))) {
+      return(list(
+        status = 0L, stdout = "Logged in using ChatGPT", stderr = character()
+      ))
+    }
+    stop("unexpected command")
+  }
+
+  status <- reproducibleai:::routing_prerequisite_status(
+    codex = "test-codex",
+    run = fake_run
+  )
+
+  expect_s3_class(status, "agentic_routing_prerequisites")
+  expect_true(status$ready)
+  expect_true(status$cli_available)
+  expect_identical(status$codex_version, "codex-cli test-version")
+  expect_identical(status$authentication, "authenticated")
+  expect_identical(status$network_policy, "not_tested")
+  expect_length(calls, 2)
+  expect_identical(calls[[1]]$args, "--version")
+  expect_identical(calls[[2]]$args, c("login", "status"))
+})
+
+test_that("restricted environments remain usable for offline capabilities", {
+  unavailable <- function(command, args, timeout) {
+    list(status = 1L, stdout = character(), stderr = "execution prohibited")
+  }
+
+  status <- reproducibleai:::routing_prerequisite_status(
+    codex = "blocked-codex",
+    run = unavailable
+  )
+
+  expect_false(status$ready)
+  expect_false(status$cli_available)
+  expect_identical(status$authentication, "unavailable")
+  expect_match(status$limitations, "runnable standalone Codex CLI")
+
+  question <- new_agentic_routing_question(
+    id = "offline",
+    prompt = "Find the plan.",
+    required_paths = "dev/goals/project-plan.md"
+  )
+  score <- score_agentic_routing_run(
+    question,
+    list(
+      answer = "The plan is maintained under project goals.",
+      evidence_paths = list("dev/goals/project-plan.md"),
+      route_summary = "Used the project goals route.",
+      confidence = 1
+    )
+  )
+  expect_gt(score$score, 0)
+})
+
+test_that("Windows discovery includes the no-admin standalone install path", {
+  skip_if_not(.Platform$OS.type == "windows")
+  candidates <- reproducibleai:::routing_codex_candidates()
+  expect_true(any(grepl(
+    "Programs.OpenAI.Codex.bin.codex[.]exe$",
+    candidates
+  )))
+})
+
+test_that("the default live runner uses only base R process execution", {
+  script <- tempfile(fileext = ".R")
+  stdout <- tempfile()
+  stderr <- tempfile()
+  writeLines("cat('runner-ok\\n')", script)
+  command <- file.path(R.home("bin"), "Rscript.exe")
+  if (!file.exists(command)) command <- file.path(R.home("bin"), "Rscript")
+
+  result <- reproducibleai:::routing_process_runner(
+    command = command,
+    args = script,
+    wd = tempdir(),
+    stdout = stdout,
+    stderr = stderr,
+    timeout = 30
+  )
+
+  expect_identical(result$status, 0L)
+  expect_identical(readLines(stdout), "runner-ok")
+  expect_length(readLines(stderr), 0)
+})

@@ -14,25 +14,36 @@ Implement the first usable agentic-routing evaluation slice:
 - structured event and response capture;
 - transparent deterministic scoring;
 - quantitative health summaries and durable reports; and
-- tests that do not require credentials or live model calls.
+- tests that do not require credentials or live model calls;
+- robust discovery and no-usage diagnosis of the optional standalone Codex
+  CLI; and
+- explicit support boundaries for offline, approved connected, and managed
+  computing environments.
 
 Status: implemented on `feat/agentic-routing-evaluation`; awaiting review.
 
 ## Verification record
 
-- 96 package tests pass with no failures, warnings, or skips.
+- 114 package expectations pass with no failures, warnings, or skips.
 - A clean source package build includes all three vignettes.
 - `R CMD check --no-manual --no-build-vignettes` completes with status OK.
 - The pkgdown site builds with the new article and API reference pages.
 - No authenticated model calls or paid usage occurred during implementation.
-- A live pilot remains the next step because the locally packaged Codex
-  executable was not accessible as a standalone CLI from this environment.
+- The no-usage preflight discovers Codex CLI 0.145.0 from its stable user-local
+  Windows installation and confirms saved ChatGPT authentication despite a
+  stale IDE `PATH`.
+- A live self-evaluation remains the next step after these changes are committed
+  and the maintainer explicitly approves repeated model usage.
 
 ## Acceptance criteria
 
 - Gold fixtures and raw runs remain outside the evaluated repository.
 - Every repetition starts a fresh ephemeral read-only Codex session.
 - Repeated model execution requires explicit approval.
+- Package installation and deterministic capabilities do not require Codex,
+  cloud authentication, administrator rights, or live network access.
+- The package never installs, authenticates, elevates, or bypasses
+  organizational endpoint and network controls.
 - Final responses conform to a versioned JSON Schema.
 - Routing and answer scoring is literal, transparent, and independently
   testable.

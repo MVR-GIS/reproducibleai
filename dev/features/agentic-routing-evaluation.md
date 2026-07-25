@@ -12,11 +12,37 @@ used, and write a durable aggregate health report.
 2. Save private fixtures outside the target with
    `write_agentic_routing_questions()`.
 3. Review the questions, repetitions, model, target commit, and expected usage.
-4. Call `run_agentic_routing_evaluation(..., approved = TRUE)`.
-5. Inspect raw external runs when a score needs explanation.
-6. Call `summarize_agentic_routing()`.
-7. Write an aggregate report with `write_agentic_routing_report()`.
-8. Compare instruction formulations only after establishing a stable baseline.
+4. Run `check_agentic_routing_prerequisites()` in the local development
+   environment.
+5. Call `run_agentic_routing_evaluation(..., approved = TRUE)`.
+6. Inspect raw external runs when a score needs explanation.
+7. Call `summarize_agentic_routing()`.
+8. Write and commit an aggregate report with
+   `write_agentic_routing_report()`.
+9. Compare instruction formulations only after establishing a stable baseline.
+
+## Capability tiers
+
+### Local deterministic
+
+Available without Codex, a SaaS account, administrator rights, or live network
+access: scaffolding, migration, structural validation, fixture authoring,
+offline scoring, summarization of saved results, and health-report rendering.
+
+### Local connected agentic
+
+Live evaluation additionally requires a runnable standalone Codex CLI, saved
+authentication, outbound service access, account entitlement, and permission
+under local application and network policy. It is an explicitly initiated
+development diagnostic, not an automatic package-build or CI task.
+
+### Managed or disconnected
+
+Application allow-listing, endpoint security, identity policy, or network
+controls may prohibit live execution on no-admin or government-furnished
+equipment. The package must preserve deterministic local functionality, explain
+the unavailable capability, and never install software, authenticate, or bypass
+organizational controls on the user's behalf.
 
 ## Measures
 
@@ -53,6 +79,8 @@ This feature measures literal rubric satisfaction and routing claims. It does
 not prove scientific correctness, causal attribution, or universal instruction
 quality. The first version does not automatically mutate `AGENTS.md`, search a
 prompt space, estimate monetary cost, or orchestrate multi-turn sessions.
+Passing local preflight does not prove that network policy or service
+entitlement will permit a live run.
 
 ## Related authority
 

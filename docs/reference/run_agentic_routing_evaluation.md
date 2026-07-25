@@ -13,7 +13,7 @@ run_agentic_routing_evaluation(
   repetitions = 3L,
   approved = FALSE,
   output_dir = NULL,
-  codex = "codex",
+  codex = NULL,
   model = NULL,
   timeout = 900,
   runner = NULL,
@@ -47,7 +47,11 @@ run_agentic_routing_evaluation(
 
 - codex:
 
-  Codex CLI executable or absolute executable path.
+  `NULL` to discover a standalone Codex CLI automatically, or a CLI
+  command or absolute executable path. Live evaluation requires this
+  optional external program and existing CLI authentication. Use
+  [`check_agentic_routing_prerequisites()`](https://mvr-gis.github.io/reproducibleai/reference/check_agentic_routing_prerequisites.md)
+  before the first run.
 
 - model:
 

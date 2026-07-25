@@ -14,6 +14,11 @@
   rubrics, and traces from the evaluated repository.
 - Added contamination controls that keep gold fixtures and raw runs
   outside the repository under evaluation.
+- Added no-usage prerequisite diagnostics and robust discovery of the
+  user-local standalone Codex CLI on Windows.
+- Clarified that deterministic package capabilities require neither
+  Codex nor a cloud account, while live evaluation remains optional and
+  subject to local application, identity, and network policy.
 
 ## reproducibleai 2026.07.24.9000
 

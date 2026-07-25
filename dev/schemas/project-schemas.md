@@ -93,6 +93,23 @@ Every question contains:
 A required or allowed path ending in `/` matches descendants. Other paths match
 exactly after slash normalization.
 
+## Agentic-routing prerequisite diagnostic
+
+The local diagnostic contains:
+
+- `ready`: whether local preflight checks passed
+- `cli_available`: whether a runnable standalone Codex CLI was found
+- `codex_path`: local resolved executable path, never written to a health report
+- `codex_version`: reported CLI version
+- `authentication`: `authenticated`, `not_authenticated`, or `unavailable`
+- optional repository path, context validity, Git SHA, and clean-worktree state
+- `network_policy`: currently `not_tested`
+- human-readable limitations and local discovery errors
+
+`ready` does not assert network access, service entitlement, or enterprise
+policy approval. The diagnostic never starts a model run or installs,
+authenticates, or reconfigures software.
+
 ## Structured routing response
 
 The Codex final response schema is versioned at

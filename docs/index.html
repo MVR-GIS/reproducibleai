@@ -66,11 +66,25 @@
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"MVR-GIS/reproducibleai"</span><span class="op">)</span></span></code></pre></div>
+<p>The core package is local-first. Scaffolding, migration planning and application, structural validation, competency-question authoring, offline scoring, summaries, and report rendering do not require a Codex installation, cloud SaaS account, or administrator rights.</p>
+<p>Live agentic-routing evaluation is an optional connected capability. It requires:</p>
+<ul>
+<li>a separately installed Codex CLI;</li>
+<li>an authenticated Codex CLI session;</li>
+<li>outbound connectivity to the Codex service; and</li>
+<li>permission under the computer’s application, endpoint, identity, and network policies.</li>
+</ul>
+<p>On Windows, OpenAI’s standalone installer installs into the user profile and does not require npm:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode powershell"><code class="sourceCode powershell"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>powershell <span class="op">-</span>ExecutionPolicy ByPass <span class="op">-</span>c <span class="st">"irm https://chatgpt.com/codex/install.ps1 | iex"</span></span></code></pre></div>
+<p>Restart the R IDE after installation, then run:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/check_agentic_routing_prerequisites.html">check_agentic_routing_prerequisites</a></span><span class="op">(</span>path <span class="op">=</span> <span class="st">"."</span><span class="op">)</span></span></code></pre></div>
+<p>The diagnostic also discovers the standard user-local Windows installation when an IDE has a stale <code>PATH</code>. It does not install software, authenticate, contact a model, or consume model usage. On managed or disconnected equipment, live execution may remain prohibited even when package installation succeeds. <a href="https://mvr-gis.github.io/reproducibleai/">reproducibleai</a> reports that limitation and retains its offline functionality; it never attempts to bypass organizational controls.</p>
 </div>
 <div class="section level2">
 <h2 id="scaffold-a-new-r-package">Scaffold a new R package<a class="anchor" aria-label="anchor" href="#scaffold-a-new-r-package"></a>
 </h2>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mvr-gis.github.io/reproducibleai/">reproducibleai</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="reference/use_agentic_context.html">use_agentic_context</a></span><span class="op">(</span></span>
@@ -84,7 +98,7 @@
 <div class="section level2">
 <h2 id="migrate-an-existing-repository">Migrate an existing repository<a class="anchor" aria-label="anchor" href="#migrate-an-existing-repository"></a>
 </h2>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plan</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/plan_agentic_context_migration.html">plan_agentic_context_migration</a></span><span class="op">(</span><span class="st">"."</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Review the structured operations before changing the repository.</span></span>
@@ -112,8 +126,10 @@
 <h2 id="scope">Scope<a class="anchor" aria-label="anchor" href="#scope"></a>
 </h2>
 <p>The agentic-routing evaluation API defines private competency questions, runs fresh read-only <code>codex exec</code> sessions, scores evidence routing and expected answer content, and writes aggregate health reports.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">question</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/new_agentic_routing_question.html">new_agentic_routing_question</a></span><span class="op">(</span></span>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/check_agentic_routing_prerequisites.html">check_agentic_routing_prerequisites</a></span><span class="op">(</span>path <span class="op">=</span> <span class="st">"."</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">question</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/new_agentic_routing_question.html">new_agentic_routing_question</a></span><span class="op">(</span></span>
 <span>  id <span class="op">=</span> <span class="st">"current-priority"</span>,</span>
 <span>  prompt <span class="op">=</span> <span class="st">"What is the current development priority?"</span>,</span>
 <span>  required_paths <span class="op">=</span> <span class="st">"dev/goals/project-plan.md"</span>,</span>
@@ -133,7 +149,7 @@
 <span>  <span class="va">health</span>,</span>
 <span>  <span class="st">"dev/governance/agentic-routing-health.md"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>Keep private fixtures and raw runs outside the evaluated repository. Model responses remain stochastic; health reports summarize repeated observations rather than claiming deterministic model behavior.</p>
+<p>Keep private fixtures and raw runs outside the evaluated repository. Model responses remain stochastic; health reports summarize repeated observations rather than claiming deterministic model behavior. Live evaluation is intended as an explicitly initiated local development diagnostic, not as an automatic package-build or CI step. A committed aggregate report can communicate the observed health of repository context to maintainers and end-users.</p>
 </div>
 <div class="section level2">
 <h2 id="bug-reports">Bug reports<a class="anchor" aria-label="anchor" href="#bug-reports"></a>

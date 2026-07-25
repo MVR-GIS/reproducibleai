@@ -4,6 +4,8 @@
 
 - [`apply_agentic_context_migration()`](https://mvr-gis.github.io/reproducibleai/reference/apply_agentic_context_migration.md)
   : Apply an approved agentic-context migration
+- [`check_agentic_routing_prerequisites()`](https://mvr-gis.github.io/reproducibleai/reference/check_agentic_routing_prerequisites.md)
+  : Check local prerequisites for live agentic-routing evaluation
 - [`detect_agentic_context_profiles()`](https://mvr-gis.github.io/reproducibleai/reference/detect_agentic_context_profiles.md)
   : Detect applicable agentic-context profiles
 - [`new_agentic_routing_question()`](https://mvr-gis.github.io/reproducibleai/reference/new_agentic_routing_question.md)

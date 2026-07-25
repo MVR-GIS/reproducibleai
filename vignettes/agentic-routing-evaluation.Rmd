@@ -19,6 +19,42 @@ answer efficiently?
 The harness is deterministic, but model responses are stochastic. Interpret
 results as repeated-run distributions rather than byte-identical tests.
 
+## Capability and environment preflight
+
+Most `{reproducibleai}` functionality is available without Codex, a cloud
+account, or administrator rights. Live routing evaluation is different: it
+starts authenticated model runs and therefore requires a separately installed
+Codex CLI, connectivity, account entitlement, and organizational permission.
+
+On Windows, the standalone installer uses a user-local installation and does
+not require npm:
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://chatgpt.com/codex/install.ps1 | iex"
+```
+
+Restart the R IDE after installing. Then perform a no-usage preflight:
+
+```{r eval=FALSE}
+library(reproducibleai)
+
+check_agentic_routing_prerequisites(
+  path = "C:/workspace/FluvialGeomorph/fluvgeo"
+)
+```
+
+Automatic discovery checks `PATH` and the standard user-local Windows
+installation. Supply `codex = "C:/path/to/codex.exe"` only for a nonstandard
+installation. The diagnostic checks the executable, saved authentication,
+agentic context, and Git state without contacting a model. Network and
+enterprise execution policy remain untested until a live run begins.
+
+On managed government-furnished, disconnected, or no-admin equipment, package
+installation and offline capabilities remain useful even if application
+allow-listing, identity policy, or network controls prohibit live Codex
+evaluation. Do not bypass those controls. Prepare or inspect fixtures and
+reports offline, and perform live evaluation only in an approved environment.
+
 ## Define private competency questions
 
 ```{r eval=FALSE}
@@ -103,3 +139,8 @@ write_agentic_routing_report(
 The durable report contains only aggregate metrics and recommendations. Inspect
 external raw runs before changing instructions, and validate proposed
 improvements on held-out questions or repositories.
+
+Run this workflow deliberately during local development when agentic context
+changes. Do not place live evaluation in package builds or CI. Commit the
+aggregate report as a transparent quality and troubleshooting artifact; never
+commit the private fixtures or raw traces.
