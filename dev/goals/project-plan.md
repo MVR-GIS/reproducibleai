@@ -7,12 +7,14 @@ context and quantitative evaluation of how effectively agents use that context.
 
 ## Current objective
 
-Establish and interpret the first self-evaluation baseline, then design a
-controlled routing-specificity sensitivity experiment.
+Preserve the completed agentic-routing evaluation baseline in a resumable state.
+Further evaluation-feature development and routing sensitivity experiments are
+paused until the maintainer explicitly resumes them.
 
 Status: the reviewed 11-question baseline pilot is complete for commit
 `202172f`; adapter hardening, integrated workflow documentation, and durable
-health reporting are implemented on `feat/agentic-routing-evaluation`.
+health reporting were merged to remote `main` by PR #3. See
+`dev/checkpoints/current/agentic-routing-evaluation-paused.md`.
 
 ## Verification record
 
@@ -66,7 +68,7 @@ health reporting are implemented on `feat/agentic-routing-evaluation`.
 These repositories form the initial evaluation cohort. Remaining repositories
 are a later adoption and external-validation cohort.
 
-## Next evaluation phases
+## On-resume evaluation phases
 
 1. Review the two low-precision architecture routes and answer-breadth evidence.
 2. Define one routing-specificity hypothesis without changing the benchmark.
