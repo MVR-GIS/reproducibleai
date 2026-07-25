@@ -41,10 +41,10 @@ Character vector of written file paths (invisibly).
 ## Details
 
 This function is intended to be called from CI after
-[`renv::restore()`](https://rdrr.io/pkg/renv/man/restore.html) and SBOM
-generation steps (e.g., Anchore SBOM Action). It does not generate the
-SBOM itself; it creates additional evidence that documents the
-environment associated with the SBOM artifact.
+[`renv::restore()`](https://rstudio.github.io/renv/reference/restore.html)
+and SBOM generation steps (e.g., Anchore SBOM Action). It does not
+generate the SBOM itself; it creates additional evidence that documents
+the environment associated with the SBOM artifact.
 
 Files written:
 

@@ -31,8 +31,7 @@ Character vector of written/updated file paths (invisibly).
 
 ## Details
 
-This function is intended to be run once during initial repository setup
-in an interactive session (similar to the `usethis` pattern).
+This function is intended to be run during initial repository setup.
 
 What this function does:
 
@@ -53,8 +52,8 @@ Next steps after running:
 
 - Ensure `reproducibleai` is included in the project's `renv.lock`
   (install it and run
-  [`renv::snapshot()`](https://rdrr.io/pkg/renv/man/snapshot.html) if
-  needed).
+  [`renv::snapshot()`](https://rstudio.github.io/renv/reference/snapshot.html)
+  if needed).
 
 - Commit changes and open a PR to verify the workflow produces an SBOM
   bundle.

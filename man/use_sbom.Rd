@@ -22,8 +22,7 @@ an SBOM using Anchore's SBOM Action (Syft-based), and writes additional
 environment metadata (and a copy of \code{renv.lock}) into \verb{artifacts/sbom/}.
 }
 \details{
-This function is intended to be run once during initial repository setup in
-an interactive session (similar to the \code{usethis} pattern).
+This function is intended to be run during initial repository setup.
 
 What this function does:
 \itemize{

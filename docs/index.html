@@ -11,8 +11,8 @@
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Reproducible AI">
-<meta name="description" content="An R package of tools to help teams adopt a reproducible workflow for AI-assisted projects. This package contains a set of tools to assist data science professionals adopt efficient workflows during the early stages of AI adoption. We hold the opinionated view that the ethical use of AI requires data scientists to make well-informed, conscious decisions throughout the analysis process. These tools are a work in progress and designed to help our team experiment with developing new methodologies for AI-assisted workflows. These tools help to define a repeatable framework of chat instructions between sessions and across teams. Tools are provided to create a transparent audit trail to evaluate the use of AI.">
-<meta property="og:description" content="An R package of tools to help teams adopt a reproducible workflow for AI-assisted projects. This package contains a set of tools to assist data science professionals adopt efficient workflows during the early stages of AI adoption. We hold the opinionated view that the ethical use of AI requires data scientists to make well-informed, conscious decisions throughout the analysis process. These tools are a work in progress and designed to help our team experiment with developing new methodologies for AI-assisted workflows. These tools help to define a repeatable framework of chat instructions between sessions and across teams. Tools are provided to create a transparent audit trail to evaluate the use of AI.">
+<meta name="description" content="Tools for creating, migrating, and validating durable repository context for reproducible AI-assisted development. A versioned scaffold routes standing agent instructions through AGENTS.md into maintained goals, architecture, decisions, governance, workflows, schemas, features, and concise checkpoints. Structured migration plans preserve legacy content until an explicitly approved application has created and validated its replacement.">
+<meta property="og:description" content="Tools for creating, migrating, and validating durable repository context for reproducible AI-assisted development. A versioned scaffold routes standing agent instructions through AGENTS.md into maintained goals, architecture, decisions, governance, workflows, schemas, features, and concise checkpoints. Structured migration plans preserve legacy content until an explicitly approved application has created and validated its replacement.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">reproducibleai</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2026.05.30</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2026.07.24.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,10 +35,7 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/chat-boostrap-governance.html">Starting a new AI chat session with a governed bootstrap prompt</a></li>
-    <li><a class="dropdown-item" href="articles/chat-session-history.html">Saving Copilot chat session history (audit trail)</a></li>
-    <li><a class="dropdown-item" href="articles/chat_instructions.html">Reproducible chat instructions</a></li>
-    <li><a class="dropdown-item" href="articles/governed-r-package-workflow.html">Governed workflow for an R package</a></li>
+<li><a class="dropdown-item" href="articles/agentic-context.html">Durable agentic context for a repository</a></li>
     <li><a class="dropdown-item" href="articles/sbom.html">SBOM for R Package Repositories (renv + GitHub Actions)</a></li>
   </ul>
 </li>
@@ -60,119 +57,65 @@
 </h1></div>
 <!-- badges: start -->
 
-<div class="section level2">
-<h2 id="description">Description<a class="anchor" aria-label="anchor" href="#description"></a>
-</h2>
-<p>{reproducibleai} is an R package of tools to help teams adopt a reproducible workflow for AI-assisted projects. The package provides reusable instruction modules, recipe-based composition, and supporting scaffolds for durable AI-assisted development workflows.</p>
-<p>We hold the opinionated view that the ethical use of AI requires data scientists to make well-informed, conscious decisions throughout the analysis process. These tools are designed to help teams experiment with repeatable methods for AI-assisted workflows while keeping those workflows reviewable and auditable.</p>
-<p><strong>Core ideas:</strong></p>
-<ul>
-<li>make chat sessions reproducible by recording the exact instruction modules used,</li>
-<li>keep instruction content reviewable as static markdown,</li>
-<li>support recipe-based composition of reusable instruction modules,</li>
-<li>provide lightweight handler-backed installation where some modules require supporting repository structure,</li>
-<li>support an auditable workflow as teams adopt AI tooling.</li>
-</ul>
-</div>
-<div class="section level2">
-<h2 id="instruction-model">Instruction model<a class="anchor" aria-label="anchor" href="#instruction-model"></a>
-</h2>
-<p><code>reproducibleai</code> is instruction-first.</p>
-<p>Canonical instruction text is stored as static markdown in <code>inst/instructions/</code>. Public workflows compose instruction modules by name and install them into a target repository with <code><a href="reference/use_instructions.html">use_instructions()</a></code>.</p>
-<p>Internally, installation is now handler-backed:</p>
-<ul>
-<li>every public instruction module has a corresponding handler,</li>
-<li>simple modules install canonical text only,</li>
-<li>config-aware modules can also scaffold supporting repository structure.</li>
-</ul>
-<p>This preserves static, reviewable instruction text while allowing modules such as development-governance to establish the repository structure they depend on.</p>
-<hr>
-</div>
-<div class="section level2">
-<h2 id="authors">Authors<a class="anchor" aria-label="anchor" href="#authors"></a>
-</h2>
-<ul>
-<li>
-<a href="mailto:Michael.P.Dougherty@usace.army.mil">Michael Dougherty</a>, Geographer, Rock Island District, U.S. Army Corps of Engineers <a itemprop="sameAs" content="https://orcid.org/0000-0002-1465-5927" href="https://0000-0002-1465-5927" target="orcid.widget" rel="me noopener noreferrer" style="vertical-align:top;" class="external-link"> <img src="https://orcid.org/sites/default/files/images/orcid_16x16.png" alt="ORCID iD icon" style="width:1em;margin-right:.5em;">https://orcid.org/0000-0002-1465-5927</a>
-</li>
-</ul>
-<hr>
-</div>
+<p><a href="https://mvr-gis.github.io/reproducibleai/">reproducibleai</a> creates, migrates, and validates durable repository context for reproducible AI-assisted development. Instead of copying chat instructions and preserving transcripts as working context, it creates a concise root <code>AGENTS.md</code> that routes work into maintained artifacts under <code>dev/</code>.</p>
+<p>The standard separates standing instructions from goals, architecture, decisions, governance, workflows, schemas, feature specifications, and concise checkpoints. Git preserves superseded history.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>You can install the development version from GitHub with:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># install.packages("pak")</span></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>pak<span class="sc">::</span><span class="fu">pak</span>(<span class="st">"MVR-GIS/reproducibleai"</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu">pak</span><span class="op">(</span><span class="st">"MVR-GIS/reproducibleai"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="quick-start">Quick start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
+<h2 id="scaffold-a-new-r-package">Scaffold a new R package<a class="anchor" aria-label="anchor" href="#scaffold-a-new-r-package"></a>
 </h2>
-<div class="section level3">
-<h3 id="id_1-see-which-instruction-modules-are-available">1) See which instruction modules are available<a class="anchor" aria-label="anchor" href="#id_1-see-which-instruction-modules-are-available"></a>
-</h3>
-<div class="sourceCode" id="cb2"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(reproducibleai)</span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">instructions_available</span>()</span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co">#&gt; [1] "chat-manual"            "development-governance" "goals"                  "parameterized-help"    </span></span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&gt; [5] "python-package"         "quarto-book"            "r-package"              "shiny-golem"           </span></span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&gt; [9] "user-manual"</span></span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co"># returns the public module names you can compose into recipes</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="id_2-use-a-recommended-recipe">2) Use a recommended recipe<a class="anchor" aria-label="anchor" href="#id_2-use-a-recommended-recipe"></a>
-</h3>
-<div class="sourceCode" id="cb3"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>recipes <span class="ot">&lt;-</span> <span class="fu">instructions_recipes</span>()</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>recipes<span class="sc">$</span>r_package</span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; [1] "chat-manual" "goals"       "r-package"</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="id_3-install-instructions-into-your-project">3) Install instructions into your project<a class="anchor" aria-label="anchor" href="#id_3-install-instructions-into-your-project"></a>
-</h3>
-<div class="sourceCode" id="cb4"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">use_instructions</span>(recipes<span class="sc">$</span>r_package)</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co"># installs into dev/instructions/ by default</span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co"># also writes dev/instructions/CHAT_INSTRUCTIONS.md</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="id_4-use-development-governance-when-you-want-repository-scaffolding">4) Use development-governance when you want repository scaffolding<a class="anchor" aria-label="anchor" href="#id_4-use-development-governance-when-you-want-repository-scaffolding"></a>
-</h3>
-<p>The <code>development-governance</code> module is the first config-aware module. In addition to installing its instruction text, it scaffolds a standard development-governance structure under <code>dev/</code>, including:</p>
-<ul>
-<li><code>dev/05_plan.md</code></li>
-<li><code>dev/10_design.md</code></li>
-<li><code>dev/40_schemas.md</code></li>
-<li><code>dev/decisions/</code></li>
-<li><code>dev/instructions/</code></li>
-<li><code>dev/sessions/</code></li>
-</ul>
-<p>Example:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">use_instructions</span>(<span class="fu">c</span>(<span class="st">"chat-manual"</span>, <span class="st">"development-governance"</span>))</span></code></pre></div>
-<p>This is useful for repositories that want durable AI-assisted development artifacts such as plans, design notes, schema contracts, decision records, reusable instructions, and archived sessions.</p>
-</div>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mvr-gis.github.io/reproducibleai/">reproducibleai</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="reference/use_agentic_context.html">use_agentic_context</a></span><span class="op">(</span></span>
+<span>  path <span class="op">=</span> <span class="st">"."</span>,</span>
+<span>  profiles <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"base"</span>, <span class="st">"r-package"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="reference/validate_agentic_context.html">validate_agentic_context</a></span><span class="op">(</span><span class="st">"."</span><span class="op">)</span></span></code></pre></div>
+<p>Scaffolding is deterministic and idempotent. Existing repository-owned content is never overwritten.</p>
 </div>
 <div class="section level2">
-<h2 id="notes-on-installation-behavior">Notes on installation behavior<a class="anchor" aria-label="anchor" href="#notes-on-installation-behavior"></a>
+<h2 id="migrate-an-existing-repository">Migrate an existing repository<a class="anchor" aria-label="anchor" href="#migrate-an-existing-repository"></a>
 </h2>
-<p><code><a href="reference/use_instructions.html">use_instructions()</a></code> is designed around the repository layout:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">plan</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/plan_agentic_context_migration.html">plan_agentic_context_migration</a></span><span class="op">(</span><span class="st">"."</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Review the structured operations before changing the repository.</span></span>
+<span><span class="va">plan</span><span class="op">$</span><span class="va">operations</span></span>
+<span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/apply_agentic_context_migration.html">apply_agentic_context_migration</a></span><span class="op">(</span></span>
+<span>  <span class="va">plan</span>,</span>
+<span>  approved <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Planning is read-only: legacy content remains in place. Application creates and validates replacements before removing superseded files. Destructive operations are refused when a source is untracked, has uncommitted changes, or requires manual review.</p>
+</div>
+<div class="section level2">
+<h2 id="profiles">Profiles<a class="anchor" aria-label="anchor" href="#profiles"></a>
+</h2>
+<p>Standard 0.1 includes:</p>
 <ul>
 <li>
-<code>dev/instructions/</code> for installed instruction modules</li>
+<code>base</code>, which applies to every repository</li>
 <li>
-<code>dev/instructions/CHAT_INSTRUCTIONS.md</code> as the session entrypoint</li>
+<code>r-package</code>, which adds routes and workflow guidance for R package development</li>
 </ul>
-<p>Modules are installed through internal handlers. For most modules this means installing static instruction text. For selected modules, handlers may also scaffold required supporting files or directories.</p>
-<p>The package currently treats canonical instruction markdown as the authoritative module content; handlers support installation and scaffolding but do not dynamically rewrite substantive instruction text.</p>
-<hr>
+<p><code><a href="reference/detect_agentic_context_profiles.html">detect_agentic_context_profiles()</a></code> reports evidence for candidate profiles but does not silently select or apply them.</p>
 </div>
 <div class="section level2">
-<h2 id="vignettes">Vignettes<a class="anchor" aria-label="anchor" href="#vignettes"></a>
+<h2 id="scope">Scope<a class="anchor" aria-label="anchor" href="#scope"></a>
 </h2>
-<div class="sourceCode" id="cb6"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># What vignettes exist for this package?</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">vignette</span>(<span class="at">package =</span> <span class="st">"reproducibleai"</span>)</span></code></pre></div>
+<p>This release establishes deterministic context scaffolding and migration. Model execution, competency-question scoring, routing sensitivity analysis, health reports, and prompt tuning are intentionally reserved for a later evaluation feature.</p>
 </div>
 <div class="section level2">
 <h2 id="bug-reports">Bug reports<a class="anchor" aria-label="anchor" href="#bug-reports"></a>
 </h2>
-<p>Please open an issue at: <a href="https://github.com/MVR-GIS/reproducibleai/issues" class="external-link uri">https://github.com/MVR-GIS/reproducibleai/issues</a></p>
+<p>Please open an issue at <a href="https://github.com/MVR-GIS/reproducibleai/issues" class="external-link uri">https://github.com/MVR-GIS/reproducibleai/issues</a>.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="license">
@@ -202,8 +145,7 @@
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
 <li><a href="https://app.codecov.io/gh/MVR-GIS/reproducibleai" class="external-link"><img src="https://codecov.io/gh/MVR-GIS/reproducibleai/graph/badge.svg" alt="Codecov test coverage"></a></li>
-<li><a href="https://www.tidyverse.org/lifecycle" class="external-link"><img src="https://img.shields.io/badge/lifecycle-maturing-blue.svg" alt="Lifecycle: maturing"></a></li>
-<li><a href="https://www.repostatus.org/#wip" class="external-link"><img src="https://www.repostatus.org/badges/latest/wip.svg" alt="Project Status: WIP"></a></li>
+<li><a href="https://www.tidyverse.org/lifecycle" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></li>
 <li><a href="http://choosealicense.com/licenses/cc0-1.0/" class="external-link"><img src="https://img.shields.io/badge/license-CC0-blue.svg" alt="License: CC0"></a></li>
 </ul>
 </div>
@@ -217,7 +159,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>
