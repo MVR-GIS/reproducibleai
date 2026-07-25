@@ -2,3 +2,28 @@ url: https://mvr-gis.github.io/reproducibleai/
 template:
   bootstrap: 5
 
+navbar:
+  components:
+    articles:
+      text: Articles
+      menu:
+      - text: "Step 1: Review the benchmark"
+        href: articles/review-agentic-routing-benchmarks.html
+      - text: "Step 2: Run the evaluation"
+        href: articles/agentic-routing-evaluation.html
+      - text: "Step 3: Interpret routing health"
+        href: articles/interpret-agentic-routing-health.html
+      - text: Durable agentic context for a repository
+        href: articles/agentic-context.html
+      - text: SBOM for R Package Repositories
+        href: articles/sbom.html
+
+articles:
+- title: Articles
+  contents:
+  - review-agentic-routing-benchmarks
+  - agentic-routing-evaluation
+  - interpret-agentic-routing-health
+  - agentic-context
+  - sbom
+

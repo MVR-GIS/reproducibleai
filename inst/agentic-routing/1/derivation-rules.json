@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "generator_version": "0.1.0",
+  "rules": [
+    {
+      "id": "current-goal",
+      "artifact_type": "goal",
+      "path_regex": "^dev/goals/[^/]+[.]md$",
+      "heading_patterns": ["^Current objective$", "^Current focus$", "^Current state$"],
+      "question_template": "What is the project's current development objective or focus? State the maintained substantive points.",
+      "min_words": 5,
+      "max_words": 220
+    },
+    {
+      "id": "accepted-decision",
+      "artifact_type": "decision",
+      "path_regex": "^dev/decisions/[^/]+[.]md$",
+      "heading_patterns": ["^Decision$", "^Decisions$"],
+      "question_template": "What decision is maintained in this decision record? State the maintained substantive points.",
+      "min_words": 5,
+      "max_words": 300
+    },
+    {
+      "id": "feature-outcome",
+      "artifact_type": "feature",
+      "path_regex": "^dev/features/[^/]+[.]md$",
+      "heading_patterns": ["^User outcome$", "^Outcome$", "^Purpose$"],
+      "question_template": "What outcome or purpose is maintained for this feature? State the maintained substantive points.",
+      "min_words": 5,
+      "max_words": 220
+    },
+    {
+      "id": "workflow-procedure",
+      "artifact_type": "workflow",
+      "path_regex": "^dev/workflows/[^/]+[.]md$",
+      "heading_patterns": ["^Procedure$", "^Routing a change$", "^Workflow$", "^Purpose$"],
+      "question_template": "What procedure or purpose is maintained for this workflow? State the maintained substantive points.",
+      "min_words": 5,
+      "max_words": 300
+    },
+    {
+      "id": "architecture-boundary",
+      "artifact_type": "architecture",
+      "path_regex": "^dev/architecture/[^/]+[.]md$",
+      "heading_patterns": ["^System boundary$", "^Responsibility boundary$", "^Current architecture$", "^Overview$", "^Purpose$"],
+      "question_template": "What architecture boundary or responsibility is maintained here? State the maintained substantive points.",
+      "min_words": 5,
+      "max_words": 300
+    },
+    {
+      "id": "schema-contract",
+      "artifact_type": "schema",
+      "path_regex": "^dev/schemas/[^/]+[.]md$",
+      "heading_patterns": ["^Contract$", "^Schema contract$", "^Current schema$", "^Purpose$", "^Overview$"],
+      "question_template": "What schema or data contract is maintained here? State the maintained substantive points.",
+      "min_words": 5,
+      "max_words": 300
+    }
+  ]
+}

@@ -30,6 +30,10 @@ evidence for repository-local behavior.
 - R package API, implementation, documentation, or tests: `DESCRIPTION`,
   `NAMESPACE`, `R/`, `man/`, `tests/testthat/`, and
   `dev/workflows/r-package-development.md`
+- Agentic-routing questions, experiments, scoring, or reports:
+  `dev/features/agentic-routing-evaluation.md`,
+  `dev/schemas/project-schemas.md`, and
+  `dev/workflows/agentic-routing-evaluation.md`
 
 Full session transcripts are not normal context sources. Use maintained
 durable artifacts and concise checkpoints.
