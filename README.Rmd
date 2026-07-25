@@ -118,6 +118,12 @@ The agentic-routing evaluation API defines private competency questions, runs
 fresh read-only `codex exec` sessions, scores evidence routing and expected
 answer content, and writes aggregate health reports.
 
+The user workflow is presented as three connected articles:
+
+1. [Review and freeze the benchmark](https://mvr-gis.github.io/reproducibleai/articles/review-agentic-routing-benchmarks.html)
+2. [Run the evaluation](https://mvr-gis.github.io/reproducibleai/articles/agentic-routing-evaluation.html)
+3. [Interpret routing health](https://mvr-gis.github.io/reproducibleai/articles/interpret-agentic-routing-health.html)
+
 ```{r eval=FALSE}
 check_agentic_routing_prerequisites(path = ".")
 
@@ -129,6 +135,9 @@ write_agentic_routing_review(benchmark, review_dir)
 
 # Edit questions.csv, inspect exclusions.csv, and then:
 benchmark <- apply_agentic_routing_review(benchmark, review_dir)
+benchmark_path <- file.path(tempdir(), "reproducibleai-benchmark.json")
+write_agentic_routing_benchmark(benchmark, benchmark_path)
+benchmark <- read_agentic_routing_benchmark(benchmark_path)
 
 evaluation <- run_agentic_routing_evaluation(
   path = ".",

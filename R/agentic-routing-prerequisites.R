@@ -29,6 +29,12 @@ print.agentic_routing_prerequisites <- function(x, ...) {
   cat("<agentic_routing_prerequisites>\n")
   cat("Codex CLI: ", if (x$cli_available) x$codex_version else "unavailable", "\n", sep = "")
   cat("Authentication: ", x$authentication, "\n", sep = "")
+  cat(
+    "Codex exec interface: ",
+    if (isTRUE(x$exec_compatible)) "compatible" else "incompatible",
+    "\n",
+    sep = ""
+  )
   if (!is.null(x$repository)) {
     cat("Repository context: ", if (isTRUE(x$context_valid)) "valid" else "invalid", "\n", sep = "")
     cat("Git worktree: ", if (isTRUE(x$git_clean)) "clean" else "not clean", "\n", sep = "")
@@ -48,6 +54,11 @@ routing_prerequisite_status <- function(path = NULL, codex = NULL,
     routing_codex_authentication(cli$path, run = run)
   } else {
     list(authenticated = FALSE, status = "unavailable")
+  }
+  interface <- if (cli$available) {
+    routing_codex_exec_support(cli$path, run = run)
+  } else {
+    list(supported = FALSE, error = "Codex CLI unavailable.")
   }
 
   repository <- NULL
@@ -83,6 +94,12 @@ routing_prerequisite_status <- function(path = NULL, codex = NULL,
       "The Codex CLI is not authenticated; run `codex login` where policy permits."
     )
   }
+  if (cli$available && !interface$supported) {
+    limitations <- c(
+      limitations,
+      paste0("The installed Codex CLI is incompatible: ", interface$error)
+    )
+  }
   if (!is.null(path) && !isTRUE(context_valid)) {
     limitations <- c(
       limitations,
@@ -103,11 +120,13 @@ routing_prerequisite_status <- function(path = NULL, codex = NULL,
 
   structure(
     list(
-      ready = cli$available && auth$authenticated && repository_ready,
+      ready = cli$available && auth$authenticated &&
+        interface$supported && repository_ready,
       cli_available = cli$available,
       codex_path = if (cli$available) cli$path else NA_character_,
       codex_version = if (cli$available) cli$version else NA_character_,
       authentication = auth$status,
+      exec_compatible = interface$supported,
       repository = repository,
       context_valid = context_valid,
       git_sha = git_sha,
@@ -118,6 +137,44 @@ routing_prerequisite_status <- function(path = NULL, codex = NULL,
     ),
     class = "agentic_routing_prerequisites"
   )
+}
+
+routing_codex_exec_support <- function(command, run = routing_command_capture) {
+  result <- tryCatch(
+    run(command = command, args = c("exec", "--help"), timeout = 10000),
+    error = function(e) e
+  )
+  if (inherits(result, "error") || !identical(as.integer(result$status), 0L)) {
+    detail <- if (inherits(result, "error")) {
+      conditionMessage(result)
+    } else {
+      trimws(paste(c(result$stderr, result$stdout), collapse = "\n"))
+    }
+    return(list(
+      supported = FALSE,
+      error = if (nzchar(detail)) detail else "`codex exec --help` failed."
+    ))
+  }
+  help <- paste(c(result$stdout, result$stderr), collapse = "\n")
+  required <- c(
+    "--cd", "--sandbox", "--ephemeral", "--ignore-user-config",
+    "--json", "--output-schema", "--output-last-message"
+  )
+  missing <- required[!vapply(
+    required,
+    function(option) grepl(option, help, fixed = TRUE),
+    logical(1)
+  )]
+  if (length(missing)) {
+    return(list(
+      supported = FALSE,
+      error = paste(
+        "missing required option(s)",
+        paste(missing, collapse = ", ")
+      )
+    ))
+  }
+  list(supported = TRUE, error = "")
 }
 
 routing_resolve_codex <- function(codex = NULL, error = TRUE,

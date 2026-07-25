@@ -1,185 +1,166 @@
-# Evaluate agentic routing
+# Agentic routing, Step 2: Run the evaluation
 
-Agentic-context validation confirms that a repository has the expected
-structure. Routing evaluation asks a different question: when Codex
-receives a task, does it find the right maintained evidence and produce
-the expected answer efficiently?
+This is Step 2 of the
+[reproducibleai](https://mvr-gis.github.io/reproducibleai/)
+agentic-routing workflow:
 
-The harness is deterministic, but model responses are stochastic.
-Interpret results as repeated-run distributions rather than
-byte-identical tests.
+1.  [Review and freeze the competency
+    benchmark](https://mvr-gis.github.io/reproducibleai/articles/review-agentic-routing-benchmarks.md).
+2.  **Run the routing evaluation** (this article).
+3.  [Interpret routing health and plan a
+    comparison](https://mvr-gis.github.io/reproducibleai/articles/interpret-agentic-routing-health.md).
 
-## Capability and environment preflight
+Step 2 starts with the private, frozen benchmark JSON produced by
+Step 1. It runs fresh read-only Codex sessions, retains private
+diagnostic evidence outside the target, and writes an aggregate health
+report suitable for the target repository.
+
+## Inputs and outputs
+
+| Artifact | Location | Role |
+|----|----|----|
+| Frozen benchmark JSON | outside target | Private fixed criterion from Step 1 |
+| Clean target Git commit | target repository | System under test |
+| Raw JSONL, responses, and stderr | outside target | Private troubleshooting evidence |
+| Serialized evaluation and health objects | outside target | Reanalysis without rerunning |
+| Aggregate Markdown report | inside target | Durable result consumed by Step 3 |
+
+Never place the benchmark, canonical answers, or raw runs inside the
+repository being evaluated.
+
+## Load the Step 1 benchmark
+
+``` r
+
+library(reproducibleai)
+
+target <- "C:/workspace/FluvialGeomorph/fluvgeo"
+benchmark_path <- "C:/workspace/agentic-reviews/fluvgeo-baseline.json"
+benchmark <- read_agentic_routing_benchmark(benchmark_path)
+print(benchmark)
+```
+
+The benchmark must have no pending questions. Rejected questions remain
+in the JSON for auditability but are omitted from execution.
+
+## Run the no-usage preflight
 
 Most [reproducibleai](https://mvr-gis.github.io/reproducibleai/)
-functionality is available without Codex, a cloud account, or
-administrator rights. Live routing evaluation is different: it starts
-authenticated model runs and therefore requires a separately installed
-Codex CLI, connectivity, account entitlement, and organizational
-permission.
+capabilities require neither Codex nor a cloud account. Live routing
+evaluation requires a separately installed Codex CLI, authentication,
+connectivity, account entitlement, and organizational permission.
 
-On Windows, the standalone installer uses a user-local installation and
-does not require npm:
+``` r
+
+status <- check_agentic_routing_prerequisites(target)
+print(status)
+stopifnot(status$ready)
+```
+
+Preflight checks:
+
+- discovery and version of the standalone Codex CLI;
+- saved authentication;
+- compatibility of the installed `codex exec --help` interface;
+- valid agentic context;
+- a readable target Git commit; and
+- a clean target worktree.
+
+It does not call a model or consume usage. Network and enterprise
+execution policy remain untested until the first live session.
+
+On Windows, the standalone user-local installer does not require npm:
 
 ``` powershell
 powershell -ExecutionPolicy ByPass -c "irm https://chatgpt.com/codex/install.ps1 | iex"
 ```
 
-Restart the R IDE after installing. Then perform a no-usage preflight:
+Restart the R IDE after installation. On managed, disconnected, or
+government-furnished equipment, do not bypass application, identity, or
+network controls. Stop after offline preparation when live execution is
+prohibited.
+
+## Use a canary before a batch
+
+A one-question canary catches runtime, CLI, authentication, and
+structured response problems before they invalidate or waste a larger
+experiment.
 
 ``` r
 
-library(reproducibleai)
+canary <- benchmark
+canary$questions <- benchmark$questions[1]
 
-check_agentic_routing_prerequisites(
-  path = "C:/workspace/FluvialGeomorph/fluvgeo"
+canary_evaluation <- run_agentic_routing_evaluation(
+  path = target,
+  questions = canary,
+  repetitions = 1,
+  approved = TRUE
 )
+
+stopifnot(all(canary_evaluation$runs$completed))
 ```
 
-Automatic discovery checks `PATH` and the standard user-local Windows
-installation. Supply `codex = "C:/path/to/codex.exe"` only for a
-nonstandard installation. The diagnostic checks the executable, saved
-authentication, agentic context, and Git state without contacting a
-model. Network and enterprise execution policy remain untested until a
-live run begins.
+Do not interpret a zero score when completion is zero as routing
+failure. Inspect stderr and JSONL first. An execution or schema failure
+means the experiment did not observe routing behavior.
 
-On managed government-furnished, disconnected, or no-admin equipment,
-package installation and offline capabilities remain useful even if
-application allow-listing, identity policy, or network controls prohibit
-live Codex evaluation. Do not bypass those controls. Prepare or inspect
-fixtures and reports offline, and perform live evaluation only in an
-approved environment.
+## Run the approved evaluation
 
-## Define private competency questions
-
-The preferred first pass derives candidates deterministically from
-maintained `dev/` sections. The generator does not inspect `AGENTS.md`,
-and no model is used to create either the question or its canonical
-answer:
-
-``` r
-
-benchmark <- derive_agentic_routing_questions(
-  "C:/workspace/FluvialGeomorph/fluvgeo"
-)
-
-review_dir <- "C:/workspace/agentic-reviews/fluvgeo-baseline"
-write_agentic_routing_review(benchmark, review_dir)
-
-# Edit questions.csv, inspect exclusions.csv, then import the decisions.
-benchmark <- apply_agentic_routing_review(
-  benchmark,
-  review_dir
-)
-
-fixture <- file.path(tempdir(), "fluvgeo-routing-benchmark.json")
-write_agentic_routing_benchmark(benchmark, fixture)
-benchmark <- read_agentic_routing_benchmark(fixture)
-```
-
-All generated candidates begin as pending. Evaluation refuses a
-benchmark until every item has been explicitly approved or rejected. The
-[benchmark-review
-article](https://mvr-gis.github.io/reproducibleai/articles/review-agentic-routing-benchmarks.md)
-describes the CSV columns, QA checklist, exclusions review, staged
-review, and artifact lifecycle. Freeze the reviewed benchmark outside
-the target repository before comparing routing specifications. Source
-and rules hashes make changes auditable.
-
-Questions that require synthesis, judgment, or facts not expressed in a
-supported maintained section should still be authored manually:
-
-``` r
-
-library(reproducibleai)
-
-questions <- list(
-  new_agentic_routing_question(
-    id = "current-priority",
-    prompt = "What is the current development priority and its exit criteria?",
-    required_paths = "dev/goals/project-plan.md",
-    allowed_paths = c("AGENTS.md", "dev/architecture/design.md"),
-    expected_terms = c("current objective", "exit criteria"),
-    forbidden_terms = "session transcript"
-  ),
-  new_agentic_routing_question(
-    id = "architecture-boundary",
-    prompt = "Which repository owns this behavior and what evidence supports that?",
-    required_paths = c(
-      "AGENTS.md",
-      "dev/architecture/backend-ecosystem.md"
-    ),
-    allowed_paths = "dev/workflows/backend-change-assessment.md",
-    expected_terms = c("ownership", "downstream")
-  )
-)
-
-fixture <- file.path(tempdir(), "fluvgeo-routing-questions.json")
-write_agentic_routing_questions(questions, fixture)
-questions <- read_agentic_routing_questions(fixture)
-```
-
-Keep the fixture outside the repository under evaluation. Otherwise
-Codex can inspect the private rubric.
-
-## Run repeated isolated sessions
+After the canary succeeds, run the reviewed benchmark. Start with one
+repetition per question to validate coverage; use multiple repetitions
+when estimating stochastic stability or comparing specifications.
 
 ``` r
 
 evaluation <- run_agentic_routing_evaluation(
-  path = "C:/workspace/FluvialGeomorph/fluvgeo",
+  path = target,
   questions = benchmark,
   repetitions = 5,
   approved = TRUE,
+  output_dir = "C:/workspace/agentic-reviews/fluvgeo-runs",
   model = NULL
 )
 ```
 
-Each repetition uses a fresh `codex exec` session with:
+Every repetition uses a fresh `codex exec` session with:
 
 - `--ephemeral`;
 - `--sandbox read-only`;
-- `--ask-for-approval never`;
 - `--ignore-user-config`;
 - `--json`; and
 - `--output-schema`.
 
+Preflight verifies this option contract before the first model call.
+Codex CLI 0.145.0 does not expose the interactive `--ask-for-approval`
+option on `exec`; read-only sandboxing and non-interactive execution
+provide the applicable boundary.
+
 The function uses existing Codex authentication. It does not accept or
-record API keys. Raw JSONL, responses, and stderr remain in an external
-temporary directory unless another external directory is supplied.
+record API keys.
 
-`codex exec` and structured output are documented in OpenAI’s
-[non-interactive
-mode](https://learn.chatgpt.com/docs/non-interactive-mode) and [CLI
-reference](https://learn.chatgpt.com/docs/developer-commands?surface=cli#cli-codex-exec).
-
-## Summarize and report
+## Create the Step 2 output
 
 ``` r
 
 health <- summarize_agentic_routing(evaluation)
-health$health_score
-health$by_question
 
-write_agentic_routing_report(
-  health,
-  path = file.path(
-    "C:/workspace/FluvialGeomorph/fluvgeo",
-    "dev",
-    "governance",
-    "agentic-routing-health.md"
-  )
+report_path <- file.path(
+  target,
+  "dev",
+  "governance",
+  "agentic-routing-health.md"
 )
+write_agentic_routing_report(health, report_path)
 ```
 
-Generated questions score answer grounding with deterministic multiset
-token precision, recall, and F1 against the frozen canonical answer.
-Manually authored questions retain expected-term recall. The durable
-report contains only aggregate metrics and recommendations. Inspect
-external raw runs before changing instructions, and validate proposed
-improvements on held-out questions or repositories.
+Commit only the aggregate report. Keep serialized R objects, raw
+responses, events, stderr, prompts, and gold answers outside the target.
 
-Run this workflow deliberately during local development when agentic
-context changes. Do not place live evaluation in package builds or CI.
-Commit the aggregate report as a transparent quality and troubleshooting
-artifact; never commit the private fixtures or raw traces.
+The harness is deterministic, but model responses are stochastic. A
+single-repetition pilot validates execution and reveals candidate
+signals; it does not estimate run-to-run variation.
+
+**Next:** continue to [Step 3: Interpret routing
+health](https://mvr-gis.github.io/reproducibleai/articles/interpret-agentic-routing-health.md)
+before changing repository instructions.

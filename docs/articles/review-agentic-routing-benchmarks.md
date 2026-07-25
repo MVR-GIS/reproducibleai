@@ -1,4 +1,18 @@
-# Review agentic-routing competency benchmarks
+# Agentic routing, Step 1: Review the benchmark
+
+This is Step 1 of the
+[reproducibleai](https://mvr-gis.github.io/reproducibleai/)
+agentic-routing workflow:
+
+1.  **Review and freeze the competency benchmark** (this article).
+2.  [Run the routing
+    evaluation](https://mvr-gis.github.io/reproducibleai/articles/agentic-routing-evaluation.md).
+3.  [Interpret routing health and plan a
+    comparison](https://mvr-gis.github.io/reproducibleai/articles/interpret-agentic-routing-health.md).
+
+Each step consumes the artifact produced by the previous step. Private
+criteria and raw runs stay outside the target repository; only the
+aggregate health report becomes durable repository documentation.
 
 Derivation creates candidate questions and private canonical answers. It
 does not make those candidates scientifically valid by itself. A human
@@ -165,3 +179,7 @@ This explicit separation makes the roles clear: maintained `dev/`
 context supplies the candidate criterion, a human validates it, the
 frozen JSON fixes it, Codex supplies stochastic responses, and the
 health report summarizes the observed performance.
+
+**Next:** continue to [Step 2: Run the routing
+evaluation](https://mvr-gis.github.io/reproducibleai/articles/agentic-routing-evaluation.md)
+with the frozen benchmark JSON.

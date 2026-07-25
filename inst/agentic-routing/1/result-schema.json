@@ -10,8 +10,7 @@
       "type": "array",
       "items": {
         "type": "string"
-      },
-      "uniqueItems": true
+      }
     },
     "route_summary": {
       "type": "string"

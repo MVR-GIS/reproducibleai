@@ -21,12 +21,16 @@ durable aggregate health report.
 6. Review repetitions, model, target commit, and expected usage.
 7. Run `check_agentic_routing_prerequisites()` in the local development
    environment.
-8. Call `run_agentic_routing_evaluation(..., approved = TRUE)`.
-9. Inspect raw external runs when a score needs explanation.
-10. Call `summarize_agentic_routing()`.
-11. Write and commit an aggregate report with
+8. Run a one-question canary and stop if execution or structured response
+   completion fails.
+9. Call `run_agentic_routing_evaluation(..., approved = TRUE)`.
+10. Inspect raw external runs when a score needs explanation.
+11. Call `summarize_agentic_routing()`.
+12. Write and commit an aggregate report with
    `write_agentic_routing_report()`.
-12. Compare instruction formulations only with the same frozen benchmark.
+13. Interpret execution, routing, answer, efficiency, and variability layers in
+    that order.
+14. Compare instruction formulations only with the same frozen benchmark.
 
 ## Capability tiers
 
@@ -97,4 +101,6 @@ entitlement will permit a live run.
 - Decision: `dev/decisions/adr-0007-agentic-routing-evaluation.md`
 - Schemas: `dev/schemas/project-schemas.md`
 - Workflow: `dev/workflows/agentic-routing-evaluation.md`
-- User article: `vignettes/agentic-routing-evaluation.Rmd`
+- Step 1 article: `vignettes/review-agentic-routing-benchmarks.Rmd`
+- Step 2 article: `vignettes/agentic-routing-evaluation.Rmd`
+- Step 3 article: `vignettes/interpret-agentic-routing-health.Rmd`

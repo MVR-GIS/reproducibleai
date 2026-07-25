@@ -26,6 +26,19 @@ test_that("routing questions round-trip through the versioned JSON fixture", {
   )
 })
 
+test_that("the structured-response schema uses the supported Codex subset", {
+  schema <- jsonlite::read_json(
+    reproducibleai:::routing_result_schema_path(),
+    simplifyVector = FALSE
+  )
+
+  expect_false(
+    "uniqueItems" %in% names(schema$properties$evidence_paths)
+  )
+  expect_false(is.null(schema$properties$evidence_paths$items$type))
+  expect_false(isTRUE(schema$additionalProperties))
+})
+
 test_that("competency derivation is deterministic and independent of AGENTS", {
   target <- withr::local_tempdir()
   use_agentic_context(target, profiles = "base", quiet = TRUE)
@@ -371,6 +384,11 @@ test_that("repeated evaluation uses isolated structured Codex runs", {
     },
     logical(1)
   )))
+  expect_true(all(vapply(
+    calls,
+    function(x) !"--ask-for-approval" %in% x$args,
+    logical(1)
+  )))
   expect_false(reproducibleai:::path_within(evaluation$output_dir, target))
 })
 
@@ -400,6 +418,11 @@ test_that("failed execution scores zero and remains reportable", {
   expect_equal(health$health_score, 0)
   expect_true(any(grepl(
     "execution or structured-response failures",
+    readLines(report),
+    fixed = TRUE
+  )))
+  expect_false(any(grepl(
+    "clarify the AGENTS.md route",
     readLines(report),
     fixed = TRUE
   )))
@@ -472,6 +495,16 @@ test_that("routing prerequisite checks are diagnostic and do not run a model", {
         status = 0L, stdout = "Logged in using ChatGPT", stderr = character()
       ))
     }
+    if (identical(args, c("exec", "--help"))) {
+      return(list(
+        status = 0L,
+        stdout = paste(
+          "--cd --sandbox --ephemeral --ignore-user-config --json",
+          "--output-schema --output-last-message"
+        ),
+        stderr = character()
+      ))
+    }
     stop("unexpected command")
   }
 
@@ -483,12 +516,35 @@ test_that("routing prerequisite checks are diagnostic and do not run a model", {
   expect_s3_class(status, "agentic_routing_prerequisites")
   expect_true(status$ready)
   expect_true(status$cli_available)
+  expect_true(status$exec_compatible)
   expect_identical(status$codex_version, "codex-cli test-version")
   expect_identical(status$authentication, "authenticated")
   expect_identical(status$network_policy, "not_tested")
-  expect_length(calls, 2)
+  expect_length(calls, 3)
   expect_identical(calls[[1]]$args, "--version")
   expect_identical(calls[[2]]$args, c("login", "status"))
+  expect_identical(calls[[3]]$args, c("exec", "--help"))
+})
+
+test_that("preflight rejects an incompatible codex exec interface", {
+  fake_run <- function(command, args, timeout) {
+    if (identical(args, "--version")) {
+      return(list(status = 0L, stdout = "codex-cli old", stderr = character()))
+    }
+    if (identical(args, c("login", "status"))) {
+      return(list(status = 0L, stdout = "Logged in", stderr = character()))
+    }
+    list(status = 0L, stdout = "--sandbox --json", stderr = character())
+  }
+
+  status <- reproducibleai:::routing_prerequisite_status(
+    codex = "old-codex",
+    run = fake_run
+  )
+
+  expect_false(status$ready)
+  expect_false(status$exec_compatible)
+  expect_match(status$limitations, "incompatible")
 })
 
 test_that("restricted environments remain usable for offline capabilities", {

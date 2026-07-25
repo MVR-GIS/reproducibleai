@@ -75,6 +75,14 @@ run_agentic_routing_evaluation <- function(
         call. = FALSE
       )
     }
+    interface <- routing_codex_exec_support(codex)
+    if (!interface$supported) {
+      stop(
+        "The installed Codex CLI does not support the required non-interactive interface.",
+        "\n", interface$error,
+        call. = FALSE
+      )
+    }
   } else {
     if (is.null(codex)) codex <- "codex"
     codex_version <- "injected-runner"
@@ -260,11 +268,15 @@ run_agentic_routing_once <- function(root, question, repetition, output_dir,
 routing_process_runner <- function(command, args, wd, stdout, stderr, timeout) {
   previous <- setwd(wd)
   on.exit(setwd(previous), add = TRUE)
+  stdin_path <- tempfile("reproducibleai-codex-stdin-")
+  writeLines(character(), stdin_path, useBytes = TRUE)
+  on.exit(unlink(stdin_path, force = TRUE), add = TRUE)
   status <- suppressWarnings(system2(
     command = command,
     args = vapply(args, shQuote, character(1)),
     stdout = stdout,
     stderr = stderr,
+    stdin = stdin_path,
     timeout = ceiling(timeout)
   ))
   list(status = as.integer(status))
@@ -275,7 +287,6 @@ routing_codex_args <- function(root, prompt, response_path, schema, model) {
     "exec",
     "--cd", root,
     "--sandbox", "read-only",
-    "--ask-for-approval", "never",
     "--ignore-user-config",
     "--ephemeral",
     "--json",

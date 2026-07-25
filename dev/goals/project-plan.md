@@ -7,34 +7,35 @@ context and quantitative evaluation of how effectively agents use that context.
 
 ## Current objective
 
-Add an independent, deterministic competency derivation lane:
+Establish and interpret the first self-evaluation baseline, then design a
+controlled routing-specificity sensitivity experiment.
 
-- extract conservative questions and canonical answers from maintained `dev/`
-  sections without reading `AGENTS.md`;
-- require explicit human approval or rejection;
-- provide an accessible external review bundle and documented QA workflow;
-- freeze versioned benchmarks outside the evaluated repository;
-- score generated answers with transparent token-overlap metrics; and
-- retain manual competency questions for synthesis and judgment tasks.
-
-Status: implemented and verified on `feat/agentic-routing-evaluation`;
-awaiting maintainer review.
+Status: the reviewed 11-question baseline pilot is complete for commit
+`202172f`; adapter hardening, integrated workflow documentation, and durable
+health reporting are implemented on `feat/agentic-routing-evaluation`.
 
 ## Verification record
 
-- 145 package expectations pass with no failures, warnings, or skips.
-- A clean source package build includes all four vignettes.
+- 155 package expectations pass with no failures, warnings, or skips.
+- The package now has five connected vignettes, including a numbered
+  review-run-interpret workflow.
 - `R CMD check --no-manual --no-build-vignettes` completes with status OK.
 - The pkgdown site builds with the new article and API reference pages.
 - Self-derivation produces 11 pending candidates across goals, decisions,
   features, workflows, and architecture; five unsupported sections are
   retained as explicit exclusions for human inspection.
-- No authenticated model calls or paid usage occurred during implementation.
+- Eleven authenticated pilot sessions completed successfully after a canary.
+- The baseline has 100% completion, 100% required-evidence recall, 90.9%
+  relevant-evidence precision, 39.4% literal answer score, and an 80.0/100
+  weighted health score.
+- Mean reported input was 53,106 tokens, of which 36,631 were cached; this is a
+  baseline observation rather than a pass/fail threshold.
 - The no-usage preflight discovers Codex CLI 0.145.0 from its stable user-local
   Windows installation and confirms saved ChatGPT authentication despite a
   stale IDE `PATH`.
-- A live self-evaluation remains the next step after these changes are committed
-  and the maintainer explicitly approves repeated model usage.
+- Two zero-usage launch failures exposed a removed CLI option and an unsupported
+  JSON Schema keyword; compatibility preflight, schema tests, and canary
+  guidance now guard those boundaries.
 
 ## Acceptance criteria
 
@@ -67,11 +68,11 @@ are a later adoption and external-validation cohort.
 
 ## Next evaluation phases
 
-1. Establish baseline competency questions for the initial cohort.
-2. Run a small authenticated pilot and inspect raw scoring evidence.
-3. Refine rubrics before increasing repetitions.
-4. Compare one routing-specification factor at a time in fixed worktrees.
-5. Validate recommendations on held-out questions or repositories.
+1. Review the two low-precision architecture routes and answer-breadth evidence.
+2. Define one routing-specificity hypothesis without changing the benchmark.
+3. Compare baseline and variant in fixed worktrees with three to five
+   repetitions on selected sentinel questions.
+4. Validate the selected formulation on held-out questions or repositories.
 
 ## Deferred work
 

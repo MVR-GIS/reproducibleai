@@ -15,6 +15,7 @@ summarize_agentic_routing <- function(evaluation) {
   ids <- unique(runs$question_id)
   rows <- lapply(ids, function(id) {
     x <- runs[runs$question_id == id, , drop = FALSE]
+    completed <- x[x$completed, , drop = FALSE]
     data.frame(
       question_id = id,
       runs = nrow(x),
@@ -22,14 +23,15 @@ summarize_agentic_routing <- function(evaluation) {
       mean_score = mean(x$score),
       score_sd = if (nrow(x) > 1L) stats::sd(x$score) else NA_real_,
       minimum_score = min(x$score),
-      route_recall = mean(x$route_recall),
-      route_precision = mean(x$route_precision),
-      term_recall = mean(x$term_recall),
-      answer_score = mean(x$answer_score),
-      forbidden_rate = mean(x$forbidden_rate),
+      route_recall = routing_mean_na(completed$route_recall),
+      route_precision = routing_mean_na(completed$route_precision),
+      term_recall = routing_mean_na(completed$term_recall),
+      answer_score = routing_mean_na(completed$answer_score),
+      forbidden_rate = routing_mean_na(completed$forbidden_rate),
       mean_input_tokens = routing_mean_na(x$input_tokens),
       mean_cached_input_tokens = routing_mean_na(x$cached_input_tokens),
       mean_output_tokens = routing_mean_na(x$output_tokens),
+      mean_tool_calls = routing_mean_na(x$tool_calls),
       mean_elapsed_seconds = routing_mean_na(x$elapsed_seconds),
       stringsAsFactors = FALSE
     )
@@ -37,6 +39,7 @@ summarize_agentic_routing <- function(evaluation) {
   by_question <- do.call(rbind, rows)
   rownames(by_question) <- NULL
   weighted_score <- stats::weighted.mean(runs$score, runs$weight)
+  completed_runs <- runs[runs$completed, , drop = FALSE]
   recommendations <- routing_recommendations(by_question)
 
   structure(
@@ -51,6 +54,16 @@ summarize_agentic_routing <- function(evaluation) {
       runs = nrow(runs),
       questions = nrow(by_question),
       completion_rate = mean(runs$completed),
+      route_recall = routing_mean_na(completed_runs$route_recall),
+      route_precision = routing_mean_na(completed_runs$route_precision),
+      answer_score = routing_mean_na(completed_runs$answer_score),
+      mean_input_tokens = routing_mean_na(completed_runs$input_tokens),
+      mean_cached_input_tokens = routing_mean_na(
+        completed_runs$cached_input_tokens
+      ),
+      mean_output_tokens = routing_mean_na(completed_runs$output_tokens),
+      mean_tool_calls = routing_mean_na(completed_runs$tool_calls),
+      mean_elapsed_seconds = routing_mean_na(completed_runs$elapsed_seconds),
       by_question = by_question,
       recommendations = recommendations
     ),
@@ -94,8 +107,8 @@ routing_report_text <- function(health) {
     health$git_sha
   }
   table_lines <- c(
-    "| Question | Runs | Complete | Score | SD | Recall | Precision | Answer | Forbidden | Input tokens | Seconds |",
-    "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"
+    "| Question | Runs | Complete | Score | SD | Recall | Precision | Answer | Input | Cached | Output | Tools | Seconds |",
+    "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"
   )
   for (i in seq_len(nrow(health$by_question))) {
     x <- health$by_question[i, ]
@@ -108,8 +121,10 @@ routing_report_text <- function(health) {
       routing_percent(x$route_recall), " | ",
       routing_percent(x$route_precision), " | ",
       routing_percent(x$answer_score), " | ",
-      routing_percent(x$forbidden_rate), " | ",
       routing_decimal(x$mean_input_tokens, digits = 0), " | ",
+      routing_decimal(x$mean_cached_input_tokens, digits = 0), " | ",
+      routing_decimal(x$mean_output_tokens, digits = 0), " | ",
+      routing_decimal(x$mean_tool_calls, digits = 1), " | ",
       routing_decimal(x$mean_elapsed_seconds), " |"
     ))
   }
@@ -130,9 +145,25 @@ routing_report_text <- function(health) {
     paste0("- Runs: ", health$runs),
     paste0("- Completion rate: ", routing_percent(health$completion_rate)),
     paste0("- Weighted health score: ", sprintf("%.1f/100", health$health_score)),
+    paste0("- Mean required-evidence recall: ", routing_percent(health$route_recall)),
+    paste0("- Mean relevant-evidence precision: ", routing_percent(health$route_precision)),
+    paste0("- Mean answer score: ", routing_percent(health$answer_score)),
+    paste0("- Mean input tokens: ", routing_decimal(health$mean_input_tokens, digits = 0)),
+    paste0("- Mean cached input tokens: ", routing_decimal(
+      health$mean_cached_input_tokens, digits = 0
+    )),
+    paste0("- Mean output tokens: ", routing_decimal(health$mean_output_tokens, digits = 0)),
+    paste0("- Mean tool calls: ", routing_decimal(health$mean_tool_calls, digits = 1)),
+    paste0("- Mean elapsed seconds: ", routing_decimal(health$mean_elapsed_seconds)),
     "",
     "The score summarizes repeated stochastic runs; it is not a deterministic proof of correctness.",
     "Private rubrics and raw traces are intentionally stored outside the evaluated repository.",
+    if (all(health$by_question$runs < 2L)) {
+      "This pilot has one observation per question and cannot estimate run-to-run stability."
+    } else {
+      "Question-level standard deviations describe observed run-to-run stability."
+    },
+    "Token and timing metrics are descriptive until compared with a maintained baseline or threshold.",
     "",
     "## Question results",
     "",
@@ -164,6 +195,7 @@ routing_recommendations <- function(by_question) {
         prefix, "investigate execution or structured-response failures before interpreting routing."
       ))
     }
+    if (x$completion_rate == 0) next
     if (x$route_recall < 0.8) {
       out <- c(out, paste0(
         prefix, "clarify the AGENTS.md route or make required evidence more discoverable."
@@ -176,7 +208,7 @@ routing_recommendations <- function(by_question) {
     }
     if (x$answer_score < 0.8) {
       out <- c(out, paste0(
-        prefix, "review whether durable evidence states the required capability clearly."
+        prefix, "inspect prompt-to-criterion alignment and response breadth; low literal grounding can reflect paraphrase, excess context, or unclear durable evidence."
       ))
     }
     if (!is.na(x$score_sd) && x$score_sd > 0.10) {

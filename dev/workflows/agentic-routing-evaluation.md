@@ -39,6 +39,10 @@ available.
 
 ## Execute
 
+Run one approved question as a canary. Inspect completion, stderr, JSONL, and
+the structured response before starting a larger batch. Do not interpret an
+execution failure as a routing result.
+
 Call `run_agentic_routing_evaluation()` with explicit approval. The default
 adapter uses:
 
@@ -46,7 +50,6 @@ adapter uses:
 - one ephemeral session per question repetition;
 - target repository as the working directory;
 - read-only sandbox;
-- approval policy `never`;
 - ignored user configuration;
 - JSONL event output; and
 - a schema-constrained final response.
@@ -56,10 +59,14 @@ access tokens, or credential files in fixtures, events, or reports.
 
 Live execution is a maintainer-initiated local development diagnostic. Do not
 run it automatically during package installation, package builds, tests, or CI.
+Preflight verifies that the installed CLI exposes every required
+non-interactive option before starting the first model call.
 
 ## Review
 
 Inspect failed and low-scoring raw runs before interpreting the aggregate.
+Interpret completion first, then routing recall and precision, answer
+grounding, efficiency, and finally repeated-run variation.
 Distinguish:
 
 - execution or authentication failure;

@@ -134,6 +134,8 @@ The local diagnostic contains:
 - `codex_path`: local resolved executable path, never written to a health report
 - `codex_version`: reported CLI version
 - `authentication`: `authenticated`, `not_authenticated`, or `unavailable`
+- `exec_compatible`: whether `codex exec --help` exposes every option required
+  by the evaluation adapter
 - optional repository path, context validity, Git SHA, and clean-worktree state
 - `network_policy`: currently `not_tested`
 - human-readable limitations and local discovery errors
@@ -148,7 +150,9 @@ The Codex final response schema is versioned at
 `inst/agentic-routing/1/result-schema.json` and requires:
 
 - `answer`: string
-- `evidence_paths`: unique array of repository-relative strings
+- `evidence_paths`: array of repository-relative strings; duplicate values are
+  removed during scoring because the supported structured-output schema subset
+  does not permit `uniqueItems`
 - `route_summary`: string
 - `confidence`: number from zero through one
 
@@ -177,7 +181,8 @@ expected-term recall for manually authored questions.
 
 The durable Markdown report contains repository name, Git SHA, model and Codex
 CLI labels, evaluation timestamp, run and question counts, completion rate,
-weighted health score, per-question aggregate metrics, threshold-based
+weighted health score, aggregate routing and answer metrics, input/cache/output
+tokens, tool calls, elapsed time, per-question metrics, threshold-based
 recommendations, and the scoring contract.
 
 It must not contain private prompts, rubrics, raw answers, event streams,

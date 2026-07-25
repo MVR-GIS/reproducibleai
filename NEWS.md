@@ -11,6 +11,11 @@
   import.
 * Added canonical-answer token precision, recall, and F1 for generated
   retrieval and grounding questions.
+* Added a numbered review-run-interpret article workflow and the first durable
+  self-evaluation health report.
+* Hardened live execution with `codex exec` interface preflight, a supported
+  structured-output schema, canary guidance, and execution-aware
+  recommendations.
 * Added explicitly approved, repeated, ephemeral, read-only `codex exec`
   evaluation with JSONL event capture and schema-constrained responses.
 * Added transparent routing, answer, completion, usage, and variability metrics.

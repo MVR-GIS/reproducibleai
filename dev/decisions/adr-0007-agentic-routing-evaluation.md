@@ -33,6 +33,8 @@ repository context being measured.
 - aggregate durable health reports that exclude prompts, rubrics, responses,
   and raw traces;
 - optional user-local CLI discovery and a no-usage prerequisite diagnostic; and
+- required-option validation against `codex exec --help` before live execution;
+- a one-question canary before a larger first-time batch; and
 - a strict separation between deterministic offline package capabilities and
   connected agentic execution.
 
