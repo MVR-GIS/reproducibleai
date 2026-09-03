@@ -3,20 +3,35 @@
 ## Purpose
 
 Develop `{reproducibleai}` as the reusable implementation of durable agentic
-context and quantitative evaluation of how effectively agents use that context.
+context, human-agent decision governance, and quantitative evaluation of how
+effectively agents use that context.
 
 ## Current objective
 
-Preserve the completed agentic-routing evaluation baseline in a resumable state.
-Further evaluation-feature development and routing sensitivity experiments are
-paused until the maintainer explicitly resumes them.
+Dogfood the accepted human-agent decision-governance policy manually in FGDB
+before deciding whether to add scaffolding, schemas, validation, R helpers, or
+delegation scoring to the package.
 
-Status: the reviewed 11-question baseline pilot is complete for commit
-`202172f`; adapter hardening, integrated workflow documentation, and durable
-health reporting were merged to remote `main` by PR #3. See
+The human-readable Stage A policy and workflow are maintained in
+`dev/governance/human-agent-decision-governance.md` and
+`dev/workflows/investigate-decide-implement.md`. Agentic-routing sensitivity
+experiments remain paused as recorded in
 `dev/checkpoints/current/agentic-routing-evaluation-paused.md`.
 
-## Verification record
+## Human-agent governance acceptance criteria
+
+- Routine implementation proceeds without unnecessary human escalation.
+- Consequential scientific or architectural ambiguity stops before behavior is
+  changed without accountable review.
+- Decision packets communicate cited evidence, unknowns, alternatives, and one
+  precise decision without requiring a transcript.
+- Adjudicated outcomes are promoted to existing durable artifact categories.
+- Cross-repository scope, contract ownership, and modification authority remain
+  explicit.
+- Dogfooding records missed and unnecessary escalation, reviewer effort,
+  decision clarity, and procedural friction before automation is proposed.
+
+## Routing baseline verification record (2026-07-25)
 
 - 155 package expectations pass with no failures, warnings, or skips.
 - The package now has five connected vignettes, including a numbered
