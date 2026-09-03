@@ -8,28 +8,39 @@ effectively agents use that context.
 
 ## Current objective
 
-Dogfood the accepted human-agent decision-governance policy manually in FGDB
-before deciding whether to add scaffolding, schemas, validation, R helpers, or
-delegation scoring to the package.
+Use the lean human-agent collaboration guidance during normal FGDB development
+and observe whether it improves routing and forward progress without weakening
+scientific authority.
 
-The human-readable Stage A policy and workflow are maintained in
+The stabilized policy and workflow are maintained in
 `dev/governance/human-agent-decision-governance.md` and
 `dev/workflows/investigate-decide-implement.md`. Agentic-routing sensitivity
 experiments remain paused as recorded in
 `dev/checkpoints/current/agentic-routing-evaluation-paused.md`.
 
-## Human-agent governance acceptance criteria
+ADR-0010 records the completed pilot result. The policy prevented unsupported
+choices but over-investigated a visual GIS judgment, delayed human
+consultation, and omitted the reasoning-environment/repository-agent handoff.
+The revised manual guidance addresses those gaps without changing Standard
+0.1, scaffolding, validation, or the R API.
+
+## Human-agent collaboration acceptance criteria
 
 - Routine implementation proceeds without unnecessary human escalation.
-- Consequential scientific or architectural ambiguity stops before behavior is
-  changed without accountable review.
-- Decision packets communicate cited evidence, unknowns, alternatives, and one
-  precise decision without requiring a transcript.
+- Tacit expertise, intent, and visual or professional judgment trigger early,
+  focused consultation rather than substitute investigation.
+- Reasoning-environment and repository-agent handoffs state the objective,
+  established decisions, scope, open questions, permissions, and completion
+  criteria without carrying a transcript.
+- Investigations stop when the next action is clear or human judgment is the
+  remaining input.
+- Consequential scientific or architectural choices still stop before
+  unauthorized behavior changes.
+- Responses lead with conclusions and decision-relevant evidence; full decision
+  packets are reserved for genuinely complex choices.
 - Adjudicated outcomes are promoted to existing durable artifact categories.
-- Cross-repository scope, contract ownership, and modification authority remain
-  explicit.
-- Dogfooding records missed and unnecessary escalation, reviewer effort,
-  decision clarity, and procedural friction before automation is proposed.
+- Further automation is proposed only for a repeated, stable gap not already
+  handled by the agent platform or repository instructions.
 
 ## Routing baseline verification record (2026-07-25)
 

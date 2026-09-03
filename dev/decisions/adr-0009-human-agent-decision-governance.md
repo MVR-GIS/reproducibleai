@@ -1,6 +1,6 @@
 # ADR-0009: Adopt human-agent decision governance for manual dogfooding
 
-- Status: accepted
+- Status: superseded by ADR-0010
 - Date: 2026-09-03
 
 ## Context

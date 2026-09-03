@@ -5,5 +5,5 @@ Define artifact authority, lifecycle, review expectations, and information-handl
 ## Maintained policies
 
 - `artifact-lifecycle.md`: authority and lifecycle of durable context.
-- `human-agent-decision-governance.md`: delegation boundaries, evidence
-  posture, human authority, and transitional handoffs.
+- `human-agent-decision-governance.md`: lean routing between humans, reasoning
+  environments, repository agents, and durable context.

@@ -6,7 +6,8 @@ Document repeatable, repository-relevant procedures here. A workflow should stat
 
 - `complete-development-task.md`: ordinary authorized implementation through
   completion.
-- `investigate-decide-implement.md`: consequential ambiguity, human
-  adjudication, durable promotion, implementation, and verification.
+- `investigate-decide-implement.md`: early consultation, proportionate
+  investigation, compact AI-system handoffs, consequential decisions, and
+  implementation.
 - `r-package-development.md`: repository-specific R package procedure.
 - `agentic-routing-evaluation.md`: benchmark review, execution, and reporting.

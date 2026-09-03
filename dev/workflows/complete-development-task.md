@@ -9,9 +9,9 @@ A requested repository change is ready to implement.
 1. Inspect applicable `AGENTS.md` instructions and routed context.
 2. Confirm the requested scope and current Git evidence.
 3. Confirm that established contracts govern the result and that implementation
-   is within delegated authority. If consequential ambiguity remains, follow
-   `dev/workflows/investigate-decide-implement.md` before modifying authoritative
-   behavior.
+   is within delegated authority. If intent, tacit expertise, or consequential
+   ambiguity remains, use the consult/investigate workflow before modifying
+   authoritative behavior.
 4. Implement the smallest coherent change while preserving unrelated work.
 5. Run checks proportionate to risk.
 6. Update affected goals, architecture, decisions, governance, workflows,

@@ -46,6 +46,8 @@ fail validation; repository-owned edits relative to seed hashes remain warnings.
 - Decision: `dev/decisions/adr-0006-agentic-context-standard.md`
 - Manual governance extension:
   `dev/governance/human-agent-decision-governance.md`
+- Stabilizing decision:
+  `dev/decisions/adr-0010-lean-human-agent-collaboration.md`
 - Consequential-change workflow:
   `dev/workflows/investigate-decide-implement.md`
 - Schemas: `dev/schemas/project-schemas.md`

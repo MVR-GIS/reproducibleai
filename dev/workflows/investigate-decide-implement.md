@@ -1,122 +1,76 @@
-# Investigate, decide, implement, and verify
+# Consult, investigate, decide, implement, and verify
 
 ## Trigger
 
-Use this workflow when a requested change may affect scientific meaning,
-methodology, architecture, authoritative data semantics, capability ownership,
-provenance, reproducibility, public or cross-repository contracts, governance,
-release, or deployment behavior.
-
-## Inputs
-
-- objective and decision to inform;
-- repositories or systems in scope;
-- constraints and established assumptions;
-- permitted actions, including whether implementation is allowed; and
-- expected output.
-
-When these are provided in an investigation brief, treat the brief as task
-direction rather than evidence of current repository state.
+Use this workflow when repository work exposes missing human intent, tacit
+expertise, or a potentially consequential choice. Routine implementation stays
+in `complete-development-task.md`.
 
 ## Procedure
 
-### 1. Establish scope and authority
+### 1. Route the missing work
 
-Read applicable `AGENTS.md` files and routed context. Inspect repository, branch,
-working tree, remotes, and relevant history. Name every repository in scope and
-do not infer authority to modify another repository from shared workspace access.
+Identify what is actually missing:
 
-### 2. Classify the initial action
+- intent, professional judgment, visual assessment, or broad synthesis:
+  **consult the human or use a reasoning environment**;
+- current code, history, dependencies, or cross-repository impact:
+  **use the repository agent**;
+- neither: **proceed with implementation**.
 
-- **Proceed** when an established contract unambiguously governs the requested
-  result and implementation is authorized.
-- **Investigate** when evidence is needed before readiness can be established.
-- **Escalate** when available evidence already exposes a consequential choice
-  requiring accountable human judgment.
+Do not begin a broad investigation merely because the topic is scientific.
+Ask a focused human question early when tacit expertise can determine the
+direction.
 
-If uncertain, investigate without changing authoritative behavior.
+### 2. Inspect proportionately
 
-### 3. Build evidence
+When repository evidence is needed, inspect the narrowest relevant contracts,
+code, tests, history, and external authority. Stop when the next action is
+clear, additional evidence is unlikely to change it, or the remaining gap is a
+human judgment.
 
-Inspect the narrowest relevant code, tests, configuration, maintained context,
-history, and authoritative external sources. Label significant findings as
-verified, inferred, proposed, or unknown. Cite paths, symbols, tests, commits,
-or sources where practical.
+Distinguish verified facts, inferences, proposals, and unknowns when doing so
+prevents confusion. The labels are not a required reporting template.
 
-Treat contradictions as findings. Do not resolve them merely by choosing the
-newest, most convenient, or most complete-looking source.
+### 3. Choose a disposition
 
-### 4. Determine disposition
+- **Proceed:** implement established behavior within the authorized scope.
+- **Consult:** ask one concise question and resume from the answer.
+- **Investigate:** gather a bounded missing fact, then classify again.
+- **Escalate:** stop before committing a consequential unresolved choice.
 
-Proceed only when evidence establishes the intended contract and the requested
-work remains within delegated authority. Otherwise return a decision packet:
+Reversible defaults and exploratory settings should normally be proposed and
+reviewed quickly. Escalation is for durable consequences, not ordinary
+uncertainty.
 
-#### Question
+### 4. Make the handoff
 
-State the precise decision required.
+For a repository-agent handoff, provide the objective, established human
+decisions, repository scope, open evidence questions, permitted changes, and
+completion criteria.
 
-#### Why consequential
+For a human or reasoning-environment handoff, lead with the conclusion or
+decision needed, cite only decision-relevant repository facts, identify the
+remaining uncertainty, recommend the next action, and ask one precise question.
 
-Explain which scientific meaning, contract, owner, consumer, provenance,
-reproducibility, release, or deployment behavior differs between alternatives.
+A full decision packet is optional and should be reserved for complex choices
+whose alternatives and consequences cannot be communicated clearly in a short
+handoff.
 
-#### Verified evidence
+### 5. Record consequential decisions
 
-Cite inspectable evidence and distinguish current implementation from intended
-authority.
+After adjudication, update the narrowest applicable durable artifact. Do not
+store the conversation or transitional packet when the resulting contract,
+code, test, or documentation is sufficient.
 
-#### Known constraints
+### 6. Implement and verify
 
-List accepted boundaries every alternative must preserve.
-
-#### Unknowns
-
-List material facts that could not be established.
-
-#### Alternatives and consequences
-
-Describe only meaningfully different choices and their expected implications.
-
-#### Agent assessment
-
-Optionally recommend an alternative, clearly labeled as an assessment rather
-than established fact.
-
-#### Human decision required
-
-Ask one precise question that an accountable human can answer.
-
-### 5. Record the decision durably
-
-After adjudication, route the durable result to the narrowest applicable
-artifact:
-
-- goal or scope -> `dev/goals/`;
-- capability boundary or system structure -> `dev/architecture/`;
-- consequential choice and rationale -> `dev/decisions/`;
-- exact contract -> `dev/schemas/`;
-- repeatable procedure -> `dev/workflows/`;
-- cohesive behavior -> `dev/features/`; or
-- user-visible behavior -> the owning repository's user documentation.
-
-Do not preserve the decision packet as competing authority once its outcome is
-captured. Use a checkpoint only if meaningful unfinished state remains.
-
-### 6. Implement
-
-Confirm that implementation is authorized, then follow the repository's normal
-development workflow. Implement the smallest coherent realization of the
-accepted decision while preserving unrelated work.
-
-### 7. Verify
-
-Run checks proportionate to risk. For cross-repository changes, verify the
-owning producer contract before consumers and run relevant integration checks.
-Review the final status and diff against the authorized scope and durable
-decision.
+Return to the repository agent when the decision and scope are clear. Implement
+the smallest coherent change, run checks proportionate to risk, and report the
+outcome and any material remaining uncertainty.
 
 ## Completion evidence
 
-Report the disposition, evidence inspected, human decision when required,
-durable artifacts updated, implementation boundary, verification performed,
-and remaining unknowns or risks.
+Report what changed, what was verified, and whether any human decision became
+durable. Avoid reproducing the investigation unless its details are needed for
+review or future work.
