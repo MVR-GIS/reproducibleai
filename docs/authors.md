@@ -8,12 +8,12 @@
 ## Citation
 
 Dougherty M (2026). *reproducibleai: Reproducible AI*. R package version
-2026.07.25.9000, <https://mvr-gis.github.io/reproducibleai/>.
+2026.09.4, <https://mvr-gis.github.io/reproducibleai/>.
 
     @Manual{,
       title = {reproducibleai: Reproducible AI},
       author = {Michael Dougherty},
       year = {2026},
-      note = {R package version 2026.07.25.9000},
+      note = {R package version 2026.09.4},
       url = {https://mvr-gis.github.io/reproducibleai/},
     }
