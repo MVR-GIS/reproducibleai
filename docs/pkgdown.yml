@@ -1,13 +1,14 @@
-pandoc: 3.8.3
+pandoc: '3.10'
 pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   agentic-context: agentic-context.html
   agentic-routing-evaluation: agentic-routing-evaluation.html
   interpret-agentic-routing-health: interpret-agentic-routing-health.html
+  rep-research-ai: rep-research-ai.html
   review-agentic-routing-benchmarks: review-agentic-routing-benchmarks.html
   sbom: sbom.html
-last_built: 2026-07-25T18:34Z
+last_built: 2026-09-04T20:43Z
 urls:
   reference: https://mvr-gis.github.io/reproducibleai/reference
   article: https://mvr-gis.github.io/reproducibleai/articles

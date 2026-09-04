@@ -3,18 +3,46 @@
 ## Purpose
 
 Develop `{reproducibleai}` as the reusable implementation of durable agentic
-context and quantitative evaluation of how effectively agents use that context.
+context, human-agent decision governance, and quantitative evaluation of how
+effectively agents use that context.
 
 ## Current objective
 
-Establish and interpret the first self-evaluation baseline, then design a
-controlled routing-specificity sensitivity experiment.
+Use the lean human-agent collaboration guidance during normal FGDB development
+and observe whether it improves routing and forward progress without weakening
+scientific authority.
 
-Status: the reviewed 11-question baseline pilot is complete for commit
-`202172f`; adapter hardening, integrated workflow documentation, and durable
-health reporting are implemented on `feat/agentic-routing-evaluation`.
+The stabilized policy and workflow are maintained in
+`dev/governance/human-agent-decision-governance.md` and
+`dev/workflows/investigate-decide-implement.md`. Agentic-routing sensitivity
+experiments remain paused as recorded in
+`dev/checkpoints/current/agentic-routing-evaluation-paused.md`.
 
-## Verification record
+ADR-0010 records the completed pilot result. The policy prevented unsupported
+choices but over-investigated a visual GIS judgment, delayed human
+consultation, and omitted the reasoning-environment/repository-agent handoff.
+The revised manual guidance addresses those gaps without changing Standard
+0.1, scaffolding, validation, or the R API.
+
+## Human-agent collaboration acceptance criteria
+
+- Routine implementation proceeds without unnecessary human escalation.
+- Tacit expertise, intent, and visual or professional judgment trigger early,
+  focused consultation rather than substitute investigation.
+- Reasoning-environment and repository-agent handoffs state the objective,
+  established decisions, scope, open questions, permissions, and completion
+  criteria without carrying a transcript.
+- Investigations stop when the next action is clear or human judgment is the
+  remaining input.
+- Consequential scientific or architectural choices still stop before
+  unauthorized behavior changes.
+- Responses lead with conclusions and decision-relevant evidence; full decision
+  packets are reserved for genuinely complex choices.
+- Adjudicated outcomes are promoted to existing durable artifact categories.
+- Further automation is proposed only for a repeated, stable gap not already
+  handled by the agent platform or repository instructions.
+
+## Routing baseline verification record (2026-07-25)
 
 - 155 package expectations pass with no failures, warnings, or skips.
 - The package now has five connected vignettes, including a numbered
@@ -66,7 +94,7 @@ health reporting are implemented on `feat/agentic-routing-evaluation`.
 These repositories form the initial evaluation cohort. Remaining repositories
 are a later adoption and external-validation cohort.
 
-## Next evaluation phases
+## On-resume evaluation phases
 
 1. Review the two low-precision architecture routes and answer-breadth evidence.
 2. Define one routing-specificity hypothesis without changing the benchmark.

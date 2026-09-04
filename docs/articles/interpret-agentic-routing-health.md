@@ -76,7 +76,10 @@ reliably delivered required evidence in this pilot. The architecture
 route sometimes expanded beyond the minimum source, and answer/token
 behavior deserves a controlled follow-up. The pilot does not establish
 that 53,106 input tokens is intrinsically too high, nor that low literal
-F1 means the substantive answer was wrong.
+F1 means the substantive answer was wrong. Because the pilot recorded
+the model as `configured-default`, treat it as an operational baseline;
+specify an explicit model identifier for longitudinal or variant
+comparisons.
 
 ## Diagnose a low question
 

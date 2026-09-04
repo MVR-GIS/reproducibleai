@@ -115,11 +115,11 @@ expected answer content, and writes aggregate health reports.
 The user workflow is presented as three connected articles:
 
 1.  [Review and freeze the
-    benchmark](https://mvr-gis.github.io/reproducibleai/articles/review-agentic-routing-benchmarks.md)
+    benchmark](https://mvr-gis.github.io/reproducibleai/articles/review-agentic-routing-benchmarks.html)
 2.  [Run the
-    evaluation](https://mvr-gis.github.io/reproducibleai/articles/agentic-routing-evaluation.md)
+    evaluation](https://mvr-gis.github.io/reproducibleai/articles/agentic-routing-evaluation.html)
 3.  [Interpret routing
-    health](https://mvr-gis.github.io/reproducibleai/articles/interpret-agentic-routing-health.md)
+    health](https://mvr-gis.github.io/reproducibleai/articles/interpret-agentic-routing-health.html)
 
 ``` r
 

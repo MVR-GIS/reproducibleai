@@ -7,6 +7,8 @@ navbar:
     articles:
       text: Articles
       menu:
+      - text: "Reproducible Research with AI"
+        href: articles/rep-research-ai.html
       - text: "Step 1: Review the benchmark"
         href: articles/review-agentic-routing-benchmarks.html
       - text: "Step 2: Run the evaluation"
@@ -21,6 +23,7 @@ navbar:
 articles:
 - title: Articles
   contents:
+  - rep-research-ai
   - review-agentic-routing-benchmarks
   - agentic-routing-evaluation
   - interpret-agentic-routing-health

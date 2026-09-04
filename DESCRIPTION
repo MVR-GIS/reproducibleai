@@ -1,6 +1,6 @@
 Package: reproducibleai
 Title: Reproducible AI
-Version: 2026.07.25.9000
+Version: 2026.09.4
 Authors@R: c(
     person("Michael", "Dougherty", , 
            "Michael.P.Dougherty@usace.army.mil", role = c("aut", "cre"),
@@ -34,4 +34,4 @@ Config/testthat/edition: 3
 VignetteBuilder: knitr
 SystemRequirements: Codex CLI (optional; required only for live
     agentic-routing evaluation)
-Config/roxygen2/version: 8.0.0
+Config/roxygen2/version: 8.1.0

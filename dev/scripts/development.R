@@ -27,6 +27,8 @@ reproducibleai::validate_agentic_context(path = ".", strict = TRUE)
 
 
 ## Update docs
+devtools::document()
+devtools::load_all()
 devtools::install()
 pkgdown::build_site()
 
