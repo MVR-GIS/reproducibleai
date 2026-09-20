@@ -1,17 +1,48 @@
 # R package development
 
-## Applicable evidence
+## Trigger and evidence
 
-- Package metadata and dependencies: `DESCRIPTION`
-- Exported interface: `NAMESPACE`, roxygen source, and generated `man/`
-- Implementation: `R/`
-- Behavioral verification: `tests/testthat/`
-- User guidance: `README.Rmd`, vignettes, and pkgdown configuration
+Read this workflow before changing R package code, dependencies, tests,
+documentation, build/check tooling or development automation. Inspect the relevant
+`DESCRIPTION`, `NAMESPACE`, `R/`, `tests/testthat/`, roxygen/`man/`,
+`README.md` or `README.Rmd`, vignettes and pkgdown configuration.
 
-## Procedure
+## Choose the standard facility first
 
-1. Inspect `DESCRIPTION`, `NAMESPACE`, relevant R functions, tests, and documentation.
-2. Keep exported behavior, roxygen comments, generated help, examples, and tests aligned.
-3. Prefer deterministic functions with structured return values for automation.
-4. Run focused `testthat` tests, regenerate documentation when needed, then run package-level checks.
-5. Review generated-file changes separately from hand-authored source changes.
+| Task | Usual entry point |
+| --- | --- |
+| Load development code | `devtools::load_all()` or `pkgload::load_all()` |
+| Test behavior | `devtools::test()` or `testthat::test_local()` |
+| Generate function documentation | `devtools::document()` or `roxygen2::roxygenise()` |
+| Build/check the package | `devtools::check()` or standard `R CMD build` / `R CMD check` |
+| Build the documentation site | `pkgdown::build_site()` |
+
+Before adding or retaining a wrapper, inspect the existing tool's supported
+options. Use metadata and configuration when they meet the need. Custom code must
+address a demonstrated gap; record the standard facility considered, the gap and
+when the workaround can be removed in a short code comment or existing workflow.
+A script's existence or successful execution is not justification for keeping it.
+Keep installation and workstation setup explicit and independently usable.
+
+## Placement and verification
+
+- Keep installed behavior in `R/`; regression assertions and controlled fixtures
+  in the standard package test workflow. Use temporary outputs and scoped cleanup.
+- Evaluate explicit opt-in conditions for live integration tests. Do not use real
+  analyst data as automatic fixtures. Retain separate diagnostics only where
+  their inputs or execution requirements warrant it.
+- `dev/` may hold necessary developer tools; it must not become a parallel test
+  suite or a replacement package-management interface. Do not add frameworks or
+  dependencies solely to reorganize existing scripts.
+- Keep implementation, exports, help, examples and tests aligned. Run focused
+  tests first, then broader checks proportionate to the change; do not rebuild
+  every artifact for dev-only prose edits.
+
+## Completion
+
+Review the diff for duplicate responsibilities, implicit side effects and
+superseded wrappers. Update the existing workflow to describe the current
+procedure, removing conflicting instructions. Verify that the AGENTS route and
+this workflow suffice to choose the normal commands without reading a dated
+report. Report relevant verification and remaining exceptions in the response;
+do not create a routine completion narrative. Review generated changes separately.

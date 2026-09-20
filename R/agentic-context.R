@@ -562,9 +562,10 @@ render_agentic_template <- function(content, root, profiles) {
   repo <- basename(root)
   profile_routes <- if ("r-package" %in% profiles) {
     paste0(
-      "- R package API, implementation, documentation, or tests: ",
-      "`DESCRIPTION`, `NAMESPACE`, `R/`, `man/`, `tests/testthat/`, and ",
-      "`dev/workflows/r-package-development.md`"
+      "- R package code, dependencies, tests, documentation, build/check tooling ",
+      "or development automation: read `dev/workflows/r-package-development.md` ",
+      "before choosing tools or editing; inspect `DESCRIPTION`, `NAMESPACE`, ",
+      "`R/`, `man/`, and `tests/testthat/` as applicable."
     )
   } else {
     "- Repository-type-specific rules: inspect the repository's native configuration and workflows."

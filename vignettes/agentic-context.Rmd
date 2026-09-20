@@ -25,6 +25,13 @@ The `{reproducibleai}` standard uses:
 - checkpoints only for useful resumable state, and
 - Git for superseded history.
 
+Read the workflow named by the matching route before choosing an implementation
+or tool. Maintain current procedures in their purpose-named artifacts, removing
+conflicting instructions; dated evidence must remain optional. For R packages,
+the profile starts with standard R tooling and requires a demonstrated gap before
+custom automation. Completion review checks both the direct route and unnecessary
+duplication. These are behavioral instructions, not a guarantee of agent compliance.
+
 ## New repositories
 
 ```{r eval=FALSE}
@@ -67,3 +74,6 @@ validate_agentic_context(".", strict = TRUE)
 Validation checks structure, required routes, the installed standard version,
 and changes relative to seeded file hashes. Local edits are warnings rather than
 errors because scaffolded files become repository-owned after creation.
+Template improvements apply to new scaffolds. Existing repositories require a
+reviewed edit of their owned files; rerunning setup will not overwrite them.
+Structural validation does not establish that an agent applied the instructions.

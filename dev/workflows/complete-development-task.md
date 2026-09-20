@@ -6,7 +6,7 @@ A requested repository change is ready to implement.
 
 ## Procedure
 
-1. Inspect applicable `AGENTS.md` instructions and routed context.
+1. Read the workflow named by the applicable `AGENTS.md` route before choosing the implementation or tools.
 2. Confirm the requested scope and current Git evidence.
 3. Confirm that established contracts govern the result and that implementation
    is within delegated authority. If intent, tacit expertise, or consequential
@@ -14,9 +14,9 @@ A requested repository change is ready to implement.
    authoritative behavior.
 4. Implement the smallest coherent change while preserving unrelated work.
 5. Run checks proportionate to risk.
-6. Update affected goals, architecture, decisions, governance, workflows,
-   schemas, or feature documentation.
-7. Review the final status and diff.
+6. Edit the existing artifact that owns the changed requirement or procedure;
+   remove conflicting guidance rather than appending a completion narrative.
+7. Review the final status and diff. Verify that the task route reaches current instructions without a historical report, and remove duplicate or superseded machinery.
 8. Create a checkpoint only if useful unfinished state remains.
 
 ## Completion evidence
